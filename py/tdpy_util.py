@@ -35,17 +35,107 @@ import seaborn as sns
 sns.set(context='poster', style='ticks', color_codes=True)
 
 
-# In[2]:
+# In[17]:
 
-def retr_heal(nside=256):
+def retr_nfwp(nfwg, numbside, norm=None):
     
-    npixl = 12 * nside**2
-    apix = 4. * pi / npixl # [sr]
-    thhp, phhp = hp.pixelfunc.pix2ang(nside, arange(npixl), nest=False) # [rad]
-    lghp = ((rad2deg(phhp) - 180.) % 360.) - 180. # [deg]
-    bghp = 90. - rad2deg(thhp) # [deg]
+    edenlocl = 0.3 # [GeV/cm^3]
+    radilocl = 8.5 # [kpc]
+    rscl = 23.1 # [kpc]
+    
+    nradi = 100
+    minmradi = 1e-2
+    maxmradi = 1e2
+    radi = logspace(log10(minmradi), log10(maxmradi), nradi)
+    
+    nsadi = 100
+    minmsadi = 0.
+    maxmsadi = 2. * radilocl
+    sadi = linspace(minmsadi, maxmsadi, nsadi)
+    
 
-    return lghp, bghp, nside, npixl, apix
+    lghp, bghp, numbside, numbpixl, apix = retr_heal(numbside)
+    
+    cosigahp = cos(deg2rad(lghp)) * cos(deg2rad(bghp))
+    gahp = rad2deg(arccos(cosigahp))
+    
+    eden = 1. / (radi / rscl)**nfwg / (1. + radi / rscl)**(3. - nfwg)
+    eden *= edenlocl / interp1d(radi, eden)(radilocl)
+    
+    edengrid = zeros((nsadi, numbpixl))
+    for i in range(nsadi):
+        radigrid = sqrt(radilocl**2 + sadi[i]**2 - 2 * radilocl * sadi[i] * cosigahp)
+        edengrid[i, :] = interp1d(radi, eden)(radigrid)
+
+
+    edengridtotl = sum(edengrid**2, axis=0)
+
+    #plt.loglog(radi, eden)
+    #plt.show()
+    #test = retr_cart(edengridtotl, latra=[-90., 90.], lonra=[-90.,90.])
+    #plt.imshow(test, origin='lower', cmap='Reds', extent=[-90.,90.,-90.,90.], norm=matplotlib.colors.LogNorm())
+    #plt.show()
+    
+    if norm != None:
+        jgahp = argsort(gahp)
+        edengridtotl /= interp1d(gahp[jgahp], edengridtotl[jgahp])(5.)
+        
+        
+    return edengridtotl
+
+
+# In[19]:
+
+def mexp(numb):
+    logn = log10(numb)
+    expo = floor(logn)
+    mant = 10**(logn - expo)
+    
+    if numb > 1e2 or numb < 1e-2:
+        if mant == 1.:
+            strg = r'$10^{%d}$' % expo
+        else:
+            strg = r'$%.3g \times 10^{%d}$' % (mant, expo)
+    else:
+        strg = '%.3g' % numb
+
+    return strg
+
+
+# In[16]:
+
+def retr_p4dm_spec(anch, part='el'):
+    
+    if part == 'el':
+        strg = 'AtProduction_positrons'
+    if part == 'ph':
+        strg = 'AtProduction_gammas'
+
+    name = os.environ["TDPY_UTIL_DATA_PATH"] + '/p4dm/' + strg + '.dat'
+    p4dm = loadtxt(name)
+    
+    p4dm[:, 0] *= 1e3 # [MeV]
+    
+    mass = unique(p4dm[:, 0])
+    nmass = mass.size
+    nener = p4dm.shape[0] / nmass
+    
+    mult = zeros((nener, nmass))
+    for k in range(nmass):
+        jp4dm = where(abs(p4dm[:, 0] - mass[k]) == 0)[0]
+
+        if anch == 'e':
+            mult[:, k] = p4dm[jp4dm, 4]
+        if anch == 'mu':
+            mult[:, k] = p4dm[jp4dm, 7]
+        if anch == 'tau':
+            mult[:, k] = p4dm[jp4dm, 10]
+        if anch == 'b':
+            mult[:, k] = p4dm[jp4dm, 13]
+        
+    enerscal = 10**p4dm[jp4dm, 1]
+
+    return mult, enerscal, mass
 
 
 # In[3]:
@@ -65,19 +155,22 @@ def show_prog(cntr, maxmcntr, thiscntr, nprog=20, jproc=None):
 
 # In[4]:
 
-def print_mem_usage():
-    mem = float(sh.awk(sh.ps('u','-p',os.getpid()),'{sum=sum+$6}; END {print sum/1024}'))
-    print '%.3g MB is being used.' % mem
+def show_memo():
+    
+    memo = float(sh.awk(sh.ps('u', '-p', os.getpid()),'{sum=sum+$6}; END {print sum/1024}'))
+    
+    print '%.3g MB is being used.' % memo
+    
 
 
 # In[5]:
 
-def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, nside=256):
+def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
     
     nbgcr = cart.shape[0]
     nlgcr = cart.shape[1]
-    lghp, bghp, nside, npixl, apix = retr_heal(nside)
-    heal = zeros(npixl)
+    lghp, bghp, numbside, numbpixl, apix = retr_heal(numbside)
+    heal = zeros(numbpixl)
     jpixl = where((minmlgal < lghp) & (lghp < maxmlgal) & (minmbgal < bghp) & (bghp < maxmbgal))[0]
     jlgcr = (nlgcr * (lghp[jpixl] - minmlgal) / (maxmlgal - minmlgal)).astype(int)
     jbgcr = (nbgcr * (bghp[jpixl] - minmbgal) / (maxmbgal - minmbgal)).astype(int)
@@ -87,16 +180,71 @@ def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., 
     return heal
 
 
+# In[2]:
+
+def retr_healgrid(numbside=256):
+    
+    numbpixl = 12 * numbside**2
+    apix = 4. * pi / numbpixl # [sr]
+    thhp, phhp = hp.pixelfunc.pix2ang(numbside, arange(numbpixl), nest=False) # [rad]
+    lghp = ((rad2deg(phhp) - 180.) % 360.) - 180. # [deg]
+    bghp = 90. - rad2deg(thhp) # [deg]
+
+    return lghp, bghp, numbside, numbpixl, apix
+
+
+# In[7]:
+
+def retr_cart(hmap, jpixlrofi=None, numbsideinpt=None,               minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, reso=0.1):
+    
+    if jpixlrofi == None:
+        numbpixlinpt = hmap.size
+        numbsideinpt = int(sqrt(numbpixlinpt / 12.))
+    else:
+        numbpixlinpt = numbsideinpt**2 * 12
+    
+    deltlgcr = maxmlgal - minmlgal
+    numbbinslgcr = int(deltlgcr / reso)
+    
+    deltbgcr = maxmbgal - minmbgal
+    numbbinsbgcr = int(deltbgcr / reso)
+    
+    lgcr = linspace(minmlgal, maxmlgal, numbbinslgcr)
+    ilgcr = arange(numbbinslgcr)
+    
+    bgcr = linspace(minmbgal, maxmbgal, numbbinsbgcr)
+    ibgcr = arange(numbbinsbgcr)
+    
+    lghp, bghp, numbside, numbpixl, apix = retr_heal(numbsideinpt)
+
+    bgcrmesh, lgcrmesh = meshgrid(bgcr, lgcr)
+    
+    jpixl = hp.ang2pix(numbsideinpt, pi / 2. - deg2rad(bgcrmesh), deg2rad(lgcrmesh))
+    
+    if jpixlrofi == None:
+        kpixl = jpixl
+    else:
+        pixlcnvt = zeros(numbpixlinpt, dtype=int)
+        for k in range(jpixlrofi.size):
+            pixlcnvt[jpixlrofi[k]] = k
+        kpixl = pixlcnvt[jpixl]
+
+    hmapcart = zeros((numbbinsbgcr, numbbinslgcr))
+    hmapcart[meshgrid(ibgcr, ilgcr)] = hmap[kpixl]
+
+    return hmapcart
+
+
 # In[6]:
 
-def retr_fdfm(binsener, nside=256, vfdm=7):                    
+def retr_fdfm(binsener, numbside=256, vfdm=7):                    
     
     diffener = binsener[1:] - binsener[0:-1]
     nener = diffener.size
     
     path = os.environ["PNTS_TRAN_DATA_PATH"] + '/'
 
-    npixl = nside**2 * 12
+    numbpixl = numbside**2 * 12
     
     if vfdm == 2:
         path += 'gll_iem_v02.fit'
@@ -113,12 +261,12 @@ def retr_fdfm(binsener, nside=256, vfdm=7):
    
     fluxcart = pf.getdata(path, 0) * 1e3 # [1/cm^2/s/sr/GeV]
     enerfdfm = array(pf.getdata(path, 1).tolist()).flatten() * 1e-3 # [GeV]
-    fdfmheal = zeros((enerfdfm.size, npixl))
+    fdfmheal = zeros((enerfdfm.size, numbpixl))
     for i in range(enerfdfm.size):
-        fdfmheal[i, :] = cart_heal(fliplr(fluxcart[i, :, :]), nside=nside)
+        fdfmheal[i, :] = cart_heal(fliplr(fluxcart[i, :, :]), numbside=numbside)
         
     
-    fdfm = empty((nener, npixl))
+    fdfm = empty((nener, numbpixl))
     numbsampbins = 10
     enersamp = logspace(log10(amin(binsener)), log10(amax(binsener)), numbsampbins * nener)
     fdfmheal = interpolate.interp1d(enerfdfm, fdfmheal, axis=0)(enersamp)
@@ -127,72 +275,6 @@ def retr_fdfm(binsener, nside=256, vfdm=7):
 
 
     return fdfm
-
-
-# In[7]:
-
-def retr_cart(hmap, jpixlrofi=None, nsideinpt=None,               minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, reso=0.1):
-    
-    if jpixlrofi == None:
-        npixlinpt = hmap.size
-        nsideinpt = int(sqrt(npixlinpt / 12.))
-    else:
-        npixlinpt = nsideinpt**2 * 12
-    
-    deltlgcr = maxmlgal - minmlgal
-    numbbinslgcr = int(deltlgcr / reso)
-    
-    deltbgcr = maxmbgal - minmbgal
-    numbbinsbgcr = int(deltbgcr / reso)
-    
-    lgcr = linspace(minmlgal, maxmlgal, numbbinslgcr)
-    ilgcr = arange(numbbinslgcr)
-    
-    bgcr = linspace(minmbgal, maxmbgal, numbbinsbgcr)
-    ibgcr = arange(numbbinsbgcr)
-    
-    lghp, bghp, nside, npixl, apix = retr_heal(nsideinpt)
-
-    bgcrmesh, lgcrmesh = meshgrid(bgcr, lgcr)
-    
-    jpixl = hp.ang2pix(nsideinpt, pi / 2. - deg2rad(bgcrmesh), deg2rad(lgcrmesh))
-    
-    if jpixlrofi == None:
-        kpixl = jpixl
-    else:
-        pixlcnvt = zeros(npixlinpt, dtype=int)
-        for k in range(jpixlrofi.size):
-            pixlcnvt[jpixlrofi[k]] = k
-        kpixl = pixlcnvt[jpixl]
-
-    hmapcart = zeros((numbbinsbgcr, numbbinslgcr))
-    hmapcart[meshgrid(ibgcr, ilgcr)] = hmap[kpixl]
-
-    return hmapcart
-
-
-# In[8]:
-
-# temp
-if False:
-    get_ipython().magic(u'matplotlib inline')
-
-    nsideinpt = 256
-
-    lghp, bghp, nside, npixl, apix = retr_heal(nsideinpt)
-
-    minmlgal=-20.
-    maxmlgal=20.
-    minmbgal=-10.
-    maxmbgal=10.
-
-    jpixlrofi = where((lghp > minmlgal) & (lghp < maxmlgal) & (bghp > minmbgal) & (bghp < maxmbgal))[0]
-
-    hmap = exp(-lghp**2 / 100.) * exp(-bghp**2 / 10.)
-
-    hmapcart = retr_cart(hmap[jpixlrofi], jpixlrofi=jpixlrofi, nsideinpt=nsideinpt,                          minmlgal=minmlgal, maxmlgal=maxmlgal,                          minmbgal=minmbgal, maxmbgal=maxmbgal)
-    plt.imshow(hmapcart)
-    plt.show()
 
 
 # In[9]:
@@ -411,95 +493,32 @@ def plot_braz(ax, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mcol=
     
 
 
-# In[12]:
+# In[ ]:
 
-def sample(pdfvar, arrvar, numbsamp, axis=0, getcdf=False, binned=False, rej=False):
+def plot_propeffi(plotpath, plotextn, numbswep, numbpara, listaccp, listjsampvari, strgpara):
     
-    if rej:
-        pdfvar -= amin(pdfvar, axis=axis)
-        pdfvar /= amax(pdfvar, axis=axis)
-        numbsamp_ = numbsamp
-        samvar = []
-        while numbsamp_ > 0:
-            if not binned:
-                rands = rand(numbsamp_ * 2)
-                maxvar = max(arrvar)
-                minvar = min(arrvar)
-                samvar_ = rands[0:thisnumbsamp] * (maxvar - minvar) + minvar
-                jsam = where(rands[numbsamp_:numbsamp_*2] - interpolate.interp1d(arrvar, pdfvar)(samvar_) < 0)[0]
-                samvar.extend(samvar_[jsamp])
-                thisnumbsamp -= jsam.size
-            else:
-                rands = rand(numbsamp_)
-                samjvar = random_integers(0, arrvar.size-1, size=thisnumbsamp)
-                jsamp = where(rands < pdfvar[samjvar])[0]
-                jvar = samjvar[jsam]
-                samvar.extend(arrvar[jvar])
-                thisnumbsamp -= jvar.size
-        samvar = array(samvar)
-    else:
-        pdfvar /= trapz(pdfvar, arrvar)
-        cdfvar = cumtrapz(pdfvar, arrvar, axis=axis, initial=0.)
-        rands = rand(numbsamp)
-        if not binned:
-            samvar = interpolate.interp1d(cdfvar, arrvar)(rands)
-        else:
-            jvar = argmin(fabs(cdfvar[:,None] - rands[None,:]), axis=0)
-            samvar = arrvar[jvar]
-            
-    if getcdf and (not rej):
-        return samvar, cdfvar
-    else:
-        return samvar
+    jlistaccp = where(listaccp == True)[0]
 
-
-# In[13]:
-
-def test_sample():
+    binstime = linspace(0., numbswep - 1., 10)
     
-    numbsamp = 1
-    numbbins = 1000
-    npara = 10
-    
-    # random.choice
-    t0 = time.time()
-    limvar = linspace(0., 100., numbbins + 1)
-    arrvar = (limvar[1:] + limvar[0:-1]) / 2.
-    delvar = limvar[1:] - limvar[0:-1]
-    pdfvar = exp(-(arrvar - 10.)**2 / 10**2) + exp(-(arrvar - 70.)**2 / 20.**2)
-    pdfvar /= sum(pdfvar * delvar)
-    provar = delvar * pdfvar
-    samvar0 = choice(arrvar, p=provar, size=numbsamp)
-    t1 = time.time()
-    print 'choice: %d seconds' % (t1 - t0)
-    
-    # its
-    t0 = time.time()
-    limvar = linspace(0.,100.,numbbins+1)
-    arrvar = (limvar[1:numbbins+1] + limvar[0:numbbins]) / 2.
-    pdfvar = exp(-(arrvar - 10.)**2 / 10**2) + exp(-(arrvar - 70.)**2 / 20.**2)
-    samvar1, cdfvar = sample(pdfvar, arrvar, numbsamp, getcdf=True)
-    t1 = time.time()
-    print 'Unbinned ITS: %d seconds' % (t1 - t0)
-    
-    t0 = time.time()
-    limvar = linspace(0.,100.,numbbins+1)
-    arrvar = (limvar[1:numbbins+1] + limvar[0:numbbins]) / 2.
-    pdfvar = exp(-(arrvar - 10.)**2 / 10**2) + exp(-(arrvar - 70.)**2 / 20.**2)
-    samvar3 = sample(pdfvar, arrvar, numbsamp, rej=True)
-    t1 = time.time()
-    print 'Unbinned RS: %d seconds' % (t1 - t0)
-    
-    #plt.plot(arrvar, cdfvar)
-    
-    fig, ax = plt.subplots()
-    ax.hist(samvar0, 50, alpha=0.2)   
-    ax.hist(samvar1, 50, alpha=0.2)
-    ax.hist(samvar2, 50, alpha=0.2) 
-    ax.hist(samvar3, 50, alpha=0.2)
-    ax.hist(samvar4, 50, alpha=0.2)
-    plt.show()
-    
+    numbcols = 2
+    numbrows = (numbpara + 1) / 2
+    fig, axgr = plt.subplots(numbrows, numbcols, figsize=(16, 4 * (numbpara + 1)))
+    if numbrows == 1:
+        axgr = [axgr]
+    for a, axrw in enumerate(axgr):
+        for b, ax in enumerate(axrw):
+            k = 2 * a + b
+            if k == numbpara:
+                ax.axis('off')
+            jlistpara = where(listjsampvari == k)[0]
+            jlistintc = intersect1d(jlistaccp, jlistpara, assume_unique=True)
+            histotl = ax.hist(jlistpara, binstime, color='b')
+            histaccp = ax.hist(jlistintc, binstime, color='g')
+            ax.set_title(strgpara[k])
+    plt.subplots_adjust(hspace=0.3)
+    plt.savefig(plotpath + '/propeffi' + plotextn + '.png')
+    plt.close(fig)
 
 
 # In[14]:
@@ -525,140 +544,16 @@ def retr_atcr(sgnl, ndela=10):
     return atcr, iact
 
 
-# In[15]:
+# In[ ]:
 
-def anim(fig, fname, animfunc, indxvect, args=None, fps=3, dpi=50):
+def retr_numbsamp(numbswep, numbburn, factthin):
     
-    ani = animation.FuncAnimation(fig, animfunc, indxvect, fargs=args, blit=True)
-    ani.save('/n/pan/www/tansu/' + fname, writer='imagemagick', fps=fps, dpi=dpi)
-    plt.close(fig)
-    path = 'http://faun.rc.fas.harvard.edu/tansu/' + fname
-    IPython.display.Image(url=path)
-
-
-# In[16]:
-
-def retr_p4dm_spec(anch, part='el'):
+    numbsamp = (numbswep - numbburn) / factthin
     
-    if part == 'el':
-        strg = 'AtProduction_positrons'
-    if part == 'ph':
-        strg = 'AtProduction_gammas'
-
-    name = os.environ["TDPY_UTIL_DATA_PATH"] + '/p4dm/' + strg + '.dat'
-    p4dm = loadtxt(name)
-    
-    p4dm[:, 0] *= 1e3 # [MeV]
-    
-    mass = unique(p4dm[:, 0])
-    nmass = mass.size
-    nener = p4dm.shape[0] / nmass
-    
-    mult = zeros((nener, nmass))
-    for k in range(nmass):
-        jp4dm = where(abs(p4dm[:, 0] - mass[k]) == 0)[0]
-
-        if anch == 'e':
-            mult[:, k] = p4dm[jp4dm, 4]
-        if anch == 'mu':
-            mult[:, k] = p4dm[jp4dm, 7]
-        if anch == 'tau':
-            mult[:, k] = p4dm[jp4dm, 10]
-        if anch == 'b':
-            mult[:, k] = p4dm[jp4dm, 13]
-        
-    enerscal = 10**p4dm[jp4dm, 1]
-
-    return mult, enerscal, mass
+    return numbsamp
 
 
-# In[17]:
-
-def retr_nfwp(nfwg, nside, norm=None):
-    
-    edenlocl = 0.3 # [GeV/cm^3]
-    radilocl = 8.5 # [kpc]
-    rscl = 23.1 # [kpc]
-    
-    nradi = 100
-    minmradi = 1e-2
-    maxmradi = 1e2
-    radi = logspace(log10(minmradi), log10(maxmradi), nradi)
-    
-    nsadi = 100
-    minmsadi = 0.
-    maxmsadi = 2. * radilocl
-    sadi = linspace(minmsadi, maxmsadi, nsadi)
-    
-
-    lghp, bghp, nside, npixl, apix = retr_heal(nside)
-    
-    cosigahp = cos(deg2rad(lghp)) * cos(deg2rad(bghp))
-    gahp = rad2deg(arccos(cosigahp))
-    
-    eden = 1. / (radi / rscl)**nfwg / (1. + radi / rscl)**(3. - nfwg)
-    eden *= edenlocl / interp1d(radi, eden)(radilocl)
-    
-    edengrid = zeros((nsadi, npixl))
-    for i in range(nsadi):
-        radigrid = sqrt(radilocl**2 + sadi[i]**2 - 2 * radilocl * sadi[i] * cosigahp)
-        edengrid[i, :] = interp1d(radi, eden)(radigrid)
-
-
-    edengridtotl = sum(edengrid**2, axis=0)
-
-    #plt.loglog(radi, eden)
-    #plt.show()
-    #test = retr_cart(edengridtotl, latra=[-90., 90.], lonra=[-90.,90.])
-    #plt.imshow(test, origin='lower', cmap='Reds', extent=[-90.,90.,-90.,90.], norm=matplotlib.colors.LogNorm())
-    #plt.show()
-    
-    if norm != None:
-        jgahp = argsort(gahp)
-        edengridtotl /= interp1d(gahp[jgahp], edengridtotl[jgahp])(5.)
-        
-        
-    return edengridtotl
-
-
-# In[18]:
-
-def retr_gang(lghl, bghl):
-    
-    gang = rad2deg(arccos(cos(deg2rad(lghl)) * cos(deg2rad(bghl))))
-    
-    return gang
-
-
-# In[19]:
-
-def mexp(numb):
-    logn = log10(numb)
-    expo = floor(logn)
-    mant = 10**(logn - expo)
-    
-    if numb > 1e2 or numb < 1e-2:
-        if mant == 1.:
-            strg = r'$10^{%d}$' % expo
-        else:
-            strg = r'$%.3g \times 10^{%d}$' % (mant, expo)
-    else:
-        strg = '%.3g' % numb
-
-    return strg
-
-
-# In[20]:
-
-def retr_filelist(version, nside, evclass, evtype):
-
-    tag = os.environ["PNTS_TRAN_DATA_PATH"] + "/" + version + "/flux_*_%4.4d_evc%3.3d_evt%2.2d.fits" % (nside, evclass, evtype)
-    filelist = sorted(glob.glob(tag))
-
-    return filelist
-
-
-# In[21]:
+# In[ ]:
 
 def icdf_self(paraunit, minmpara, maxmpara):
     para = (maxmpara - minmpara) * paraunit + minmpara
@@ -732,41 +627,7 @@ def icdf_samp_sing(samp, k, datapara):
     return sampvarb
 
 
-def plot_propeffi(plotpath, plotextn, numbswep, numbpara, listaccp, listjsampvari, strgpara):
-    
-    jlistaccp = where(listaccp == True)[0]
-
-    binstime = linspace(0., numbswep - 1., 10)
-    
-    numbcols = 2
-    numbrows = (numbpara + 1) / 2
-    fig, axgr = plt.subplots(numbrows, numbcols, figsize=(16, 4 * (numbpara + 1)))
-    if numbrows == 1:
-        axgr = [axgr]
-    for a, axrw in enumerate(axgr):
-        for b, ax in enumerate(axrw):
-            k = 2 * a + b
-            if k == numbpara:
-                ax.axis('off')
-            jlistpara = where(listjsampvari == k)[0]
-            jlistintc = intersect1d(jlistaccp, jlistpara, assume_unique=True)
-            histotl = ax.hist(jlistpara, binstime, color='b')
-            histaccp = ax.hist(jlistintc, binstime, color='g')
-            ax.set_title(strgpara[k])
-    plt.subplots_adjust(hspace=0.3)
-    plt.savefig(plotpath + '/propeffi' + plotextn + '.png')
-    plt.close(fig)
-    
-
-
-    
-def retr_numbsamp(numbswep, numbburn, factthin):
-    
-    numbsamp = (numbswep - numbburn) / factthin
-    
-    return numbsamp
-
-
+# In[21]:
 
 def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, plotextn='', numbburn=None, factthin=None, verbtype=0):
     
