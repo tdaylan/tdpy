@@ -182,7 +182,7 @@ def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., 
 
 # In[2]:
 
-def retr_healgrid(numbside=256):
+def retr_healgrid(numbside):
     
     numbpixl = 12 * numbside**2
     apix = 4. * pi / numbpixl # [sr]
