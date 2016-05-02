@@ -118,9 +118,9 @@ def retr_p4dm_spec(anch, part='el'):
     
     mass = unique(p4dm[:, 0])
     nmass = mass.size
-    nener = p4dm.shape[0] / nmass
+    numbener = p4dm.shape[0] / nmass
     
-    mult = zeros((nener, nmass))
+    mult = zeros((numbener, nmass))
     for k in range(nmass):
         jp4dm = where(abs(p4dm[:, 0] - mass[k]) == 0)[0]
 
@@ -195,9 +195,9 @@ def retr_healgrid(numbside):
 
 # In[7]:
 
-def retr_cart(hmap, jpixlrofi=None, numbsideinpt=None,               minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, reso=0.1):
+def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None,               minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, reso=0.1):
     
-    if jpixlrofi == None:
+    if indxpixlrofi == None:
         numbpixlinpt = hmap.size
         numbsideinpt = int(sqrt(numbpixlinpt / 12.))
     else:
@@ -221,12 +221,12 @@ def retr_cart(hmap, jpixlrofi=None, numbsideinpt=None,               minmlgal=-1
     
     jpixl = hp.ang2pix(numbsideinpt, pi / 2. - deg2rad(bgcrmesh), deg2rad(lgcrmesh))
     
-    if jpixlrofi == None:
+    if indxpixlrofi == None:
         kpixl = jpixl
     else:
         pixlcnvt = zeros(numbpixlinpt, dtype=int)
-        for k in range(jpixlrofi.size):
-            pixlcnvt[jpixlrofi[k]] = k
+        for k in range(indxpixlrofi.size):
+            pixlcnvt[indxpixlrofi[k]] = k
         kpixl = pixlcnvt[jpixl]
 
     hmapcart = zeros((numbbinsbgcr, numbbinslgcr))
@@ -240,7 +240,7 @@ def retr_cart(hmap, jpixlrofi=None, numbsideinpt=None,               minmlgal=-1
 def retr_fdfm(binsener, numbside=256, vfdm=7):                    
     
     diffener = binsener[1:] - binsener[0:-1]
-    nener = diffener.size
+    numbener = diffener.size
     
     path = os.environ["PNTS_TRAN_DATA_PATH"] + '/'
 
@@ -266,11 +266,11 @@ def retr_fdfm(binsener, numbside=256, vfdm=7):
         fdfmheal[i, :] = cart_heal(fliplr(fluxcart[i, :, :]), numbside=numbside)
         
     
-    fdfm = empty((nener, numbpixl))
+    fdfm = empty((numbener, numbpixl))
     numbsampbins = 10
-    enersamp = logspace(log10(amin(binsener)), log10(amax(binsener)), numbsampbins * nener)
+    enersamp = logspace(log10(amin(binsener)), log10(amax(binsener)), numbsampbins * numbener)
     fdfmheal = interpolate.interp1d(enerfdfm, fdfmheal, axis=0)(enersamp)
-    for i in range(nener):
+    for i in range(numbener):
         fdfm[i, :] = trapz(fdfmheal[i*numbsampbins:(i+1)*numbsampbins, :],                            enersamp[i*numbsampbins:(i+1)*numbsampbins], axis=0) / diffener[i]
 
 
