@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 # math
 from numpy import *
@@ -35,7 +35,7 @@ import seaborn as sns
 sns.set(context='poster', style='ticks', color_codes=True)
 
 
-# In[17]:
+# In[2]:
 
 def retr_nfwp(nfwg, numbside, norm=None):
     
@@ -54,7 +54,7 @@ def retr_nfwp(nfwg, numbside, norm=None):
     sadi = linspace(minmsadi, maxmsadi, nsadi)
     
 
-    lghp, bghp, numbside, numbpixl, apix = retr_heal(numbside)
+    lghp, bghp, numbside, numbpixl, apix = retr_healgrid(numbside)
     
     cosigahp = cos(deg2rad(lghp)) * cos(deg2rad(bghp))
     gahp = rad2deg(arccos(cosigahp))
@@ -84,7 +84,7 @@ def retr_nfwp(nfwg, numbside, norm=None):
     return edengridtotl
 
 
-# In[19]:
+# In[3]:
 
 def mexp(numb):
     logn = log10(numb)
@@ -102,7 +102,7 @@ def mexp(numb):
     return strg
 
 
-# In[16]:
+# In[4]:
 
 def retr_p4dm_spec(anch, part='el'):
     
@@ -138,7 +138,7 @@ def retr_p4dm_spec(anch, part='el'):
     return mult, enerscal, mass
 
 
-# In[3]:
+# In[5]:
 
 def show_prog(cntr, maxmcntr, thiscntr, nprog=20, jproc=None):
 
@@ -153,7 +153,7 @@ def show_prog(cntr, maxmcntr, thiscntr, nprog=20, jproc=None):
     return thiscntr            
 
 
-# In[4]:
+# In[6]:
 
 def show_memo():
     
@@ -163,13 +163,13 @@ def show_memo():
     
 
 
-# In[5]:
+# In[7]:
 
 def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
     
     nbgcr = cart.shape[0]
     nlgcr = cart.shape[1]
-    lghp, bghp, numbside, numbpixl, apix = retr_heal(numbside)
+    lghp, bghp, numbside, numbpixl, apix = retr_healgrid(numbside)
     heal = zeros(numbpixl)
     jpixl = where((minmlgal < lghp) & (lghp < maxmlgal) & (minmbgal < bghp) & (bghp < maxmbgal))[0]
     jlgcr = (nlgcr * (lghp[jpixl] - minmlgal) / (maxmlgal - minmlgal)).astype(int)
@@ -180,7 +180,7 @@ def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., 
     return heal
 
 
-# In[2]:
+# In[8]:
 
 def retr_healgrid(numbside):
     
@@ -193,7 +193,7 @@ def retr_healgrid(numbside):
     return lghp, bghp, numbside, numbpixl, apix
 
 
-# In[7]:
+# In[9]:
 
 def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None,               minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, reso=0.1):
     
@@ -215,7 +215,7 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None,               minmlgal
     bgcr = linspace(minmbgal, maxmbgal, numbbinsbgcr)
     ibgcr = arange(numbbinsbgcr)
     
-    lghp, bghp, numbside, numbpixl, apix = retr_heal(numbsideinpt)
+    lghp, bghp, numbside, numbpixl, apix = retr_healgrid(numbsideinpt)
 
     bgcrmesh, lgcrmesh = meshgrid(bgcr, lgcr)
     
@@ -235,7 +235,7 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None,               minmlgal
     return hmapcart
 
 
-# In[6]:
+# In[10]:
 
 def retr_fdfm(binsener, numbside=256, vfdm=7):                    
     
@@ -277,9 +277,9 @@ def retr_fdfm(binsener, numbside=256, vfdm=7):
     return fdfm
 
 
-# In[9]:
+# In[11]:
 
-def plot_mcmc(samp, strgpara, lims=None, scalpara=None,               plotsize=6, numbbins=30, path=None, nplot=4,               truepara=None, ntickbins=3, quan=False):
+def plot_mcmc(samp, strgpara, lims=None, scalpara=None,               plotsize=6, numbbins=30, path=None, numbplot=4,               truepara=None, ntickbins=3, quan=False):
     
     numbpara = samp.shape[1]
     
@@ -297,116 +297,112 @@ def plot_mcmc(samp, strgpara, lims=None, scalpara=None,               plotsize=6
     jparagood = ones(numbpara, dtype=bool)
     jparagood[where(lims[0, :] == lims[1, :])] = False
         
-
     bins = zeros((numbbins, numbpara))
-
-    
     for k in range(numbpara):
-
         if scalpara[k] == 'self':
             bins[:, k] = linspace(lims[0, k], lims[1, k], numbbins)
         if scalpara[k] == 'logt':
             bins[:, k] = logspace(log10(lims[0, k]), log10(lims[1, k]), numbbins)
 
             
-    nfram = numbpara // nplot
-    nplotlast = numbpara % nplot
-    if nplotlast != 0:
-        nfram += 1
+    numbfram = numbpara // numbplot
+    numbplotlast = numbpara % numbplot
+    if numbplotlast != 0:
+        numbfram += 1
         
 
-    for n in range(nfram):
+    for n in range(numbfram):
 
-        if n == nfram - 1 and nplotlast != 0:
-            thisnumbpara = nplotlast
-            thissamp = samp[:, n*nplot:]
-            thisparastrg = strgpara[n*nplot:]
-            thisscalpara = scalpara[n*nplot:]
-            thistruepara = truepara[n*nplot:]
-            thisbins = bins[:, n*nplot:]
-            thisjparagood = jparagood[n*nplot:]
-            thislims = lims[:, n*nplot:]
+        if n == numbfram - 1 and numbplotlast != 0:
+            thisnumbpara = numbplotlast
+            thissamp = samp[:, n*numbplot:]
+            thisparastrg = strgpara[n*numbplot:]
+            thisscalpara = scalpara[n*numbplot:]
+            thistruepara = truepara[n*numbplot:]
+            thisbins = bins[:, n*numbplot:]
+            thisjparagood = jparagood[n*numbplot:]
+            thislims = lims[:, n*numbplot:]
             
         else:
-            thisnumbpara = nplot
-            thissamp = samp[:, n*nplot:(n+1)*nplot]
-            thisparastrg = strgpara[n*nplot:(n+1)*nplot]
-            thisscalpara = scalpara[n*nplot:(n+1)*nplot]
-            thistruepara = truepara[n*nplot:(n+1)*nplot]
-            thisbins = bins[:, n*nplot:(n+1)*nplot]
-            thisjparagood = jparagood[n*nplot:(n+1)*nplot]
-            thislims = lims[:, n*nplot:(n+1)*nplot]
+            thisnumbpara = numbplot
+            thissamp = samp[:, n*numbplot:(n+1)*numbplot]
+            thisparastrg = strgpara[n*numbplot:(n+1)*numbplot]
+            thisscalpara = scalpara[n*numbplot:(n+1)*numbplot]
+            thistruepara = truepara[n*numbplot:(n+1)*numbplot]
+            thisbins = bins[:, n*numbplot:(n+1)*numbplot]
+            thisjparagood = jparagood[n*numbplot:(n+1)*numbplot]
+            thislims = lims[:, n*numbplot:(n+1)*numbplot]
             
-        fig, axgr = plt.subplots(thisnumbpara, thisnumbpara, figsize=(plotsize*thisnumbpara, plotsize*thisnumbpara))
+        figr, axgr = plt.subplots(thisnumbpara, thisnumbpara, figsize=(plotsize*thisnumbpara, plotsize*thisnumbpara))
         if thisnumbpara == 1:
             axgr = [[axgr]]
         for k, axrw in enumerate(axgr):
-            for l, ax in enumerate(axrw):
+            for l, axis in enumerate(axrw):
                 if k < l or thisjparagood[k] == False or  thisjparagood[l] == False:
-                    ax.axis('off')
+                    axis.axis('off')
                     continue
                 if k == l:
 
-                    ax.hist(thissamp[:, k], bins=thisbins[:, k])
-                    #ax.set_yticks([])
+                    axis.hist(thissamp[:, k], bins=thisbins[:, k])
+                    #axis.set_yticks([])
                     if thistruepara[k] != None:
-                        ax.axvline(thistruepara[k], color='r')
+                        axis.axvline(thistruepara[k], color='r')
                     if quan:
                         thisquan = sp.stats.mstats.mquantiles(thissamp[:, k], prob=[0.025, 0.16, 0.84, 0.975])
-                        ax.axvline(thisquan[0], color='b', ls='--')
-                        ax.axvline(thisquan[1], color='b', ls='-.')
-                        ax.axvline(thisquan[2], color='b', ls='-.')
-                        ax.axvline(thisquan[3], color='b', ls='--')
+                        axis.axvline(thisquan[0], color='b', ls='--')
+                        axis.axvline(thisquan[1], color='b', ls='-.')
+                        axis.axvline(thisquan[2], color='b', ls='-.')
+                        axis.axvline(thisquan[3], color='b', ls='--')
     
                 else:
             
-                    h = ax.hist2d(thissamp[:, l], thissamp[:, k], bins=[thisbins[:, l], thisbins[:, k]], cmap='Blues')
+                    h = axis.hist2d(thissamp[:, l], thissamp[:, k], bins=[thisbins[:, l], thisbins[:, k]], cmap='Blues')
 
                     if thistruepara[l] != None and thistruepara[k] != None:
-                        ax.scatter(thistruepara[l], thistruepara[k], color='r', marker='o')
+                        axis.scatter(thistruepara[l], thistruepara[k], color='r', marker='o')
                     if thisscalpara[k] == 'logt':
-                        ax.set_yscale('log', basey=10)
+                        axis.set_yscale('log', basey=10)
                         arry = logspace(log10(thislims[0, k]), log10(thislims[1, k]), ntickbins)
                         strgarry = [mexp(arry[a]) for a in range(ntickbins)]
-                        ax.set_yticks(arry)
-                        ax.set_yticklabels(strgarry)
+                        axis.set_yticks(arry)
+                        axis.set_yticklabels(strgarry)
                             
                 
                 if thisscalpara[l] == 'logt':
-                    ax.set_xscale('log', basex=10)
+                    axis.set_xscale('log', basex=10)
                     arry = logspace(log10(thislims[0, l]), log10(thislims[1, l]), ntickbins)
                     strgarry = [mexp(arry[a]) for a in range(ntickbins)]
-                    ax.set_xticks(arry)
-                    ax.set_xticklabels(strgarry)
+                    axis.set_xticks(arry)
+                    axis.set_xticklabels(strgarry)
                 
-                ax.set_xlim(thislims[:, l])
+                axis.set_xlim(thislims[:, l])
                 
                 if k == thisnumbpara - 1:
-                    ax.set_xlabel(thisparastrg[l])
+                    axis.set_xlabel(thisparastrg[l])
                 #else:
-                #    ax.set_xticklabels([])
+                #    axis.set_xticklabels([])
                     
                 if l == 0 and k != 0:
-                    ax.set_ylabel(thisparastrg[k])
+                    axis.set_ylabel(thisparastrg[k])
                 #else:
-                #    ax.set_yticklabels([])
+                #    axis.set_yticklabels([])
                 
                 #if ntickbins != None:
-                    #ax.locator_params(ntickbins)
+                    #axis.locator_params(ntickbins)
                 
-        fig.subplots_adjust(bottom=0.2)
+        figr.subplots_adjust(bottom=0.2)
         
         if path == None:
             plt.show()
         else:
             plt.savefig(path + '_fram%d.png' % n)
-            plt.close(fig)
+            plt.close(figr)
     
 
     #q = sp.stats.mstats.mquantiles(hist[0], prob=[0.68, 0.95])
-    #ax.imshow(hist[0].T, origin='lower', interpolation='none', cmap='Reds', \
+    #axis.imshow(hist[0].T, origin='lower', interpolation='none', cmap='Reds', \
     #          extent=[minmtimedeca, maxmtimedeca, minmampl, maxmampl])
-    #cont = ax.contour(meantimedeca, meanampl, hist[0].T, origin='lower', color='b', levels=q)
+    #cont = axis.contour(meantimedeca, meanampl, hist[0].T, origin='lower', color='b', levels=q)
     #fmt = {}
     #strs = ['68 % CL', '95 % CL']
     #for l, s in zip(q, strs):
@@ -415,7 +411,7 @@ def plot_mcmc(samp, strgpara, lims=None, scalpara=None,               plotsize=6
     
 
 
-# In[10]:
+# In[12]:
 
 def plot_trac(listpara, labl, truepara=None, scalpara='self', path=None, titl=None, quan=False):
     
@@ -432,68 +428,68 @@ def plot_trac(listpara, labl, truepara=None, scalpara='self', path=None, titl=No
     if quan:
         quanarry = sp.stats.mstats.mquantiles(listpara, prob=[0.025, 0.16, 0.84, 0.975])
 
-    fig, axrd = plt.subplots(1, 2, figsize=(14, 7))
+    figr, axrw = plt.subplots(1, 2, figsize=(14, 7))
     if titl != None:
-        fig.suptitle(titl, fontsize=18)
-    for n, ax in enumerate(axrd):
+        figr.suptitle(titl, fontsize=18)
+    for n, axis in enumerate(axrw):
         if n == 0:
-            ax.plot(listpara)
-            ax.set_xlabel('$i_{samp}$')
-            ax.set_ylabel(labl)
+            axis.plot(listpara)
+            axis.set_xlabel('$i_{samp}$')
+            axis.set_ylabel(labl)
             if truepara != None:
-                ax.axhline(y=truepara, color='g')
+                axis.axhline(y=truepara, color='g')
             if scalpara == 'logt':
-                ax.set_yscale('log')
-            ax.set_ylim(limspara)
+                axis.set_yscale('log')
+            axis.set_ylim(limspara)
             if quan:
-                ax.axhline(quanarry[0], color='b', ls='--')
-                ax.axhline(quanarry[1], color='b', ls='-.')
-                ax.axhline(quanarry[2], color='b', ls='-.')
-                ax.axhline(quanarry[3], color='b', ls='--')
+                axis.axhline(quanarry[0], color='b', ls='--')
+                axis.axhline(quanarry[1], color='b', ls='-.')
+                axis.axhline(quanarry[2], color='b', ls='-.')
+                axis.axhline(quanarry[3], color='b', ls='--')
         else:
-            ax.hist(listpara, bins=bins)
-            ax.set_xlabel(labl)
-            ax.set_ylabel('$N_{samp}$')
+            axis.hist(listpara, bins=bins)
+            axis.set_xlabel(labl)
+            axis.set_ylabel('$N_{samp}$')
             if truepara != None:
-                ax.axvline(truepara, color='g')
+                axis.axvline(truepara, color='g')
             if scalpara == 'logt':
-                ax.set_xscale('log')
-            ax.set_xlim(limspara)
+                axis.set_xscale('log')
+            axis.set_xlim(limspara)
             if quan:
-                ax.axvline(quanarry[0], color='b', ls='--')
-                ax.axvline(quanarry[1], color='b', ls='-.')
-                ax.axvline(quanarry[2], color='b', ls='-.')
-                ax.axvline(quanarry[3], color='b', ls='--')
+                axis.axvline(quanarry[0], color='b', ls='--')
+                axis.axvline(quanarry[1], color='b', ls='-.')
+                axis.axvline(quanarry[2], color='b', ls='-.')
+                axis.axvline(quanarry[3], color='b', ls='--')
                 
-    fig.subplots_adjust(top=0.9, wspace=0.4, bottom=0.2)
+    figr.subplots_adjust(top=0.9, wspace=0.4, bottom=0.2)
 
     if path != None:
-        fig.savefig(path)
-        plt.close(fig)
+        figr.savefig(path)
+        plt.close(figr)
     else:
         plt.show()
 
 
-# In[11]:
+# In[13]:
 
 def plot_braz(ax, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mcol='black', labl=None, alpha=None):
 
     if numbsampdraw > 0:
         jsampdraw = choice(arange(ydat.shape[0]), size=numbsampdraw)
-        ax.plot(xdat, ydat[jsampdraw[0], :], alpha=0.1, color='b', label='Samples')
+        axis.plot(xdat, ydat[jsampdraw[0], :], alpha=0.1, color='b', label='Samples')
         for k in range(1, numbsampdraw):
-            ax.plot(xdat, ydat[jsampdraw[k], :], alpha=0.1, color='b')
-    ax.plot(xdat, percentile(ydat, 2.5, 0), color=lcol, alpha=alpha)
-    ax.plot(xdat, percentile(ydat, 16., 0), color=dcol, alpha=alpha)
-    ax.plot(xdat, percentile(ydat, 84., 0), color=dcol, alpha=alpha)
-    ax.plot(xdat, percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)
-    ax.plot(xdat, percentile(ydat, 50., 0), color=mcol, label=labl, alpha=alpha)
-    ax.fill_between(xdat, percentile(ydat, 2.5, 0), percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)#, label='95% C.L.')
-    ax.fill_between(xdat, percentile(ydat, 16., 0), percentile(ydat, 84., 0), color=dcol, alpha=alpha)#, label='68% C.L.')
+            axis.plot(xdat, ydat[jsampdraw[k], :], alpha=0.1, color='b')
+    axis.plot(xdat, percentile(ydat, 2.5, 0), color=lcol, alpha=alpha)
+    axis.plot(xdat, percentile(ydat, 16., 0), color=dcol, alpha=alpha)
+    axis.plot(xdat, percentile(ydat, 84., 0), color=dcol, alpha=alpha)
+    axis.plot(xdat, percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)
+    axis.plot(xdat, percentile(ydat, 50., 0), color=mcol, label=labl, alpha=alpha)
+    axis.fill_between(xdat, percentile(ydat, 2.5, 0), percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)#, label='95% C.L.')
+    axis.fill_between(xdat, percentile(ydat, 16., 0), percentile(ydat, 84., 0), color=dcol, alpha=alpha)#, label='68% C.L.')
     
 
 
-# In[ ]:
+# In[14]:
 
 def plot_propeffi(plotpath, plotextn, numbswep, numbpara, listaccp, listjsampvari, strgpara):
     
@@ -503,25 +499,25 @@ def plot_propeffi(plotpath, plotextn, numbswep, numbpara, listaccp, listjsampvar
     
     numbcols = 2
     numbrows = (numbpara + 1) / 2
-    fig, axgr = plt.subplots(numbrows, numbcols, figsize=(16, 4 * (numbpara + 1)))
+    figr, axgr = plt.subplots(numbrows, numbcols, figsize=(16, 4 * (numbpara + 1)))
     if numbrows == 1:
         axgr = [axgr]
     for a, axrw in enumerate(axgr):
-        for b, ax in enumerate(axrw):
+        for b, axis in enumerate(axrw):
             k = 2 * a + b
             if k == numbpara:
-                ax.axis('off')
+                axis.axis('off')
             jlistpara = where(listjsampvari == k)[0]
             jlistintc = intersect1d(jlistaccp, jlistpara, assume_unique=True)
-            histotl = ax.hist(jlistpara, binstime, color='b')
-            histaccp = ax.hist(jlistintc, binstime, color='g')
-            ax.set_title(strgpara[k])
+            histotl = axis.hist(jlistpara, binstime, color='b')
+            histaccp = axis.hist(jlistintc, binstime, color='g')
+            axis.set_title(strgpara[k])
     plt.subplots_adjust(hspace=0.3)
     plt.savefig(plotpath + '/propeffi' + plotextn + '.png')
-    plt.close(fig)
+    plt.close(figr)
 
 
-# In[14]:
+# In[15]:
 
 def retr_atcr(sgnl, ndela=10):
     
@@ -544,7 +540,7 @@ def retr_atcr(sgnl, ndela=10):
     return atcr, iact
 
 
-# In[ ]:
+# In[16]:
 
 def retr_numbsamp(numbswep, numbburn, factthin):
     
@@ -553,7 +549,7 @@ def retr_numbsamp(numbswep, numbburn, factthin):
     return numbsamp
 
 
-# In[ ]:
+# In[17]:
 
 def icdf_self(paraunit, minmpara, maxmpara):
     para = (maxmpara - minmpara) * paraunit + minmpara
@@ -627,7 +623,7 @@ def icdf_samp_sing(samp, k, datapara):
     return sampvarb
 
 
-# In[21]:
+# In[18]:
 
 def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, plotextn='', numbburn=None, factthin=None, verbtype=0):
     
@@ -674,7 +670,6 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
     
     # current sample index
     thiscntr = -1
-
 
     # proposal scale optimization
     if optiprop:
