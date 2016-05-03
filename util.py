@@ -256,7 +256,7 @@ def retr_fdfm(binsener, numbside=256, vfdm=7):
     return fdfm
 
 
-# In[13]:
+# In[11]:
 
 def plot_braz(ax, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mcol='black', labl=None, alpha=None):
 
@@ -275,7 +275,7 @@ def plot_braz(ax, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mcol=
     
 
 
-# In[11]:
+# In[ ]:
 
 
 

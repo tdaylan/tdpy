@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[ ]:
+# In[4]:
 
 # math
 from numpy import *
@@ -11,6 +11,8 @@ from scipy.integrate import *
 from scipy.interpolate import *
 import scipy as sp
 
+import util
+
 # plotting
 import matplotlib.pyplot as plt
 
@@ -18,7 +20,7 @@ import seaborn as sns
 sns.set(context='poster', style='ticks', color_codes=True)
 
 
-# In[ ]:
+# In[5]:
 
 def icdf_self(paraunit, minmpara, maxmpara):
     para = (maxmpara - minmpara) * paraunit + minmpara
@@ -93,7 +95,7 @@ def icdf_samp_sing(samp, k, datapara):
 
 
 
-# In[ ]:
+# In[6]:
 
 def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, plotextn='', numbburn=None, factthin=None, verbtype=0):
     
@@ -161,7 +163,7 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
     while j < numbswep:
         
         if verbtype > 0:
-            thiscntr = show_prog(j, numbswep, thiscntr)     
+            thiscntr = util.show_prog(j, numbswep, thiscntr)     
 
         if verbtype > 1:
             print
@@ -298,7 +300,7 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
     return sampbund
 
 
-# In[ ]:
+# In[7]:
 
 def plot_trac(listpara, labl, truepara=None, scalpara='self', path=None, titl=None, quan=False):
     
@@ -495,7 +497,7 @@ def plot_mcmc(samp, strgpara, lims=None, scalpara=None,               plotsize=6
                     if thisscalpara[k] == 'logt':
                         axis.set_yscale('log', basey=10)
                         arry = logspace(log10(thislims[0, k]), log10(thislims[1, k]), ntickbins)
-                        strgarry = [mexp(arry[a]) for a in range(ntickbins)]
+                        strgarry = [util.mexp(arry[a]) for a in range(ntickbins)]
                         axis.set_yticks(arry)
                         axis.set_yticklabels(strgarry)
                             
@@ -503,7 +505,7 @@ def plot_mcmc(samp, strgpara, lims=None, scalpara=None,               plotsize=6
                 if thisscalpara[l] == 'logt':
                     axis.set_xscale('log', basex=10)
                     arry = logspace(log10(thislims[0, l]), log10(thislims[1, l]), ntickbins)
-                    strgarry = [mexp(arry[a]) for a in range(ntickbins)]
+                    strgarry = [util.mexp(arry[a]) for a in range(ntickbins)]
                     axis.set_xticks(arry)
                     axis.set_xticklabels(strgarry)
                 
