@@ -90,7 +90,7 @@ def retr_p4dm_spec(anch, part='el'):
     if part == 'ph':
         strg = 'AtProduction_gammas'
 
-    name = os.environ["TDPY_UTIL_DATA_PATH"] + '/p4dm/' + strg + '.dat'
+    name = os.environ["TDPY_DATA_PATH"] + '/p4dm/' + strg + '.dat'
     p4dm = loadtxt(name)
     
     p4dm[:, 0] *= 1e3 # [MeV]
