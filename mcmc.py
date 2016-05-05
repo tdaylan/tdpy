@@ -115,8 +115,7 @@ def gmrb_test(griddata):
 
 # In[ ]:
 
-def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, rtag='', numbburn=None, truepara=None,          numbplotside=None, factthin=None, verbtype=0):
-    
+def mcmc_wrap(numbproc, *args, **keywargs):
     
     if globdata.numbproc == 1:
         gridchan = [mcmc(0)]
@@ -129,9 +128,10 @@ def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=Fa
 
         # process pool
         pool = mp.Pool(numbproc)
+        workpart = functools.partial(work, args, keywargs)
         
         # spawn the processes
-        gridchan = pool.map(work, range(globdata.numbproc))
+        gridchan = pool.map(workpart, range(globdata.numbproc))
         
         pool.close()
         pool.join()
