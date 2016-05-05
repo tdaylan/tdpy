@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[4]:
+# In[1]:
 
 # math
 from numpy import *
@@ -10,6 +10,8 @@ from numpy.random import choice
 from scipy.integrate import *
 from scipy.interpolate import *
 import scipy as sp
+
+import multiprocessing as mp
 
 import util
 
@@ -20,7 +22,7 @@ import seaborn as sns
 sns.set(context='poster', style='ticks', color_codes=True)
 
 
-# In[5]:
+# In[2]:
 
 def icdf_self(paraunit, minmpara, maxmpara):
     para = (maxmpara - minmpara) * paraunit + minmpara
@@ -65,12 +67,12 @@ def cdfn_samp(sampvarb, datapara, k=None):
 
 def cdfn_samp_sing(sampvarb, k, datapara):
     
-    if datapara[3][k] == 'self':
-        samp = cdfn_self(sampvarb, datapara[1][k], datapara[2][k])
-    if datapara[3][k] == 'logt':
-        samp = cdfn_logt(sampvarb, datapara[1][k], datapara[2][k])
-    if datapara[3][k] == 'atan':
-        samp = cdfn_atan(sampvarb, datapara[1][k], datapara[2][k])
+    if datapara[4][k] == 'self':
+        samp = cdfn_self(sampvarb, datapara[2][k], datapara[3][k])
+    if datapara[4][k] == 'logt':
+        samp = cdfn_logt(sampvarb, datapara[2][k], datapara[3][k])
+    if datapara[4][k] == 'atan':
+        samp = cdfn_atan(sampvarb, datapara[2][k], datapara[3][k])
         
     return samp
 
@@ -88,18 +90,18 @@ def icdf_samp(samp, datapara, k=None):
 
 def icdf_samp_sing(samp, k, datapara):
 
-    if datapara[3][k] == 'self':
-        sampvarb = icdf_self(samp, datapara[1][k], datapara[2][k])
-    if datapara[3][k] == 'logt':
-        sampvarb = icdf_logt(samp, datapara[1][k], datapara[2][k])
-    if datapara[3][k] == 'atan':
-        sampvarb = icdf_atan(samp, datapara[1][k], datapara[2][k])
+    if datapara[4][k] == 'self':
+        sampvarb = icdf_self(samp, datapara[2][k], datapara[3][k])
+    if datapara[4][k] == 'logt':
+        sampvarb = icdf_logt(samp, datapara[2][k], datapara[3][k])
+    if datapara[4][k] == 'atan':
+        sampvarb = icdf_atan(samp, datapara[2][k], datapara[3][k])
         
     return sampvarb
 
 
 
-# In[ ]:
+# In[3]:
 
 def gmrb_test(griddata):
     
@@ -111,16 +113,40 @@ def gmrb_test(griddata):
     return psrf
 
 
-# In[6]:
+# In[ ]:
 
-def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, rtag='', numbburn=None, truepara=None, factthin=None, verbtype=0):
+def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, rtag='', numbburn=None, truepara=None,          numbplotside=None, factthin=None, verbtype=0):
     
     
-    global strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, numbpara
+    if globdata.numbproc == 1:
+        gridchan = [mcmc(0)]
+    else:
+        if globdata.verbtype > 0:
+            print 'Forking the sampler...'
+
+        # process lock for simultaneous plotting
+        lock = mp.Lock()
+
+        # process pool
+        pool = mp.Pool(numbproc)
+        
+        # spawn the processes
+        gridchan = pool.map(work, range(globdata.numbproc))
+        
+        pool.close()
+        pool.join()
+
+
+# In[4]:
+
+def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, rtag='', numbburn=None, truepara=None,          numbplotside=None, factthin=None, verbtype=0):
     
-    strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara = datapara
+    global namepara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, numbpara
     
-    numbpara = len(strgpara)
+    namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara = datapara
+    
+    numbpara = len(namepara)
+    indxpara = arange(numbpara)
     
     # Defaults
     if truepara == None:
@@ -209,7 +235,7 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
         
         if verbtype > 1:
             print 'indxsampvari'
-            print strgpara[indxsampvari]
+            print namepara[indxsampvari]
             print 'nextsamp: '
             print nextsamp
 
@@ -313,6 +339,7 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
     levi = -log(mean(1. / exp(listllik - minmlistllik))) + minmlistllik
     info = mean(listllik) - levi
     
+    strgpara = lablpara + ' ' + unitpara
     
     if plotpath != None:
         
@@ -328,25 +355,31 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
         
         if numbplotside != 0:
             path = plotpath + 'grid' + rtag + '.png'
-            tdpy.mcmc.plot_grid(path, listsampvarb, strgpara, truepara=truepara,                                 scalpara=scalpara, numbplotside=numbplotside)
+            plot_grid(path, listsampvarb, strgpara, truepara=truepara,                                 scalpara=scalpara, numbplotside=numbplotside)
             
-        for h in range(numbpara):
-            path = plotpath + 'trac_' + namepara[h] + rtag + '.png'
-            tdpy.mcmc.plot_trac(path, listsampvarb[:, h], strgpara[h], scalpara=scalpara[h],                                 truepara=truepara[h])
+        for k in indxpara:
+            path = plotpath + 'trac_' + namepara[k] + rtag + '.png'
+            plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k],                                 truepara=truepara[k])
             
         if verbtype > 1:
             timefinl = time.time()
             print 'Done in %.3g seconds' % (timefinl - timeinit)
 
-        if verbtype > 1:
-            print 'Performing Gelman-Rubin convergence test...'
-            tim0 = time.time()
-        gmrbstat = zeros(numbpara)
-        for k in indxpara:
-            gmrbstat[k] = gmrb_test(listsampvarb)
-        if verbtype > 1:
-            timefinl = time.time()
-            print 'Done in %.3g seconds' % (timefinl - timeinit)
+        if numbproc > 1:
+            if verbtype > 1:
+                print 'Performing Gelman-Rubin convergence test...'
+                tim0 = time.time()
+            gmrbstat = zeros(numbpara)
+            for k in indxpara:
+                gmrbstat[k] = gmrb_test(listsampvarb[:, :, k])
+            path = plotpath + 'gmrb' + rtag + '.png'
+            plot_gmrb(path, gmrbstat)
+            if verbtype > 1:
+                timefinl = time.time()
+                print 'Done in %.3g seconds' % (timefinl - timeinit)
+                
+            listsampvarb = listsampvarb.reshape((numbsamp * numbproc, numbpara))
+            listsamp = listsamp.reshape((numbsamp * numbproc, numbpara))
             
     sampbund = [listsampvarb, listsamp, listsampcalc,                 listllik, listaccp, listindxsampvari, propeffi, levi, info, gmrbstat]
 
@@ -355,7 +388,53 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
 
 # In[ ]:
 
-def plot_propeffi(plotpath, rtag, numbswep, numbpara, listaccp, listindxsampvari, strgpara):
+def retr_atcr(listsamp, ndela=10):
+    
+    numbvarb = listsamp.shape[1]
+    corr = empty(numbvarb)
+    for k in range(numbvarb):
+        sp.signal.correlate(listsamp[:, k], listsamp[:, k])
+        
+    meansgnlsqrd = mean(sgnl)**2
+
+    atcr = empty(ndela)
+    sgnllist = zeros((2, nsgnl))
+    sgnllist[0,:] = sgnl
+    for t in range(ndela):
+        sgnllist[1,0:nsgnl-t] = sgnl[t:nsgnl]
+        atcr[t] = mean(roll(sgnl, t) * sgnl) - meansgnlsqrd
+        
+    # normalize the autocorrelation
+    vari = var(sgnl)
+    atcr /= vari
+         
+    iact = 1. + 2. * sum(atcr[1:-1])
+    return atcr, iact
+
+
+def retr_numbsamp(numbswep, numbburn, factthin):
+    
+    numbsamp = (numbswep - numbburn) / factthin
+    
+    return numbsamp
+
+
+# In[5]:
+
+def plot_gmrb(path, gmrbstat):
+
+    numbbins = 40
+    bins = linspace(1., amax(gmrbstat), numbbins + 1)
+    figr, axis = plt.subplots()
+    axis.hist(gmrbstat, bins=bins)
+    axis.set_title('Gelman-Rubin Convergence Test')
+    axis.set_xlabel('PSRF')
+    axis.set_ylabel('$N_p$')
+    figr.savefig(path)
+    plt.close(figr)
+
+        
+def plot_propeffi(path, numbswep, numbpara, listaccp, listindxsampvari, strgpara):
 
     jlistaccp = where(listaccp == True)[0]
 
@@ -378,12 +457,9 @@ def plot_propeffi(plotpath, rtag, numbswep, numbpara, listaccp, listindxsampvari
             histaccp = axis.hist(jlistintc, binstime, color='g')
             axis.set_title(strgpara[k])
     plt.subplots_adjust(hspace=0.3)
-    plt.savefig(plotpath + '/propeffi' + rtag + '.png')
+    plt.savefig(path)
     plt.close(figr)
-    
 
-
-# In[7]:
 
 def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, quan=True):
     
@@ -442,42 +518,11 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
         plt.close(figr)
     else:
         plt.show()
- 
-    
-def retr_atcr(listsamp, ndela=10):
-    
-    numbvarb = listsamp.shape[1]
-    corr = empty(numbvarb)
-    for k in range(numbvarb):
-        sp.signal.correlate(listsamp[:, k], listsamp[:, k])
-        
-    meansgnlsqrd = mean(sgnl)**2
-
-    atcr = empty(ndela)
-    sgnllist = zeros((2, nsgnl))
-    sgnllist[0,:] = sgnl
-    for t in range(ndela):
-        sgnllist[1,0:nsgnl-t] = sgnl[t:nsgnl]
-        atcr[t] = mean(roll(sgnl, t) * sgnl) - meansgnlsqrd
-        
-    # normalize the autocorrelation
-    vari = var(sgnl)
-    atcr /= vari
-         
-    iact = 1. + 2. * sum(atcr[1:-1])
-    return atcr, iact
-
-
-def retr_numbsamp(numbswep, numbburn, factthin):
-    
-    numbsamp = (numbswep - numbburn) / factthin
-    
-    return numbsamp
 
 
 def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None,               plotsize=6, numbbins=30, numbplotside=None,               truepara=None, ntickbins=3, quan=True):
     
-    numbpara = samp.shape[1]
+    numbpara = listsamp.shape[1]
     
     if numbplotside == None:
         numbplotside = numbpara
@@ -541,7 +586,7 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None,               
                     axis.axis('off')
                     continue
                 if k == l:
-                    axis.hist(thissamp[:, k], bins=thisbins[:, k])
+                    axis.hist(thislistsamp[:, k], bins=thisbins[:, k])
                     if thistruepara[k] != None:
                         axis.axvline(thistruepara[k], color='r')
                     if quan:
@@ -581,4 +626,5 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None,               
         else:
             plt.savefig(path + strg + '.png')
             plt.close(figr)
+    
 
