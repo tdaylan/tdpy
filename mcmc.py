@@ -69,7 +69,9 @@ def cdfn_samp_sing(sampvarb, k, datapara):
         samp = cdfn_self(sampvarb, datapara[1][k], datapara[2][k])
     if datapara[3][k] == 'logt':
         samp = cdfn_logt(sampvarb, datapara[1][k], datapara[2][k])
-
+    if datapara[3][k] == 'atan':
+        samp = cdfn_atan(sampvarb, datapara[1][k], datapara[2][k])
+        
     return samp
 
 
@@ -90,14 +92,29 @@ def icdf_samp_sing(samp, k, datapara):
         sampvarb = icdf_self(samp, datapara[1][k], datapara[2][k])
     if datapara[3][k] == 'logt':
         sampvarb = icdf_logt(samp, datapara[1][k], datapara[2][k])
-            
+    if datapara[3][k] == 'atan':
+        sampvarb = icdf_atan(samp, datapara[1][k], datapara[2][k])
+        
     return sampvarb
 
 
 
+# In[ ]:
+
+def gmrb_test(griddata):
+    
+    withvari = mean(var(griddata, 0))
+    btwnvari = griddata.shape[0] * var(mean(griddata, 0))
+    wgthvari = (1. - 1. / griddata.shape[0]) * withvari + btwnvari / griddata.shape[0]
+    psrf = sqrt(wgthvari / withvari)
+
+    return psrf
+
+
 # In[6]:
 
-def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, plotextn='', numbburn=None, factthin=None, verbtype=0):
+def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, rtag='', numbburn=None, truepara=None, factthin=None, verbtype=0):
+    
     
     global strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, numbpara
     
@@ -105,6 +122,14 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
     
     numbpara = len(strgpara)
     
+    # Defaults
+    if truepara == None:
+        truepara = array([None] * numbpara)
+        
+    if numbplotside == None:
+        numbplotside = numbpara
+
+    # Sampler settings
     if numbburn == None:
         numbburn = numbswep / 10
     if factthin == None:
@@ -127,7 +152,7 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
     listllik = zeros(numbsamp)
     
     listaccp = empty(numbswep, dtype=bool)
-    listjsampvari = empty(numbswep, dtype=int)
+    listindxsampvari = empty(numbswep, dtype=int)
     
     isamp = arange(numbpara)
         
@@ -178,13 +203,13 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
             
                 
         # propose a sample
-        jsampvari = choice(isamp)
+        indxsampvari = choice(isamp)
         nextsamp = copy(thissamp)
-        nextsamp[jsampvari] = randn() * varipara[jsampvari] + thissamp[jsampvari]
+        nextsamp[indxsampvari] = randn() * varipara[indxsampvari] + thissamp[indxsampvari]
         
         if verbtype > 1:
-            print 'jsampvari'
-            print strgpara[jsampvari]
+            print 'indxsampvari'
+            print strgpara[indxsampvari]
             print 'nextsamp: '
             print nextsamp
 
@@ -220,8 +245,8 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
             
             # update the sampler state
             thisllik = nextllik
-            thissamp[jsampvari] = nextsamp[jsampvari]
-            thissampvarb[jsampvari] = nextsampvarb[jsampvari]
+            thissamp[indxsampvari] = nextsamp[indxsampvari]
+            thissampvarb[indxsampvari] = nextsampvarb[indxsampvari]
             thissampcalc = nextsampcalc
         
         else:
@@ -232,7 +257,7 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
             # store the utility variables
             listaccp[j] = False
          
-        listjsampvari[j] = jsampvari
+        listindxsampvari[j] = indxsampvari
         
         if save[j]:
             listllik[sampindx[j]] = thisllik
@@ -245,9 +270,9 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
         if optipropdone:
             j += 1
         else:
-            propefficntrtotl[jsampvari] += 1.
+            propefficntrtotl[indxsampvari] += 1.
             if listaccp[j]:
-                propefficntr[jsampvari] += 1.
+                propefficntr[indxsampvari] += 1.
 
             if cntroptisamp % perdpropeffi == 0 and (propefficntrtotl > 0).all():
                 
@@ -279,7 +304,7 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
     jlistaccp = where(listaccp == True)[0]
     propeffi = zeros(numbpara)
     for k in range(numbpara):
-        jlistpara = where(listjsampvari == k)[0]
+        jlistpara = where(listindxsampvari == k)[0]
         jlistintc = intersect1d(jlistaccp, jlistpara, assume_unique=True)
         if jlistpara.size != 0:
             propeffi[k] = float(jlistintc.size) / jlistpara.size    
@@ -288,21 +313,79 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
     levi = -log(mean(1. / exp(listllik - minmlistllik))) + minmlistllik
     info = mean(listllik) - levi
     
+    
     if plotpath != None:
-        plot_propeffi(plotpath, plotextn, numbswep, numbpara, listaccp, listjsampvari, strgpara)
+        
+        if verbtype > 1:
+            print 'Making plots...'
+            timeinit = time.time()
+            
+        path = plotpath + 'propeffi' + rtag + '.png'
+        plot_propeffi(path, numbswep, numbpara, listaccp, listindxsampvari, strgpara)
 
-        path = plotpath + 'llik' + plotextn + '.png'
-        plot_trac(listllik, '$P(D|y)$', path=path)
+        path = plotpath + 'llik' + rtag + '.png'
+        plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
+        
+        if numbplotside != 0:
+            path = plotpath + 'grid' + rtag + '.png'
+            tdpy.mcmc.plot_grid(path, listsampvarb, strgpara, truepara=truepara,                                 scalpara=scalpara, numbplotside=numbplotside)
+            
+        for h in range(numbpara):
+            path = plotpath + 'trac_' + namepara[h] + rtag + '.png'
+            tdpy.mcmc.plot_trac(path, listsampvarb[:, h], strgpara[h], scalpara=scalpara[h],                                 truepara=truepara[h])
+            
+        if verbtype > 1:
+            timefinl = time.time()
+            print 'Done in %.3g seconds' % (timefinl - timeinit)
 
-
-    sampbund = [listsampvarb, listsamp, listsampcalc,                 listllik, listaccp, listjsampvari, propeffi, levi, info]
+        if verbtype > 1:
+            print 'Performing Gelman-Rubin convergence test...'
+            tim0 = time.time()
+        gmrbstat = zeros(numbpara)
+        for k in indxpara:
+            gmrbstat[k] = gmrb_test(listsampvarb)
+        if verbtype > 1:
+            timefinl = time.time()
+            print 'Done in %.3g seconds' % (timefinl - timeinit)
+            
+    sampbund = [listsampvarb, listsamp, listsampcalc,                 listllik, listaccp, listindxsampvari, propeffi, levi, info, gmrbstat]
 
     return sampbund
 
 
+# In[ ]:
+
+def plot_propeffi(plotpath, rtag, numbswep, numbpara, listaccp, listindxsampvari, strgpara):
+
+    jlistaccp = where(listaccp == True)[0]
+
+    binstime = linspace(0., numbswep - 1., 10)
+    
+    numbcols = 2
+    numbrows = (numbpara + 1) / 2
+    figr, axgr = plt.subplots(numbrows, numbcols, figsize=(16, 4 * (numbpara + 1)))
+    if numbrows == 1:
+        axgr = [axgr]
+    for a, axrw in enumerate(axgr):
+        for b, axis in enumerate(axrw):
+            k = 2 * a + b
+            if k == numbpara:
+                axis.axis('off')
+                break
+            jlistpara = where(listindxsampvari == k)[0]
+            jlistintc = intersect1d(jlistaccp, jlistpara, assume_unique=True)
+            histotl = axis.hist(jlistpara, binstime, color='b')
+            histaccp = axis.hist(jlistintc, binstime, color='g')
+            axis.set_title(strgpara[k])
+    plt.subplots_adjust(hspace=0.3)
+    plt.savefig(plotpath + '/propeffi' + rtag + '.png')
+    plt.close(figr)
+    
+
+
 # In[7]:
 
-def plot_trac(listpara, labl, truepara=None, scalpara='self', path=None, titl=None, quan=False):
+def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, quan=True):
     
     numbbins = 20
     
@@ -313,7 +396,9 @@ def plot_trac(listpara, labl, truepara=None, scalpara='self', path=None, titl=No
         bins = icdf_self(linspace(0., 1., numbbins + 1), minmpara, maxmpara)
     if scalpara == 'logt':
         bins = icdf_logt(linspace(0., 1., numbbins + 1), minmpara, maxmpara)
-
+    if scalpara == 'atan':
+        bins = icdf_atan(linspace(0., 1., numbbins + 1), minmpara, maxmpara)
+        
     if quan:
         quanarry = sp.stats.mstats.mquantiles(listpara, prob=[0.025, 0.16, 0.84, 0.975])
 
@@ -357,38 +442,15 @@ def plot_trac(listpara, labl, truepara=None, scalpara='self', path=None, titl=No
         plt.close(figr)
     else:
         plt.show()
-
-
-def plot_propeffi(plotpath, plotextn, numbswep, numbpara, listaccp, listjsampvari, strgpara):
+ 
     
-    jlistaccp = where(listaccp == True)[0]
-
-    binstime = linspace(0., numbswep - 1., 10)
+def retr_atcr(listsamp, ndela=10):
     
-    numbcols = 2
-    numbrows = (numbpara + 1) / 2
-    figr, axgr = plt.subplots(numbrows, numbcols, figsize=(16, 4 * (numbpara + 1)))
-    if numbrows == 1:
-        axgr = [axgr]
-    for a, axrw in enumerate(axgr):
-        for b, axis in enumerate(axrw):
-            k = 2 * a + b
-            if k == numbpara:
-                axis.axis('off')
-            jlistpara = where(listjsampvari == k)[0]
-            jlistintc = intersect1d(jlistaccp, jlistpara, assume_unique=True)
-            histotl = axis.hist(jlistpara, binstime, color='b')
-            histaccp = axis.hist(jlistintc, binstime, color='g')
-            axis.set_title(strgpara[k])
-    plt.subplots_adjust(hspace=0.3)
-    plt.savefig(plotpath + '/propeffi' + plotextn + '.png')
-    plt.close(figr)
-    
-    
-def retr_atcr(sgnl, ndela=10):
-    
-    nsgnl = sgnl.size
-    
+    numbvarb = listsamp.shape[1]
+    corr = empty(numbvarb)
+    for k in range(numbvarb):
+        sp.signal.correlate(listsamp[:, k], listsamp[:, k])
+        
     meansgnlsqrd = mean(sgnl)**2
 
     atcr = empty(ndela)
@@ -413,10 +475,13 @@ def retr_numbsamp(numbswep, numbburn, factthin):
     return numbsamp
 
 
-def plot_mcmc(samp, strgpara, lims=None, scalpara=None,               plotsize=6, numbbins=30, path=None, numbplot=4,               truepara=None, ntickbins=3, quan=False):
+def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None,               plotsize=6, numbbins=30, numbplotside=None,               truepara=None, ntickbins=3, quan=True):
     
     numbpara = samp.shape[1]
     
+    if numbplotside == None:
+        numbplotside = numbpara
+        
     if truepara == None:
         truepara = array([None] * numbpara)
         
@@ -425,73 +490,68 @@ def plot_mcmc(samp, strgpara, lims=None, scalpara=None,               plotsize=6
         
     if lims == None:
         lims = zeros((2, numbpara))
-        lims[0, :] = amin(samp, 0)
-        lims[1, :] = amax(samp, 0)
+        lims[0, :] = amin(listsamp, 0)
+        lims[1, :] = amax(listsamp, 0)
         
-    jparagood = ones(numbpara, dtype=bool)
-    jparagood[where(lims[0, :] == lims[1, :])] = False
+    indxparagood = ones(numbpara, dtype=bool)
+    indxparagood[where(lims[0, :] == lims[1, :])] = False
         
-    bins = zeros((numbbins, numbpara))
+    bins = zeros((numbbins + 1, numbpara))
     for k in range(numbpara):
         if scalpara[k] == 'self':
-            bins[:, k] = linspace(lims[0, k], lims[1, k], numbbins)
+            bins[:, k] = icdf_self(linspace(0., 1., numbbins + 1), lims[0, k], lims[1, k])
         if scalpara[k] == 'logt':
-            bins[:, k] = logspace(log10(lims[0, k]), log10(lims[1, k]), numbbins)
-
+            bins[:, k] = icdf_logt(linspace(0., 1., numbbins + 1), lims[0, k], lims[1, k])
+        if scalpara[k] == 'atan':
+            bins[:, k] = icdf_atan(linspace(0., 1., numbbins + 1), lims[0, k], lims[1, k])
             
-    numbfram = numbpara // numbplot
-    numbplotlast = numbpara % numbplot
-    if numbplotlast != 0:
+    numbfram = numbpara // numbplotside
+    numbplotsidelast = numbpara % numbplotside
+    if numbplotsidelast != 0:
         numbfram += 1
         
-
     for n in range(numbfram):
 
-        if n == numbfram - 1 and numbplotlast != 0:
-            thisnumbpara = numbplotlast
-            thissamp = samp[:, n*numbplot:]
-            thisparastrg = strgpara[n*numbplot:]
-            thisscalpara = scalpara[n*numbplot:]
-            thistruepara = truepara[n*numbplot:]
-            thisbins = bins[:, n*numbplot:]
-            thisjparagood = jparagood[n*numbplot:]
-            thislims = lims[:, n*numbplot:]
+        if n == numbfram - 1 and numbplotsidelast != 0:
+            thisnumbpara = numbplotsidelast
+            thislistsamp = listsamp[:, n*numbplotside:]
+            thisparastrg = strgpara[n*numbplotside:]
+            thisscalpara = scalpara[n*numbplotside:]
+            thistruepara = truepara[n*numbplotside:]
+            thisbins = bins[:, n*numbplotside:]
+            thisindxparagood = indxparagood[n*numbplotside:]
+            thislims = lims[:, n*numbplotside:]
             
         else:
-            thisnumbpara = numbplot
-            thissamp = samp[:, n*numbplot:(n+1)*numbplot]
-            thisparastrg = strgpara[n*numbplot:(n+1)*numbplot]
-            thisscalpara = scalpara[n*numbplot:(n+1)*numbplot]
-            thistruepara = truepara[n*numbplot:(n+1)*numbplot]
-            thisbins = bins[:, n*numbplot:(n+1)*numbplot]
-            thisjparagood = jparagood[n*numbplot:(n+1)*numbplot]
-            thislims = lims[:, n*numbplot:(n+1)*numbplot]
+            thisnumbpara = numbplotside
+            thislistsamp = listsamp[:, n*numbplotside:(n+1)*numbplotside]
+            thisparastrg = strgpara[n*numbplotside:(n+1)*numbplotside]
+            thisscalpara = scalpara[n*numbplotside:(n+1)*numbplotside]
+            thistruepara = truepara[n*numbplotside:(n+1)*numbplotside]
+            thisbins = bins[:, n*numbplotside:(n+1)*numbplotside]
+            thisindxparagood = indxparagood[n*numbplotside:(n+1)*numbplotside]
+            thislims = lims[:, n*numbplotside:(n+1)*numbplotside]
             
         figr, axgr = plt.subplots(thisnumbpara, thisnumbpara, figsize=(plotsize*thisnumbpara, plotsize*thisnumbpara))
         if thisnumbpara == 1:
             axgr = [[axgr]]
         for k, axrw in enumerate(axgr):
             for l, axis in enumerate(axrw):
-                if k < l or thisjparagood[k] == False or  thisjparagood[l] == False:
+                if k < l or thisindxparagood[k] == False or  thisindxparagood[l] == False:
                     axis.axis('off')
                     continue
                 if k == l:
-
                     axis.hist(thissamp[:, k], bins=thisbins[:, k])
-                    #axis.set_yticks([])
                     if thistruepara[k] != None:
                         axis.axvline(thistruepara[k], color='r')
                     if quan:
-                        thisquan = sp.stats.mstats.mquantiles(thissamp[:, k], prob=[0.025, 0.16, 0.84, 0.975])
+                        thisquan = sp.stats.mstats.mquantiles(thislistsamp[:, k], prob=[0.025, 0.16, 0.84, 0.975])
                         axis.axvline(thisquan[0], color='b', ls='--')
                         axis.axvline(thisquan[1], color='b', ls='-.')
                         axis.axvline(thisquan[2], color='b', ls='-.')
                         axis.axvline(thisquan[3], color='b', ls='--')
-    
                 else:
-            
-                    h = axis.hist2d(thissamp[:, l], thissamp[:, k], bins=[thisbins[:, l], thisbins[:, k]], cmap='Blues')
-
+                    h = axis.hist2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]], cmap='Blues')
                     if thistruepara[l] != None and thistruepara[k] != None:
                         axis.scatter(thistruepara[l], thistruepara[k], color='r', marker='o')
                     if thisscalpara[k] == 'logt':
@@ -500,47 +560,25 @@ def plot_mcmc(samp, strgpara, lims=None, scalpara=None,               plotsize=6
                         strgarry = [util.mexp(arry[a]) for a in range(ntickbins)]
                         axis.set_yticks(arry)
                         axis.set_yticklabels(strgarry)
-                            
-                
                 if thisscalpara[l] == 'logt':
                     axis.set_xscale('log', basex=10)
                     arry = logspace(log10(thislims[0, l]), log10(thislims[1, l]), ntickbins)
                     strgarry = [util.mexp(arry[a]) for a in range(ntickbins)]
                     axis.set_xticks(arry)
                     axis.set_xticklabels(strgarry)
-                
                 axis.set_xlim(thislims[:, l])
-                
                 if k == thisnumbpara - 1:
-                    axis.set_xlabel(thisparastrg[l])
-                #else:
-                #    axis.set_xticklabels([])
-                    
+                    axis.set_xlabel(thisparastrg[l])  
                 if l == 0 and k != 0:
                     axis.set_ylabel(thisparastrg[k])
-                #else:
-                #    axis.set_yticklabels([])
-                
-                #if ntickbins != None:
-                    #axis.locator_params(ntickbins)
-                
         figr.subplots_adjust(bottom=0.2)
-        
+        if numbfram == 1:
+            strg = ''
+        else:
+            strg = '_fram%d' % n
         if path == None:
             plt.show()
         else:
-            plt.savefig(path + '_fram%d.png' % n)
+            plt.savefig(path + strg + '.png')
             plt.close(figr)
-    
-
-    #q = sp.stats.mstats.mquantiles(hist[0], prob=[0.68, 0.95])
-    #axis.imshow(hist[0].T, origin='lower', interpolation='none', cmap='Reds', \
-    #          extent=[minmtimedeca, maxmtimedeca, minmampl, maxmampl])
-    #cont = axis.contour(meantimedeca, meanampl, hist[0].T, origin='lower', color='b', levels=q)
-    #fmt = {}
-    #strs = ['68 % CL', '95 % CL']
-    #for l, s in zip(q, strs):
-    #    fmt[l] = s
-    #plt.clabel(cont, q, fmt=fmt, fontsize=12)
-    
 
