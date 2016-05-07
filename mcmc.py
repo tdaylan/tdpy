@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[9]:
 
 # math
 from numpy import *
@@ -11,7 +11,7 @@ from scipy.integrate import *
 from scipy.interpolate import *
 import scipy as sp
 
-import multiprocessing as mp
+import multiprocessing as mp, functools
 
 import util
 
@@ -22,7 +22,7 @@ import seaborn as sns
 sns.set(context='poster', style='ticks', color_codes=True)
 
 
-# In[2]:
+# In[10]:
 
 def icdf_self(paraunit, minmpara, maxmpara):
     para = (maxmpara - minmpara) * paraunit + minmpara
@@ -101,7 +101,7 @@ def icdf_samp_sing(samp, k, datapara):
 
 
 
-# In[3]:
+# In[11]:
 
 def gmrb_test(griddata):
     
@@ -113,33 +113,30 @@ def gmrb_test(griddata):
     return psrf
 
 
-# In[ ]:
+# In[12]:
 
-def mcmc_wrap(numbproc, *args, **keywargs):
+def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, rtag='', numbburn=None, truepara=None,          numbplotside=None, factthin=None, verbtype=0):
     
-    if globdata.numbproc == 1:
-        gridchan = [mcmc(0)]
-    else:
-        if globdata.verbtype > 0:
-            print 'Forking the sampler...'
+    if verbtype > 1:
+        print 'Forking the sampler...'
 
-        # process lock for simultaneous plotting
-        lock = mp.Lock()
+    # process lock for simultaneous plotting
+    lock = mp.Lock()
 
-        # process pool
-        pool = mp.Pool(numbproc)
-        workpart = functools.partial(work, args, keywargs)
-        
-        # spawn the processes
-        gridchan = pool.map(workpart, range(globdata.numbproc))
-        
-        pool.close()
-        pool.join()
+    # process pool
+    pool = mp.Pool(numbproc)
+    workpart = functools.partial(mcmc, numbswep, llikfunc, datapara, thissamp, optiprop,         plotpath, rtag, numbburn, truepara, numbplotside, factthin, verbtype)
+
+    # spawn the processes
+    listsampbund = pool.map(workpart, arange(numbproc))
+
+    pool.close()
+    pool.join()
 
 
-# In[4]:
+# In[13]:
 
-def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, rtag='', numbburn=None, truepara=None,          numbplotside=None, factthin=None, verbtype=0):
+def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, rtag='', numbburn=None, truepara=None,          numbplotside=None, factthin=None, verbtype=0, indxprocwork=0):
     
     global namepara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, numbpara
     
@@ -227,7 +224,6 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
             print 'Proposing...'
             print
             
-                
         # propose a sample
         indxsampvari = choice(isamp)
         nextsamp = copy(thissamp)
@@ -292,7 +288,6 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
             for l in range(numbsampcalc):
                 listsampcalc[l].append(thissampcalc[l])
         
-            
         if optipropdone:
             j += 1
         else:
@@ -386,7 +381,7 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
     return sampbund
 
 
-# In[ ]:
+# In[14]:
 
 def retr_atcr(listsamp, ndela=10):
     
@@ -419,7 +414,7 @@ def retr_numbsamp(numbswep, numbburn, factthin):
     return numbsamp
 
 
-# In[5]:
+# In[15]:
 
 def plot_gmrb(path, gmrbstat):
 
@@ -627,4 +622,74 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None,               
             plt.savefig(path + strg + '.png')
             plt.close(figr)
     
+
+
+# In[16]:
+
+def funcwork(a, b, c, d, e, f, indxprocwork):
+    
+    print a, b, c, d, e, f, indxprocwork
+    
+    return
+
+
+def func(numbproc, a, b, c, d, e, f):
+    
+    functools.partial(funcwork, a, b, c, d, e, f)
+
+    pool = mp.Pool(numbproc)
+    
+    workpart = functools.partial(funcwork, a, b, c, d, e, f)
+    
+    listsampbund = pool.map(workpart, arange(numbproc))
+
+    pool.close()
+    pool.join()
+
+    return 
+    
+def retr_llik(sampvarb):
+    
+    return 0.
+
+
+
+def retr_datapara():
+ 
+    numbpara = 1
+    
+    dictpara = dict()
+    minmpara = zeros(numbpara)
+    maxmpara = zeros(numbpara)
+    namepara = empty(numbpara, dtype=object)
+    scalpara = empty(numbpara, dtype=object)
+    lablpara = empty(numbpara, dtype=object)
+    unitpara = empty(numbpara, dtype=object)
+    varipara = zeros(numbpara)
+          
+    dictpara['test'] = 0
+    namepara[0] = 'test'
+    minmpara[0] = 1e-1
+    maxmpara[0] = 1e1
+    scalpara[0] = 'logt'
+    lablpara[0] = r'$A_b$'
+    unitpara[0] = ''
+    varipara[0] = 1e-2
+
+    strgpara = lablpara + ' ' + unitpara
+    datapara = namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara
+    
+    return datapara
+
+mcmc_wrap(10, 10, retr_llik, retr_datapara())
+
+
+# In[ ]:
+
+
+
+
+# In[ ]:
+
+
 
