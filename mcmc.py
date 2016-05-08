@@ -12,6 +12,10 @@ import multiprocessing as mp, functools
 
 import util
 
+
+import warnings
+warnings.simplefilter(action="ignore", category=FutureWarning)
+
 # plotting
 import matplotlib.pyplot as plt
 
@@ -116,6 +120,10 @@ def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=Fa
 
     listobjt = numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, plotpath, rtag, numbburn, truepara, numbplotside, factthin, verbtype, numbsampcalc
 
+    global numbpara, indxpara
+    numbpara = len(datapara[0])
+    indxpara = arange(numbpara)
+    
     if numbproc == 1:
         listchan = [mcmc(listobjt, 0)]
     else:
@@ -182,9 +190,9 @@ def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=Fa
     listsamp = listsamp.reshape((numbsamp * numbproc, numbpara))
     for n in range(numbsampcalc):
         listsampcalc[n] = listsampcalc[n].reshape((numbsamp * numbproc, -1))
-    listllik = listsamp.reshape((numbswep * numbproc))
-    listaccp = listsamp.reshape((numbswep * numbproc, numbpara))
-    listindxparamodi = listindxparamodi.reshape((numbswep * numbproc))
+    listllik = listllik.flatten()
+    listaccp = listaccp.flatten()
+    listindxparamodi = listindxparamodi.flatten()
 
     if plotpath != None:
         
@@ -229,9 +237,6 @@ def mcmc(listobjt, indxprocwork):
     global namepara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, numbpara
     
     namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara = datapara
-    
-    numbpara = len(namepara)
-    indxpara = arange(numbpara)
     
     # Defaults
     if truepara == None:
