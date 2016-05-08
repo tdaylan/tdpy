@@ -1,8 +1,3 @@
-
-# coding: utf-8
-
-# In[9]:
-
 # math
 from numpy import *
 from numpy.random import *
@@ -10,6 +5,8 @@ from numpy.random import choice
 from scipy.integrate import *
 from scipy.interpolate import *
 import scipy as sp
+
+import time
 
 import multiprocessing as mp, functools
 
@@ -21,8 +18,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set(context='poster', style='ticks', color_codes=True)
 
-
-# In[10]:
 
 def icdf_self(paraunit, minmpara, maxmpara):
     para = (maxmpara - minmpara) * paraunit + minmpara
@@ -100,9 +95,6 @@ def icdf_samp_sing(samp, k, datapara):
     return sampvarb
 
 
-
-# In[11]:
-
 def gmrb_test(griddata):
     
     withvari = mean(var(griddata, 0))
@@ -113,31 +105,119 @@ def gmrb_test(griddata):
     return psrf
 
 
-# In[12]:
-
-def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, rtag='', numbburn=None, truepara=None,          numbplotside=None, factthin=None, verbtype=0):
+def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, plotpath=None, rtag='', numbburn=None, truepara=None, \
+    numbplotside=None, factthin=None, verbtype=0):
     
     if verbtype > 1:
         print 'Forking the sampler...'
 
-    # process lock for simultaneous plotting
-    lock = mp.Lock()
+    listobjt = numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, plotpath, rtag, numbburn, truepara, numbplotside, factthin, verbtype
 
-    # process pool
-    pool = mp.Pool(numbproc)
-    workpart = functools.partial(mcmc, numbswep, llikfunc, datapara, thissamp, optiprop,         plotpath, rtag, numbburn, truepara, numbplotside, factthin, verbtype)
-
-    # spawn the processes
-    listsampbund = pool.map(workpart, arange(numbproc))
-
-    pool.close()
-    pool.join()
-
-
-# In[13]:
-
-def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          plotpath=None, rtag='', numbburn=None, truepara=None,          numbplotside=None, factthin=None, verbtype=0, indxprocwork=0):
+    if numbproc == 1:
+        listchan = [mcmc(listobjt, 0)]
+    else:
+        # spawn the processes
+        pool = mp.Pool(numbproc)
+        workpart = functools.partial(mcmc, listobjt)
+        listchan = pool.map(workpart, arange(numbproc))
     
+        pool.close()
+        pool.join()
+
+
+    if verbtype > 0:
+        print 'Accumulating samples from all processes...'
+        tim0 = time.time()
+
+
+    numbsamp = retr_numbsamp(numbswep, numbburn, factthin)
+
+    # parse the sample chain
+    listsampvarb = zeros((numbsamp, numbproc, numbpara))
+    listsamp = zeros((numbsamp, numbproc, numbpara)) 
+    listsampcalc = zeros((numbsamp, numbproc, numbsampcalc))
+    listllik = zeros((numbsamp, numbproc))
+    listaccp = zeros((numbsamp, numbproc, numbpara))
+    listindxparamodi = zeros((numbsamp, numbproc, numbpara))
+
+    indxproc = arange(numbproc)
+    for k in indxproc:
+        listsampvarb[:, k, :] = listchan[k][0]
+        listsamp[:, k, :] = listchan[k][1]
+        listsampcalc[:, k, :] = listchan[k][2]
+        listllik[:, k] = listchan[k][3]
+        listaccp[:, k, :] = listchan[k][4]
+        listindxparamodi[:, k, :] = listchan[k][5]
+
+
+    indxlistaccp = where(listaccp == True)[0]
+    propeffi = zeros(numbpara)
+    for k in range(numbpara):
+        indxlistpara = where(listindxparamodi == k)[0]
+        indxlistintc = intersect1d(indxlistaccp, indxlistpara, assume_unique=True)
+        if indxlistpara.size != 0:
+            propeffi[k] = float(indxlistintc.size) / indxlistpara.size    
+    
+    minmlistllik = amin(listllik)
+    levi = -log(mean(1. / exp(listllik - minmlistllik))) + minmlistllik
+    info = mean(listllik) - levi
+    
+    strgpara = lablpara + ' ' + unitpara
+
+    if plotpath != None:
+        
+        if verbtype > 1:
+            print 'Making plots...'
+            timeinit = time.time()
+            
+        path = plotpath + 'propeffi' + rtag + '.png'
+        plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara)
+
+        path = plotpath + 'llik' + rtag + '.png'
+        plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
+        
+        if numbplotside != 0:
+            path = plotpath + 'grid' + rtag + '.png'
+            plot_grid(path, listsampvarb, strgpara, truepara=truepara,                                 scalpara=scalpara, numbplotside=numbplotside)
+            
+        for k in indxpara:
+            path = plotpath + 'trac_' + namepara[k] + rtag + '.png'
+            plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k],                                 truepara=truepara[k])
+            
+        if verbtype > 1:
+            timefinl = time.time()
+            print 'Done in %.3g seconds' % (timefinl - timeinit)
+
+        gmrbstat = zeros(numbpara)
+        if numbproc > 1:
+            if verbtype > 1:
+                print 'Performing Gelman-Rubin convergence test...'
+                tim0 = time.time()
+            for k in indxpara:
+                gmrbstat[k] = gmrb_test(listsampvarb[:, :, k])
+            path = plotpath + 'gmrb' + rtag + '.png'
+            plot_gmrb(path, gmrbstat)
+            if verbtype > 1:
+                timefinl = time.time()
+                print 'Done in %.3g seconds' % (timefinl - timeinit)
+                
+    listsampvarb = listsampvarb.reshape((numbsamp * numbproc, numbpara))
+    listsamp = listsamp.reshape((numbsamp * numbproc, numbpara))
+    for k in range(numbsampcalc):
+        listsampcalc[k] = listsampcalc[k].reshape((numbsamp * numbproc, -1))
+    listllik = listsamp.reshape((numbsamp * numbproc))
+    listaccp = listsamp.reshape((numbsamp * numbproc, numbpara))
+    listindxparamodi = listindxparamodi.reshape((numbsamp * numbproc))
+
+    chan = [listsampvarb, listsamp, listsampcalc, listllik, listaccp, listindxparamodi, propeffi, levi, info, gmrbstat]
+    
+    return chan
+
+
+def mcmc(listobjt, indxprocwork):
+    
+    numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, plotpath, rtag, numbburn, truepara, numbplotside, factthin, verbtype = listobjt
+ 
     global namepara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, numbpara
     
     namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara = datapara
@@ -175,9 +255,9 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
     listllik = zeros(numbsamp)
     
     listaccp = empty(numbswep, dtype=bool)
-    listindxsampvari = empty(numbswep, dtype=int)
+    listindxparamodi = empty(numbswep, dtype=int)
     
-    isamp = arange(numbpara)
+    indxpara = arange(numbpara)
         
     global j
     j = 0
@@ -225,13 +305,13 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
             print
             
         # propose a sample
-        indxsampvari = choice(isamp)
+        indxparamodi = choice(indxpara)
         nextsamp = copy(thissamp)
-        nextsamp[indxsampvari] = randn() * varipara[indxsampvari] + thissamp[indxsampvari]
+        nextsamp[indxparamodi] = randn() * varipara[indxparamodi] + thissamp[indxparamodi]
         
         if verbtype > 1:
-            print 'indxsampvari'
-            print namepara[indxsampvari]
+            print 'indxparamodi'
+            print namepara[indxparamodi]
             print 'nextsamp: '
             print nextsamp
 
@@ -267,8 +347,8 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
             
             # update the sampler state
             thisllik = nextllik
-            thissamp[indxsampvari] = nextsamp[indxsampvari]
-            thissampvarb[indxsampvari] = nextsampvarb[indxsampvari]
+            thissamp[indxparamodi] = nextsamp[indxparamodi]
+            thissampvarb[indxparamodi] = nextsampvarb[indxparamodi]
             thissampcalc = nextsampcalc
         
         else:
@@ -279,7 +359,7 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
             # store the utility variables
             listaccp[j] = False
          
-        listindxsampvari[j] = indxsampvari
+        listindxparamodi[j] = indxparamodi
         
         if save[j]:
             listllik[sampindx[j]] = thisllik
@@ -291,9 +371,9 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
         if optipropdone:
             j += 1
         else:
-            propefficntrtotl[indxsampvari] += 1.
+            propefficntrtotl[indxparamodi] += 1.
             if listaccp[j]:
-                propefficntr[indxsampvari] += 1.
+                propefficntr[indxparamodi] += 1.
 
             if cntroptisamp % perdpropeffi == 0 and (propefficntrtotl > 0).all():
                 
@@ -322,66 +402,11 @@ def mcmc(numbswep, llikfunc, datapara, thissamp=None, optiprop=False,          p
                 
             cntroptisamp += 1
 
-    jlistaccp = where(listaccp == True)[0]
-    propeffi = zeros(numbpara)
-    for k in range(numbpara):
-        jlistpara = where(listindxsampvari == k)[0]
-        jlistintc = intersect1d(jlistaccp, jlistpara, assume_unique=True)
-        if jlistpara.size != 0:
-            propeffi[k] = float(jlistintc.size) / jlistpara.size    
     
-    minmlistllik = amin(listllik)
-    levi = -log(mean(1. / exp(listllik - minmlistllik))) + minmlistllik
-    info = mean(listllik) - levi
-    
-    strgpara = lablpara + ' ' + unitpara
-    
-    if plotpath != None:
-        
-        if verbtype > 1:
-            print 'Making plots...'
-            timeinit = time.time()
-            
-        path = plotpath + 'propeffi' + rtag + '.png'
-        plot_propeffi(path, numbswep, numbpara, listaccp, listindxsampvari, strgpara)
+    chan = [listsampvarb, listsamp, listsampcalc, listllik, listaccp, listindxparamodi]
 
-        path = plotpath + 'llik' + rtag + '.png'
-        plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
-        
-        if numbplotside != 0:
-            path = plotpath + 'grid' + rtag + '.png'
-            plot_grid(path, listsampvarb, strgpara, truepara=truepara,                                 scalpara=scalpara, numbplotside=numbplotside)
-            
-        for k in indxpara:
-            path = plotpath + 'trac_' + namepara[k] + rtag + '.png'
-            plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k],                                 truepara=truepara[k])
-            
-        if verbtype > 1:
-            timefinl = time.time()
-            print 'Done in %.3g seconds' % (timefinl - timeinit)
+    return chan
 
-        if numbproc > 1:
-            if verbtype > 1:
-                print 'Performing Gelman-Rubin convergence test...'
-                tim0 = time.time()
-            gmrbstat = zeros(numbpara)
-            for k in indxpara:
-                gmrbstat[k] = gmrb_test(listsampvarb[:, :, k])
-            path = plotpath + 'gmrb' + rtag + '.png'
-            plot_gmrb(path, gmrbstat)
-            if verbtype > 1:
-                timefinl = time.time()
-                print 'Done in %.3g seconds' % (timefinl - timeinit)
-                
-            listsampvarb = listsampvarb.reshape((numbsamp * numbproc, numbpara))
-            listsamp = listsamp.reshape((numbsamp * numbproc, numbpara))
-            
-    sampbund = [listsampvarb, listsamp, listsampcalc,                 listllik, listaccp, listindxsampvari, propeffi, levi, info, gmrbstat]
-
-    return sampbund
-
-
-# In[14]:
 
 def retr_atcr(listsamp, ndela=10):
     
@@ -414,8 +439,6 @@ def retr_numbsamp(numbswep, numbburn, factthin):
     return numbsamp
 
 
-# In[15]:
-
 def plot_gmrb(path, gmrbstat):
 
     numbbins = 40
@@ -429,9 +452,9 @@ def plot_gmrb(path, gmrbstat):
     plt.close(figr)
 
         
-def plot_propeffi(path, numbswep, numbpara, listaccp, listindxsampvari, strgpara):
+def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara):
 
-    jlistaccp = where(listaccp == True)[0]
+    indxlistaccp = where(listaccp == True)[0]
 
     binstime = linspace(0., numbswep - 1., 10)
     
@@ -446,10 +469,10 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxsampvari, strgpara
             if k == numbpara:
                 axis.axis('off')
                 break
-            jlistpara = where(listindxsampvari == k)[0]
-            jlistintc = intersect1d(jlistaccp, jlistpara, assume_unique=True)
-            histotl = axis.hist(jlistpara, binstime, color='b')
-            histaccp = axis.hist(jlistintc, binstime, color='g')
+            indxlistpara = where(listindxparamodi == k)[0]
+            indxlistintc = intersect1d(indxlistaccp, indxlistpara, assume_unique=True)
+            histotl = axis.hist(indxlistpara, binstime, color='b')
+            histaccp = axis.hist(indxlistintc, binstime, color='g')
             axis.set_title(strgpara[k])
     plt.subplots_adjust(hspace=0.3)
     plt.savefig(path)
@@ -622,74 +645,4 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None,               
             plt.savefig(path + strg + '.png')
             plt.close(figr)
     
-
-
-# In[16]:
-
-def funcwork(a, b, c, d, e, f, indxprocwork):
-    
-    print a, b, c, d, e, f, indxprocwork
-    
-    return
-
-
-def func(numbproc, a, b, c, d, e, f):
-    
-    functools.partial(funcwork, a, b, c, d, e, f)
-
-    pool = mp.Pool(numbproc)
-    
-    workpart = functools.partial(funcwork, a, b, c, d, e, f)
-    
-    listsampbund = pool.map(workpart, arange(numbproc))
-
-    pool.close()
-    pool.join()
-
-    return 
-    
-def retr_llik(sampvarb):
-    
-    return 0.
-
-
-
-def retr_datapara():
- 
-    numbpara = 1
-    
-    dictpara = dict()
-    minmpara = zeros(numbpara)
-    maxmpara = zeros(numbpara)
-    namepara = empty(numbpara, dtype=object)
-    scalpara = empty(numbpara, dtype=object)
-    lablpara = empty(numbpara, dtype=object)
-    unitpara = empty(numbpara, dtype=object)
-    varipara = zeros(numbpara)
-          
-    dictpara['test'] = 0
-    namepara[0] = 'test'
-    minmpara[0] = 1e-1
-    maxmpara[0] = 1e1
-    scalpara[0] = 'logt'
-    lablpara[0] = r'$A_b$'
-    unitpara[0] = ''
-    varipara[0] = 1e-2
-
-    strgpara = lablpara + ' ' + unitpara
-    datapara = namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara
-    
-    return datapara
-
-mcmc_wrap(10, 10, retr_llik, retr_datapara())
-
-
-# In[ ]:
-
-
-
-
-# In[ ]:
-
-
 

@@ -119,12 +119,12 @@ def retr_p4dm_spec(anch, part='el'):
 
 # In[5]:
 
-def show_prog(cntr, maxmcntr, thiscntr, nprog=20, jproc=None):
+def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None):
 
     nextcntr = int(nprog * float(cntr + 1) / maxmcntr) * 100 / nprog
     if nextcntr > thiscntr:
-        if jproc != None:
-            print 'Process %d is %3d%% completed.' % (jproc, nextcntr)
+        if indxprocwork != None:
+            print 'Process %d is %3d%% completed.' % (indxprocwork, nextcntr)
         else:
             print '%3d%% completed.' % nextcntr
         thiscntr = nextcntr
@@ -174,7 +174,7 @@ def retr_healgrid(numbside):
 
 # In[9]:
 
-def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None,               minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, reso=0.1):
+def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, reso=0.1):
     
     if indxpixlrofi == None:
         numbpixlinpt = hmap.size
