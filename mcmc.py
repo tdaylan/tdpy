@@ -182,9 +182,9 @@ def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=Fa
     listsamp = listsamp.reshape((numbsamp * numbproc, numbpara))
     for n in range(numbsampcalc):
         listsampcalc[n] = listsampcalc[n].reshape((numbsamp * numbproc, -1))
-    listllik = listsamp.reshape((numbsamp * numbproc))
-    listaccp = listsamp.reshape((numbsamp * numbproc, numbpara))
-    listindxparamodi = listindxparamodi.reshape((numbsamp * numbproc))
+    listllik = listsamp.reshape((numbswep * numbproc))
+    listaccp = listsamp.reshape((numbswep * numbproc, numbpara))
+    listindxparamodi = listindxparamodi.reshape((numbswep * numbproc))
 
     if plotpath != None:
         
