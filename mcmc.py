@@ -111,7 +111,10 @@ def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=Fa
     if verbtype > 1:
         print 'Forking the sampler...'
 
-    listobjt = numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, plotpath, rtag, numbburn, truepara, numbplotside, factthin, verbtype
+    thisllik, thissampcalc = llikfunc(icdf_samp(thissamp[0, :], datapara))
+    numbsampcalc = len(thissampcalc)
+
+    listobjt = numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, plotpath, rtag, numbburn, truepara, numbplotside, factthin, verbtype, numbsampcalc
 
     if numbproc == 1:
         listchan = [mcmc(listobjt, 0)]
@@ -134,21 +137,21 @@ def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=Fa
 
     # parse the sample chain
     listsampvarb = zeros((numbsamp, numbproc, numbpara))
-    listsamp = zeros((numbsamp, numbproc, numbpara)) 
-    listsampcalc = zeros((numbsamp, numbproc, numbsampcalc))
+    listsamp = zeros((numbsamp, numbproc, numbpara))
+    listsampcalc = [[empty((numbsamp, numbproc))] for n in range(numbsampcalc)]
     listllik = zeros((numbsamp, numbproc))
-    listaccp = zeros((numbsamp, numbproc, numbpara))
-    listindxparamodi = zeros((numbsamp, numbproc, numbpara))
+    listaccp = zeros((numbswep, numbproc))
+    listindxparamodi = zeros((numbswep, numbproc))
 
     indxproc = arange(numbproc)
     for k in indxproc:
         listsampvarb[:, k, :] = listchan[k][0]
         listsamp[:, k, :] = listchan[k][1]
-        listsampcalc[:, k, :] = listchan[k][2]
+        for n in range(numbsampcalc):
+            listsampcalc[n][:, k] = listchan[k][2][n]
         listllik[:, k] = listchan[k][3]
-        listaccp[:, k, :] = listchan[k][4]
-        listindxparamodi[:, k, :] = listchan[k][5]
-
+        listaccp[:, k] = listchan[k][4]
+        listindxparamodi[:, k] = listchan[k][5]
 
     indxlistaccp = where(listaccp == True)[0]
     propeffi = zeros(numbpara)
@@ -164,6 +167,25 @@ def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=Fa
     
     strgpara = lablpara + ' ' + unitpara
 
+    gmrbstat = zeros(numbpara)
+    if numbproc > 1:
+        if verbtype > 1:
+            print 'Performing Gelman-Rubin convergence test...'
+            tim0 = time.time()
+        for k in indxpara:
+            gmrbstat[k] = gmrb_test(listsampvarb[:, :, k])
+        if verbtype > 1:
+            timefinl = time.time()
+            print 'Done in %.3g seconds' % (timefinl - timeinit)
+
+    listsampvarb = listsampvarb.reshape((numbsamp * numbproc, numbpara))
+    listsamp = listsamp.reshape((numbsamp * numbproc, numbpara))
+    for n in range(numbsampcalc):
+        listsampcalc[n] = listsampcalc[n].reshape((numbsamp * numbproc, -1))
+    listllik = listsamp.reshape((numbsamp * numbproc))
+    listaccp = listsamp.reshape((numbsamp * numbproc, numbpara))
+    listindxparamodi = listindxparamodi.reshape((numbsamp * numbproc))
+
     if plotpath != None:
         
         if verbtype > 1:
@@ -178,36 +200,19 @@ def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=Fa
         
         if numbplotside != 0:
             path = plotpath + 'grid' + rtag + '.png'
-            plot_grid(path, listsampvarb, strgpara, truepara=truepara,                                 scalpara=scalpara, numbplotside=numbplotside)
+            plot_grid(path, listsampvarb, strgpara, truepara=truepara, scalpara=scalpara, numbplotside=numbplotside)
             
         for k in indxpara:
             path = plotpath + 'trac_' + namepara[k] + rtag + '.png'
-            plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k],                                 truepara=truepara[k])
+            plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k], truepara=truepara[k])
             
+        if numbproc > 1:
+            path = plotpath + 'gmrb' + rtag + '.png'
+            plot_gmrb(path, gmrbstat)
+                
         if verbtype > 1:
             timefinl = time.time()
             print 'Done in %.3g seconds' % (timefinl - timeinit)
-
-        gmrbstat = zeros(numbpara)
-        if numbproc > 1:
-            if verbtype > 1:
-                print 'Performing Gelman-Rubin convergence test...'
-                tim0 = time.time()
-            for k in indxpara:
-                gmrbstat[k] = gmrb_test(listsampvarb[:, :, k])
-            path = plotpath + 'gmrb' + rtag + '.png'
-            plot_gmrb(path, gmrbstat)
-            if verbtype > 1:
-                timefinl = time.time()
-                print 'Done in %.3g seconds' % (timefinl - timeinit)
-                
-    listsampvarb = listsampvarb.reshape((numbsamp * numbproc, numbpara))
-    listsamp = listsamp.reshape((numbsamp * numbproc, numbpara))
-    for k in range(numbsampcalc):
-        listsampcalc[k] = listsampcalc[k].reshape((numbsamp * numbproc, -1))
-    listllik = listsamp.reshape((numbsamp * numbproc))
-    listaccp = listsamp.reshape((numbsamp * numbproc, numbpara))
-    listindxparamodi = listindxparamodi.reshape((numbsamp * numbproc))
 
     chan = [listsampvarb, listsamp, listsampcalc, listllik, listaccp, listindxparamodi, propeffi, levi, info, gmrbstat]
     
@@ -216,8 +221,11 @@ def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=Fa
 
 def mcmc(listobjt, indxprocwork):
     
-    numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, plotpath, rtag, numbburn, truepara, numbplotside, factthin, verbtype = listobjt
+    numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, plotpath, \
+        rtag, numbburn, truepara, numbplotside, factthin, verbtype, numbsampcalc = listobjt
  
+    thissamp = thissamp[indxprocwork, :]
+
     global namepara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, numbpara
     
     namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara = datapara
@@ -265,7 +273,6 @@ def mcmc(listobjt, indxprocwork):
     # initialize the chain
     thissampvarb = icdf_samp(thissamp, datapara)
     thisllik, thissampcalc = llikfunc(thissampvarb)
-    numbsampcalc = len(thissampcalc)
     listsampcalc = [[] for l in range(numbsampcalc)]
     
     # current sample index
