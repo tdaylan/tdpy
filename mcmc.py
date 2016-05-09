@@ -307,7 +307,7 @@ def work(listobjt, indxprocwork):
     while cntrswep < numbswep:
         
         if verbtype > 0:
-            cntrprog = util.show_prog(cntrswep, numbswep, cntrprog)     
+            cntrprog = util.show_prog(cntrswep, numbswep, cntrprog, indxprocwork=indxprocwork) 
 
         if verbtype > 1:
             print
