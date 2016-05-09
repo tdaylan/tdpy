@@ -284,12 +284,20 @@ def work(listobjt, indxprocwork):
     
     global varipara, listsamp, listsampvarb, listllik, listaccp, listindxparamodi
 
+    # proposal scale optimization
     if optiprop:
-        optipropdone = False
+        perditer = 5
+        targpropeffi = 0.3
+        perdpropeffi = 100 * numbpara
         cntrprop = zeros(numbpara)
         cntrproptotl = zeros(numbpara)
-        cntroptisamp = 0.
-        cntroptimean = 0. 
+        rollvaripara = empty((perditer, numbpara))
+        optipropdone = False
+        cntroptisamp = 0
+        cntroptimean = 0
+        thissamptemp = copy(thissamp)
+        if verbtype > 0:
+            print 'Optimizing proposal scale...'
     else:
         optipropdone = True
 
