@@ -146,7 +146,7 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     numbsamp = retr_numbsamp(numbswep, numbburn, factthin)
     indxsampsave[indxswepsave] = arange(numbsamp)
 
-    global listsamp, listsampvarb, listllik, listaccp, listindxparamodi
+    global listsamp, listsampvarb, listsampcalc, listllik, listaccp, listindxparamodi
     listsamp = zeros((numbsamp, numbpara)) + -1.
     listsampvarb = zeros((numbsamp, numbpara))
     listllik = zeros(numbsamp)
@@ -254,8 +254,6 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
             
         for k in indxpara:
             path = plotpath + 'trac_' + namepara[k] + rtag + '.png'
-            print 'hey'
-            print truepara
             plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k], truepara=truepara[k])
             
         if numbproc > 1:
@@ -283,10 +281,15 @@ def work(listobjt, indxprocwork):
     thissampvarb = icdf_samp(thissamp, datapara)
     thisllik, thissampcalc = llikfunc(thissampvarb)
 
+    
     global varipara, listsamp, listsampvarb, listllik, listaccp, listindxparamodi
 
     if optiprop:
         optipropdone = False
+        cntrprop = zeros(numbpara)
+        cntrproptotl = zeros(numbpara)
+        cntroptisamp = 0.
+        cntroptimean = 0. 
     else:
         optipropdone = True
 
@@ -374,16 +377,16 @@ def work(listobjt, indxprocwork):
         if optipropdone:
             cntrswep += 1
         else:
-            propefficntrtotl[indxparamodi] += 1.
+            cntrproptotl[indxparamodi] += 1.
             if listaccp[cntrswep]:
-                propefficntr[indxparamodi] += 1.
+                cntrprop[indxparamodi] += 1.
 
-            if cntroptisamp % perdpropeffi == 0 and (propefficntrtotl > 0).all():
+            if cntroptisamp % perdpropeffi == 0 and (cntrproptotl > 0).all():
                 
-                varipara *= 2**(propefficntr / propefficntrtotl / targpropeffi - 1.)
+                varipara *= 2**(cntrprop / cntrproptotl / targpropeffi - 1.)
                 
-                propefficntr[:] = 0.
-                propefficntrtotl[:] = 0.
+                cntrprop[:] = 0.
+                cntrproptotl[:] = 0.
                 
                 fracopti = std(rollvaripara, 0) / mean(rollvaripara, 0)
                 
