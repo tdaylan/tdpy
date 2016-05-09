@@ -558,7 +558,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
         plt.show()
 
 
-def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None,               plotsize=6, numbbins=30, numbplotside=None,               truepara=None, ntickbins=3, quan=True):
+def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, numbbins=30, numbplotside=None, truepara=None, ntickbins=3, quan=True):
     
     numbpara = listsamp.shape[1]
     
