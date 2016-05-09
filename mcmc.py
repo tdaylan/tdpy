@@ -131,7 +131,9 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
         numbburn = numbswep / 10
     if factthin == None:
         factthin = (numbswep - numbburn) / numbpara
-    
+   
+    indxproc = arange(numbproc)
+
     # sweeps to be saved
     global save
     save = zeros(numbswep, dtype=bool)
@@ -173,7 +175,7 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     else:
         pool = mp.Pool(numbproc)
         workpart = functools.partial(work, listobjt)
-        listchan = pool.map(workpart, indxnumbproc)
+        listchan = pool.map(workpart, indxproc)
     
         pool.close()
         pool.join()
@@ -458,6 +460,10 @@ def plot_gmrb(path, gmrbstat):
     numbbins = 40
     bins = linspace(1., amax(gmrbstat), numbbins + 1)
     figr, axis = plt.subplots()
+    print 'bins'
+    print bins
+    print 'gmrbstat'
+    print gmrbstat
     axis.hist(gmrbstat, bins=bins)
     axis.set_title('Gelman-Rubin Convergence Test')
     axis.set_xlabel('PSRF')
