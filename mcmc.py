@@ -109,32 +109,74 @@ def gmrb_test(griddata):
     return psrf
 
 
-def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, plotpath=None, rtag='', numbburn=None, truepara=None, \
+def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, plotpath=None, rtag='', numbburn=None, truepara=None, \
     numbplotside=None, factthin=None, verbtype=0):
+    
+    global namepara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara
+    namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara = datapara
+    
+    global numbpara, indxpara
+    numbpara = len(datapara[0])
+    indxpara = arange(numbpara)
+        
+    # Defaults
+    if truepara == None:
+        truepara = array([None] * numbpara)
+        
+    if numbplotside == None:
+        numbplotside = numbpara
+
+    # Sampler settings
+    if numbburn == None:
+        numbburn = numbswep / 10
+    if factthin == None:
+        factthin = (numbswep - numbburn) / numbpara
+    
+    # sweeps to be saved
+    global save
+    save = zeros(numbswep, dtype=bool)
+    indxswepsave = arange(numbburn, numbswep, factthin)
+    save[indxswepsave] = True
+    
+    if thissamp == None:
+        thissamp = rand((numbproc, numbpara))
+
+    global indxsampsave
+    indxsampsave = zeros(numbswep, dtype=int)
+    numbsamp = retr_numbsamp(numbswep, numbburn, factthin)
+    indxsampsave[indxswepsave] = arange(numbsamp)
+
+    global listsamp, listsampvarb, listllik, listaccp, listindxparamodi
+    listsamp = zeros((numbsamp, numbpara)) + -1.
+    listsampvarb = zeros((numbsamp, numbpara))
+    listllik = zeros(numbsamp)
+    listaccp = empty(numbswep, dtype=bool)
+    listindxparamodi = empty(numbswep, dtype=int)
+    
+    global cntrprog, cntrswep
+    cntrprog = -1
+    cntrswep = 0
+    
+    # initialize the chain
     
     if verbtype > 1:
         print 'Forking the sampler...'
 
     thisllik, thissampcalc = llikfunc(icdf_samp(thissamp[0, :], datapara))
     numbsampcalc = len(thissampcalc)
+    listsampcalc = [[] for l in range(numbsampcalc)]
 
     listobjt = numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, plotpath, rtag, numbburn, truepara, numbplotside, factthin, verbtype, numbsampcalc
 
-    global numbpara, indxpara
-    numbpara = len(datapara[0])
-    indxpara = arange(numbpara)
-    
     if numbproc == 1:
-        listchan = [mcmc(listobjt, 0)]
+        listchan = [work(listobjt, 0)]
     else:
-        # spawn the processes
         pool = mp.Pool(numbproc)
-        workpart = functools.partial(mcmc, listobjt)
-        listchan = pool.map(workpart, arange(numbproc))
+        workpart = functools.partial(work, listobjt)
+        listchan = pool.map(workpart, indxnumbproc)
     
         pool.close()
         pool.join()
-
 
     if verbtype > 0:
         print 'Accumulating samples from all processes...'
@@ -212,6 +254,8 @@ def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=Fa
             
         for k in indxpara:
             path = plotpath + 'trac_' + namepara[k] + rtag + '.png'
+            print 'hey'
+            print truepara
             plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k], truepara=truepara[k])
             
         if numbproc > 1:
@@ -227,88 +271,35 @@ def mcmc_wrap(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=Fa
     return chan
 
 
-def mcmc(listobjt, indxprocwork):
+def work(listobjt, indxprocwork):
+    
+    # re-seed the random number generator for the process
+    seed()
     
     numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, plotpath, \
         rtag, numbburn, truepara, numbplotside, factthin, verbtype, numbsampcalc = listobjt
- 
+       
     thissamp = thissamp[indxprocwork, :]
-
-    global namepara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, numbpara
-    
-    namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara = datapara
-    
-    # Defaults
-    if truepara == None:
-        truepara = array([None] * numbpara)
-        
-    if numbplotside == None:
-        numbplotside = numbpara
-
-    # Sampler settings
-    if numbburn == None:
-        numbburn = numbswep / 10
-    if factthin == None:
-        factthin = (numbswep - numbburn) / numbpara
-    
-    # sweeps to be saved
-    save = zeros(numbswep, dtype=bool)
-    jswep = arange(numbburn, numbswep, factthin)
-    save[jswep] = True
-    
-    if thissamp == None:
-        thissamp = rand(numbpara) 
-
-    sampindx = zeros(numbswep, dtype=int)
-    numbsamp = (numbswep - numbburn) / factthin
-    sampindx[jswep] = arange(numbsamp)
-
-    listsamp = zeros((numbsamp, numbpara)) + -1.
-    listsampvarb = zeros((numbsamp, numbpara))
-    listllik = zeros(numbsamp)
-    
-    listaccp = empty(numbswep, dtype=bool)
-    listindxparamodi = empty(numbswep, dtype=int)
-    
-    indxpara = arange(numbpara)
-        
-    global j
-    j = 0
-    
-    # initialize the chain
     thissampvarb = icdf_samp(thissamp, datapara)
     thisllik, thissampcalc = llikfunc(thissampvarb)
-    listsampcalc = [[] for l in range(numbsampcalc)]
-    
-    # current sample index
-    thiscntr = -1
 
-    # proposal scale optimization
+    global varipara, listsamp, listsampvarb, listllik, listaccp, listindxparamodi
+
     if optiprop:
-        perditer = 5
-        targpropeffi = 0.3
-        perdpropeffi = 100 * numbpara
-        propefficntr = zeros(numbpara)
-        propefficntrtotl = zeros(numbpara)
-        rollvaripara = empty((perditer, numbpara))
         optipropdone = False
-        cntroptisamp = 0
-        cntroptimean = 0
-        thissamptemp = copy(thissamp)
-        if verbtype > 0:
-            print 'Optimizing proposal scale...'
     else:
         optipropdone = True
-        
-    while j < numbswep:
+
+    global cntrprog, cntrswep
+    while cntrswep < numbswep:
         
         if verbtype > 0:
-            thiscntr = util.show_prog(j, numbswep, thiscntr)     
+            cntrprog = util.show_prog(cntrswep, numbswep, cntrprog)     
 
         if verbtype > 1:
             print
             print '-' * 10
-            print 'Sweep %d' % j    
+            print 'Sweep %d' % cntrswep
             print 'thissamp: '
             print thissamp
             print 'thissampvarb: '
@@ -355,7 +346,7 @@ def mcmc(listobjt, indxprocwork):
                 print 'Accepted.'
 
             # store utility variables
-            listaccp[j] = True
+            listaccp[cntrswep] = True
             
             # update the sampler state
             thisllik = nextllik
@@ -369,22 +360,22 @@ def mcmc(listobjt, indxprocwork):
                 print 'Rejected.'
 
             # store the utility variables
-            listaccp[j] = False
+            listaccp[cntrswep] = False
          
-        listindxparamodi[j] = indxparamodi
+        listindxparamodi[cntrswep] = indxparamodi
         
-        if save[j]:
-            listllik[sampindx[j]] = thisllik
-            listsamp[sampindx[j], :] = thissamp
-            listsampvarb[sampindx[j], :] = thissampvarb
+        if save[cntrswep]:
+            listllik[indxsampsave[cntrswep]] = thisllik
+            listsamp[indxsampsave[cntrswep], :] = thissamp
+            listsampvarb[indxsampsave[cntrswep], :] = thissampvarb
             for l in range(numbsampcalc):
                 listsampcalc[l].append(thissampcalc[l])
         
         if optipropdone:
-            j += 1
+            cntrswep += 1
         else:
             propefficntrtotl[indxparamodi] += 1.
-            if listaccp[j]:
+            if listaccp[cntrswep]:
                 propefficntr[indxparamodi] += 1.
 
             if cntroptisamp % perdpropeffi == 0 and (propefficntrtotl > 0).all():
