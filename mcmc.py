@@ -190,7 +190,11 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     # parse the sample chain
     listsampvarb = zeros((numbsamp, numbproc, numbpara))
     listsamp = zeros((numbsamp, numbproc, numbpara))
-    listsampcalc = [empty((numbsamp, numbproc)) for n in range(numbsampcalc)]
+    listsampcalc = []
+    for n in range(numbsampcalc):
+        size = listchan[0][2][0][n].size
+        listsampcalc.append(empty((numbsamp, numbproc, size)))
+        print listsampcalc[n].shape
     listllik = zeros((numbsamp, numbproc))
     listaccp = zeros((numbswep, numbproc))
     listindxparamodi = zeros((numbswep, numbproc))
@@ -200,7 +204,9 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
         listsampvarb[:, k, :] = listchan[k][0]
         listsamp[:, k, :] = listchan[k][1]
         for n in range(numbsampcalc):
-            listsampcalc[n][:, k] = listchan[k][2][n]
+            for j in range(numbsamp):
+                print listchan[k][2][j][n].size
+                listsampcalc[n][j, k, :] = listchan[k][2][j][n]
         listllik[:, k] = listchan[k][3]
         listaccp[:, k] = listchan[k][4]
         listindxparamodi[:, k] = listchan[k][5]
