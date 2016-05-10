@@ -194,8 +194,8 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     for n in range(numbsampcalc):
         size = listchan[0][2][0][n].size
         listsampcalc.append(empty((numbsamp, numbproc, size)))
-        print 'size'
-        print size
+        print 'size: ', size
+    print
     listllik = zeros((numbsamp, numbproc))
     listaccp = zeros((numbswep, numbproc))
     listindxparamodi = zeros((numbswep, numbproc))
