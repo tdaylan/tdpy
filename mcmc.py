@@ -141,7 +141,7 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     save[indxswepsave] = True
     
     if thissamp == None:
-        thissamp = rand((numbproc, numbpara))
+        thissamp = rand(numbproc * numbpara).reshape((numbproc, numbpara))
 
     global indxsampsave
     indxsampsave = zeros(numbswep, dtype=int)
@@ -190,7 +190,7 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     # parse the sample chain
     listsampvarb = zeros((numbsamp, numbproc, numbpara))
     listsamp = zeros((numbsamp, numbproc, numbpara))
-    listsampcalc = [[empty((numbsamp, numbproc))] for n in range(numbsampcalc)]
+    listsampcalc = [empty((numbsamp, numbproc)) for n in range(numbsampcalc)]
     listllik = zeros((numbsamp, numbproc))
     listaccp = zeros((numbswep, numbproc))
     listindxparamodi = zeros((numbswep, numbproc))
