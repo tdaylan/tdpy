@@ -565,7 +565,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
         plt.show()
 
 
-def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, numbbins=30, numbplotside=None, truepara=None, ntickbins=3, quan=True):
+def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, numbbins=20, numbplotside=None, truepara=None, numbtickbins=3, quan=True):
     
     numbpara = listsamp.shape[1]
     
@@ -646,14 +646,14 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
                         axis.scatter(thistruepara[l], thistruepara[k], color='r', marker='o')
                     if thisscalpara[k] == 'logt':
                         axis.set_yscale('log', basey=10)
-                        arry = logspace(log10(thislims[0, k]), log10(thislims[1, k]), ntickbins)
-                        strgarry = [util.mexp(arry[a]) for a in range(ntickbins)]
+                        arry = logspace(log10(thislims[0, k]), log10(thislims[1, k]), numbtickbins)
+                        strgarry = [util.mexp(arry[a]) for a in range(numbtickbins)]
                         axis.set_yticks(arry)
                         axis.set_yticklabels(strgarry)
                 if thisscalpara[l] == 'logt':
                     axis.set_xscale('log', basex=10)
-                    arry = logspace(log10(thislims[0, l]), log10(thislims[1, l]), ntickbins)
-                    strgarry = [util.mexp(arry[a]) for a in range(ntickbins)]
+                    arry = logspace(log10(thislims[0, l]), log10(thislims[1, l]), numbtickbins)
+                    strgarry = [util.mexp(arry[a]) for a in range(numbtickbins)]
                     axis.set_xticks(arry)
                     axis.set_xticklabels(strgarry)
                 axis.set_xlim(thislims[:, l])
