@@ -5,8 +5,8 @@ from numpy.random import choice
 from scipy.integrate import *
 from scipy.interpolate import *
 import scipy as sp
-
-import time
+import pyfits as pf
+import time, os
 
 import multiprocessing as mp, functools
 
@@ -109,7 +109,7 @@ def gmrb_test(griddata):
     return psrf
 
 
-def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, plotpath=None, rtag='', numbburn=None, truepara=None, \
+def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, pathbase=None, rtag='', numbburn=None, truepara=None, \
     numbplotside=None, factthin=None, verbtype=0):
     
     global namepara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara
@@ -168,7 +168,7 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     numbsampcalc = len(thissampcalc)
     listsampcalc = [[] for l in range(numbsampcalc)]
 
-    listobjt = numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, plotpath, rtag, numbburn, truepara, numbplotside, factthin, verbtype, numbsampcalc
+    listobjt = numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, pathbase, rtag, numbburn, truepara, numbplotside, factthin, verbtype, numbsampcalc
 
     if numbproc == 1:
         listchan = [work(listobjt, 0)]
@@ -245,28 +245,30 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     listaccp = listaccp.flatten()
     listindxparamodi = listindxparamodi.flatten()
 
-    if plotpath != None:
+    if pathbase != None:
+        
+        pathplot = pathbase + '/png/'
         
         if verbtype > 1:
             print 'Making plots...'
             timeinit = time.time()
             
-        path = plotpath + 'propeffi' + rtag + '.png'
+        path = pathplot + 'propeffi' + rtag + '.png'
         plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara)
 
-        path = plotpath + 'llik' + rtag + '.png'
+        path = pathplot + 'llik' + rtag + '.png'
         plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
         
         if numbplotside != 0:
-            path = plotpath + 'grid' + rtag + '.png'
+            path = pathplot + 'grid' + rtag + '.png'
             plot_grid(path, listsampvarb, strgpara, truepara=truepara, scalpara=scalpara, numbplotside=numbplotside)
             
         for k in indxpara:
-            path = plotpath + 'trac_' + namepara[k] + rtag + '.png'
+            path = pathplot + 'trac_' + namepara[k] + rtag + '.png'
             plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k], truepara=truepara[k])
             
         if numbproc > 1:
-            path = plotpath + 'gmrb' + rtag + '.png'
+            path = pathplot + 'gmrb' + rtag + '.png'
             plot_gmrb(path, gmrbstat)
                 
         if verbtype > 1:
@@ -283,7 +285,7 @@ def work(listobjt, indxprocwork):
     # re-seed the random number generator for the process
     seed()
     
-    numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, plotpath, \
+    numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, pathbase, \
         rtag, numbburn, truepara, numbplotside, factthin, verbtype, numbsampcalc = listobjt
        
     thissamp = thissamp[indxprocwork, :]
@@ -294,21 +296,33 @@ def work(listobjt, indxprocwork):
     global varipara, listsamp, listsampvarb, listllik, listaccp, listindxparamodi
 
     # proposal scale optimization
+    pathvaripara = pathbase + '/varipara' + rtag + '.fits'
     if optiprop:
-        perditer = 5
-        targpropeffi = 0.3
-        perdpropeffi = 100 * numbpara
-        cntrprop = zeros(numbpara)
-        cntrproptotl = zeros(numbpara)
-        rollvaripara = empty((perditer, numbpara))
-        optipropdone = False
-        cntroptisamp = 0
-        cntroptimean = 0
-        thissamptemp = copy(thissamp)
-        if verbtype > 0:
-            print 'Optimizing proposal scale...'
+        if not os.path.isfile(pathvaripara): 
+            if verbtype > 0:
+                print 'Optimizing proposal scale...'
+            targpropeffi = 0.25
+            perdpropeffi = 50 * numbpara
+            cntrprop = zeros(numbpara)
+            cntrproptotl = zeros(numbpara)
+            optipropdone = False
+            cntroptisamp = 0
+            cntroptimean = 0
+            thissamptemp = copy(thissamp)
+        else:
+            if verbtype > 0:
+                print 'Retrieving the optimal proposal scale...'
+            optipropdone = True
+            varipara = pf.getdata(pathvaripara)
     else:
         optipropdone = True
+
+    if verbtype > 0:
+        print 'pathvaripara'
+        print pathvaripara
+        print 'optipropdone'
+        print optipropdone
+    
 
     global cntrprog, cntrswep
     while cntrswep < numbswep:
@@ -400,29 +414,30 @@ def work(listobjt, indxprocwork):
 
             if cntroptisamp % perdpropeffi == 0 and (cntrproptotl > 0).all():
                 
-                varipara *= 2**(cntrprop / cntrproptotl / targpropeffi - 1.)
-                
-                cntrprop[:] = 0.
-                cntrproptotl[:] = 0.
-                
-                fracopti = std(rollvaripara, 0) / mean(rollvaripara, 0)
-                
-                if verbtype > 1:
-                    print 'Proposal scale step %d' % cntroptimean
-                    print 'fracopti: ', fracopti
-                    
-                if (fracopti < 0.2).all() and cntroptisamp >= perditer:
+                thispropeffi = cntrprop / cntrproptotl 
+                print 'Proposal scale step %d' % cntroptimean
+                print 'thispropeffi'
+                print thispropeffi
+                if (thispropeffi > 0.1).all() and (thispropeffi < 0.5).all():
+                    print 'Optimized variance: '
+                    print varipara
+                    print 'Writing the optimized variance to %s...' % pathvaripara
                     optipropdone = True
                     thissamp = thissamptemp
-                    if verbtype > 1:
-                        print 'Optimized variance vector: '
-                        print varipara
-                    
-                rollvaripara[0, :] = copy(varipara)
-                rollvaripara = roll(rollvaripara, 1, axis=0)
-            
+                    pf.writeto(pathvaripara, varipara, clobber=True)
+                else:
+                    factcorr = 2**(thispropeffi / targpropeffi - 1.)
+                    varipara *= factcorr
+                    cntrprop[:] = 0.
+                    cntrproptotl[:] = 0.
+                    print 'Current sample'
+                    print thissampvarb
+                    print 'Correction factor'
+                    print factcorr
+                    print 'Current variance: '
+                    print varipara
+                    print
                 cntroptimean += 1
-                
             cntroptisamp += 1
 
     
