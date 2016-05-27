@@ -1,9 +1,3 @@
-
-# coding: utf-8
-
-# In[1]:
-
-# math
 from numpy import *
 from numpy.random import *
 from numpy.random import choice
@@ -18,9 +12,6 @@ import healpy as hp
 
 # utilities
 import sh, os
-
-
-# In[2]:
 
 def retr_nfwp(nfwg, numbside, norm=None):
     
@@ -63,8 +54,6 @@ def retr_nfwp(nfwg, numbside, norm=None):
     return edengridtotl
 
 
-# In[3]:
-
 def mexp(numb):
     logn = log10(numb)
     expo = floor(logn)
@@ -80,8 +69,6 @@ def mexp(numb):
 
     return strg
 
-
-# In[4]:
 
 def retr_p4dm_spec(anch, part='el'):
     
@@ -117,8 +104,6 @@ def retr_p4dm_spec(anch, part='el'):
     return mult, enerscal, mass
 
 
-# In[5]:
-
 def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None):
 
     nextcntr = int(nprog * float(cntr + 1) / maxmcntr) * 100 / nprog
@@ -132,17 +117,12 @@ def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None):
     return thiscntr            
 
 
-# In[6]:
-
 def show_memo():
     
     memo = float(sh.awk(sh.ps('u', '-p', os.getpid()),'{sum=sum+$6}; END {print sum/1024}'))
     
     print '%.3g MB is being used.' % memo
     
-
-
-# In[7]:
 
 def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
     
@@ -159,20 +139,16 @@ def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., 
     return heal
 
 
-# In[8]:
-
 def retr_healgrid(numbside):
     
     numbpixl = 12 * numbside**2
     apix = 4. * pi / numbpixl # [sr]
     thhp, phhp = hp.pixelfunc.pix2ang(numbside, arange(numbpixl), nest=False) # [rad]
     lghp = ((rad2deg(phhp) - 180.) % 360.) - 180. # [deg]
-    bghp = 90. - rad2deg(thhp) # [deg]
+    bghp = 90. - rad2deg(thhp)
 
     return lghp, bghp, numbside, numbpixl, apix
 
-
-# In[9]:
 
 def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, reso=0.1):
     
@@ -214,17 +190,14 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
     return hmapcart
 
 
-# In[10]:
-
 def retr_fdfm(binsener, numbside=256, vfdm=7):                    
     
     diffener = binsener[1:] - binsener[0:-1]
     numbener = diffener.size
-    
-    path = os.environ["PNTS_TRAN_DATA_PATH"] + '/'
 
     numbpixl = numbside**2 * 12
     
+    path = os.environ["PCAT_DATA_PATH"] + '/'
     if vfdm == 2:
         path += 'gll_iem_v02.fit'
     if vfdm == 3:
@@ -243,20 +216,17 @@ def retr_fdfm(binsener, numbside=256, vfdm=7):
     fdfmheal = zeros((enerfdfm.size, numbpixl))
     for i in range(enerfdfm.size):
         fdfmheal[i, :] = cart_heal(fliplr(fluxcart[i, :, :]), numbside=numbside)
-        
     
     fdfm = empty((numbener, numbpixl))
     numbsampbins = 10
     enersamp = logspace(log10(amin(binsener)), log10(amax(binsener)), numbsampbins * numbener)
+    
     fdfmheal = interpolate.interp1d(enerfdfm, fdfmheal, axis=0)(enersamp)
     for i in range(numbener):
-        fdfm[i, :] = trapz(fdfmheal[i*numbsampbins:(i+1)*numbsampbins, :],                            enersamp[i*numbsampbins:(i+1)*numbsampbins], axis=0) / diffener[i]
-
+        fdfm[i, :] = trapz(fdfmheal[i*numbsampbins:(i+1)*numbsampbins, :], enersamp[i*numbsampbins:(i+1)*numbsampbins], axis=0) / diffener[i]
 
     return fdfm
 
-
-# In[11]:
 
 def plot_braz(ax, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mcol='black', labl=None, alpha=None):
 
@@ -272,10 +242,3 @@ def plot_braz(ax, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mcol=
     axis.plot(xdat, percentile(ydat, 50., 0), color=mcol, label=labl, alpha=alpha)
     axis.fill_between(xdat, percentile(ydat, 2.5, 0), percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)#, label='95% C.L.')
     axis.fill_between(xdat, percentile(ydat, 16., 0), percentile(ydat, 84., 0), color=dcol, alpha=alpha)#, label='68% C.L.')
-    
-
-
-# In[ ]:
-
-
-
