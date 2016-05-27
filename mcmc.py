@@ -302,7 +302,7 @@ def work(listobjt, indxprocwork):
             if verbtype > 0:
                 print 'Optimizing proposal scale...'
             targpropeffi = 0.25
-            perdpropeffi = 50 * numbpara
+            perdpropeffi = 400 * numbpara
             cntrprop = zeros(numbpara)
             cntrproptotl = zeros(numbpara)
             optipropdone = False
@@ -362,7 +362,6 @@ def work(listobjt, indxprocwork):
 
             # evaluate the log-likelihood
             nextllik, nextsampcalc = llikfunc(nextsampvarb)
-            
             accpprob = exp(nextllik - thisllik)
 
             if verbtype > 1:
@@ -415,10 +414,10 @@ def work(listobjt, indxprocwork):
             if cntroptisamp % perdpropeffi == 0 and (cntrproptotl > 0).all():
                 
                 thispropeffi = cntrprop / cntrproptotl 
-                print 'Proposal scale step %d' % cntroptimean
+                print 'Proposal scale optimization step %d' % cntroptimean
                 print 'thispropeffi'
                 print thispropeffi
-                if (thispropeffi > 0.1).all() and (thispropeffi < 0.5).all():
+                if (thispropeffi > 0.15).all() and (thispropeffi < 0.35).all():
                     print 'Optimized variance: '
                     print varipara
                     print 'Writing the optimized variance to %s...' % pathvaripara

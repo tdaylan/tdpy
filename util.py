@@ -126,6 +126,23 @@ def show_memo():
 
 def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
     
+    numbbgcr = cart.shape[0]
+    numblgcr = cart.shape[1]
+    lghp, bghp, numbside, numbpixl, apix = retr_healgrid(numbside)
+    
+    indxlgcr = (numblgcr * (lghp - minmlgal) / (maxmlgal - minmlgal)).astype(int)
+    indxbgcr = (numbbgcr * (bghp - minmbgal) / (maxmbgal - minmbgal)).astype(int)
+    
+    indxpixlrofi = where((minmlgal <= lghp) & (lghp <= maxmlgal) & (minmbgal <= bghp) & (bghp <= maxmbgal))[0]
+    
+    heal = zeros(numbpixl)
+    heal[indxpixlrofi] = fliplr(cart)[indxbgcr[indxpixlrofi], indxlgcr[indxpixlrofi]]
+    
+    return heal
+
+
+def cart_heal_depr(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
+    
     nbgcr = cart.shape[0]
     nlgcr = cart.shape[1]
     lghp, bghp, numbside, numbpixl, apix = retr_healgrid(numbside)
