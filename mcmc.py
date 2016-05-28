@@ -109,7 +109,7 @@ def gmrb_test(griddata):
     return psrf
 
 
-def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, pathbase=None, rtag='', numbburn=None, truepara=None, \
+def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, pathbase='./', rtag='', numbburn=None, truepara=None, \
     numbplotside=None, factthin=None, verbtype=0):
     
     global namepara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara
@@ -130,7 +130,7 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     if numbburn == None:
         numbburn = numbswep / 10
     if factthin == None:
-        factthin = (numbswep - numbburn) / numbpara
+        factthin = 4 * numbpara
    
     indxproc = arange(numbproc)
 
@@ -245,35 +245,34 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     listaccp = listaccp.flatten()
     listindxparamodi = listindxparamodi.flatten()
 
-    if pathbase != None:
-        
-        pathplot = pathbase + '/png/'
-        
-        if verbtype > 1:
-            print 'Making plots...'
-            timeinit = time.time()
-            
-        path = pathplot + 'propeffi' + rtag + '.png'
-        plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara)
+    pathplot = pathbase + 'png/'
+    os.system('mkdir -p %s' % pathplot)
 
-        path = pathplot + 'llik' + rtag + '.png'
-        plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
+    if verbtype > 1:
+        print 'Making plots...'
+        timeinit = time.time()
         
-        if numbplotside != 0:
-            path = pathplot + 'grid' + rtag + '.png'
-            plot_grid(path, listsampvarb, strgpara, truepara=truepara, scalpara=scalpara, numbplotside=numbplotside)
+    path = pathplot + rtag
+    plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara)
+
+    path = pathplot + rtag + '_llik'
+    plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
+    
+    if numbplotside != 0:
+        path = pathplot + rtag
+        plot_grid(path, listsampvarb, strgpara, truepara=truepara, scalpara=scalpara, numbplotside=numbplotside)
+        
+    for k in indxpara:
+        path = pathplot + rtag + '_' + namepara[k]
+        plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k], truepara=truepara[k])
+        
+    if numbproc > 1:
+        path = pathplot + rtag + 'gmrb'
+        plot_gmrb(path, gmrbstat)
             
-        for k in indxpara:
-            path = pathplot + 'trac_' + namepara[k] + rtag + '.png'
-            plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k], truepara=truepara[k])
-            
-        if numbproc > 1:
-            path = pathplot + 'gmrb' + rtag + '.png'
-            plot_gmrb(path, gmrbstat)
-                
-        if verbtype > 1:
-            timefinl = time.time()
-            print 'Done in %.3g seconds' % (timefinl - timeinit)
+    if verbtype > 1:
+        timefinl = time.time()
+        print 'Done in %.3g seconds' % (timefinl - timeinit)
 
     chan = [listsampvarb, listsamp, listsampcalc, listllik, listaccp, listindxparamodi, propeffi, levi, info, gmrbstat]
     
@@ -471,7 +470,7 @@ def retr_atcr(listsamp, ndela=10):
 
 def retr_numbsamp(numbswep, numbburn, factthin):
     
-    numbsamp = (numbswep - numbburn) / factthin
+    numbsamp = int((numbswep - numbburn) / factthin)
     
     return numbsamp
 
@@ -481,15 +480,11 @@ def plot_gmrb(path, gmrbstat):
     numbbins = 40
     bins = linspace(1., amax(gmrbstat), numbbins + 1)
     figr, axis = plt.subplots()
-    print 'bins'
-    print bins
-    print 'gmrbstat'
-    print gmrbstat
     axis.hist(gmrbstat, bins=bins)
     axis.set_title('Gelman-Rubin Convergence Test')
     axis.set_xlabel('PSRF')
     axis.set_ylabel('$N_p$')
-    figr.savefig(path)
+    figr.savefig(path + '_gmrb.png')
     plt.close(figr)
 
         
@@ -516,7 +511,7 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara
             histaccp = axis.hist(indxlistintc, binstime, color='g')
             axis.set_title(strgpara[k])
     plt.subplots_adjust(hspace=0.3)
-    plt.savefig(path)
+    plt.savefig(path + '_propeffi.png')
     plt.close(figr)
 
 
@@ -573,7 +568,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
     figr.subplots_adjust(top=0.9, wspace=0.4, bottom=0.2)
 
     if path != None:
-        figr.savefig(path)
+        figr.savefig(path + '_trac.png')
         plt.close(figr)
     else:
         plt.show()
@@ -676,10 +671,9 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
                 if l == 0 and k != 0:
                     axis.set_ylabel(thisparastrg[k])
         figr.subplots_adjust(bottom=0.2)
-        if numbfram == 1:
-            strg = ''
-        else:
-            strg = '_fram%d' % n
+        strg = '_grid'
+        if numbfram != 1:
+            strg += '%04d' % n
         if path == None:
             plt.show()
         else:
