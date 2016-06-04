@@ -110,7 +110,7 @@ def gmrb_test(griddata):
 
 
 def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, pathbase='./', rtag='', numbburn=None, truepara=None, \
-    numbplotside=None, factthin=None, verbtype=0):
+    numbplotside=None, factthin=None, verbtype=0, factpropeffi=2.):
     
     global namepara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara
     namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara = datapara
@@ -295,13 +295,15 @@ def work(listobjt, indxprocwork):
     global varipara, listsamp, listsampvarb, listllik, listaccp, listindxparamodi
 
     # proposal scale optimization
-    pathvaripara = pathbase + '/varipara' + rtag + '.fits'
+    pathvaripara = pathbase + '/varipara_' + rtag + '.fits'
     if optiprop:
         if not os.path.isfile(pathvaripara): 
             if verbtype > 0:
                 print 'Optimizing proposal scale...'
             targpropeffi = 0.25
-            perdpropeffi = 400 * numbpara
+            minmpropeffi = targpropeffi / factpropeffi
+            maxmpropeffi = targpropeffi * factpropeffi
+            perdpropeffi = 2000 * numbpara
             cntrprop = zeros(numbpara)
             cntrproptotl = zeros(numbpara)
             optipropdone = False
@@ -414,9 +416,13 @@ def work(listobjt, indxprocwork):
                 
                 thispropeffi = cntrprop / cntrproptotl 
                 print 'Proposal scale optimization step %d' % cntroptimean
-                print 'thispropeffi'
+                print 'Current proposal efficiency'
                 print thispropeffi
-                if (thispropeffi > 0.15).all() and (thispropeffi < 0.35).all():
+                print 'Mean of the current proposal efficiency'
+                print mean(thispropeffi)
+                print 'Standard deviation of the current proposal efficiency'
+                print std(thispropeffi)
+                if (thispropeffi > minmpropeffi).all() and (thispropeffi < maxmpropeffi).all():
                     print 'Optimized variance: '
                     print varipara
                     print 'Writing the optimized variance to %s...' % pathvaripara
