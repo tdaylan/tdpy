@@ -141,6 +141,15 @@ def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., 
     return heal
 
 
+class cntr():
+    def incr(self, valu=1):
+        temp = self.cntr
+        self.cntr += valu
+        return temp
+    def __init__(self):
+        self.cntr = 0
+
+
 def cart_heal_depr(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
     
     nbgcr = cart.shape[0]

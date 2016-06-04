@@ -444,28 +444,23 @@ def work(listobjt, indxprocwork):
     return chan
 
 
-def retr_atcr(listsamp, ndela=10):
+def retr_atcr(listsamp, numbdela=10):
     
-    numbvarb = listsamp.shape[1]
-    corr = empty(numbvarb)
-    for k in range(numbvarb):
-        sp.signal.correlate(listsamp[:, k], listsamp[:, k])
-        
-    meansgnlsqrd = mean(sgnl)**2
+    numbsamp = listsamp.shape[1]
+    numbpara = listsamp.shape[1]
+    
+    # mean square signal
+    meansqrd = mean(listsamp, axis=0)**2
 
-    atcr = empty(ndela)
-    sgnllist = zeros((2, nsgnl))
-    sgnllist[0,:] = sgnl
-    for t in range(ndela):
-        sgnllist[1,0:nsgnl-t] = sgnl[t:nsgnl]
-        atcr[t] = mean(roll(sgnl, t) * sgnl) - meansgnlsqrd
+    # autocorrelation
+    atcr = empty((numbdela, numbpara))
+    for t in range(numbdela):
+        atcr[t, :] = mean(roll(listsamp, t, axis=0) * listsamp - meansqrd[None, :], axis=0)
         
     # normalize the autocorrelation
-    vari = var(sgnl)
-    atcr /= vari
+    atcr /= amax(atcr, axis=0)
          
-    iact = 1. + 2. * sum(atcr[1:-1])
-    return atcr, iact
+    return atcr
 
 
 def retr_numbsamp(numbswep, numbburn, factthin):
