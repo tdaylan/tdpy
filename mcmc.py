@@ -168,7 +168,8 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     numbsampcalc = len(thissampcalc)
     listsampcalc = [[] for l in range(numbsampcalc)]
 
-    listobjt = numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, pathbase, rtag, numbburn, truepara, numbplotside, factthin, verbtype, numbsampcalc
+    listobjt = numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, pathbase, rtag, numbburn, \
+        truepara, numbplotside, factthin, verbtype, numbsampcalc, factpropeffi
 
     if numbproc == 1:
         listchan = [work(listobjt, 0)]
@@ -245,29 +246,29 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     listaccp = listaccp.flatten()
     listindxparamodi = listindxparamodi.flatten()
 
-    pathplot = pathbase + 'png/'
+    pathplot = pathbase + '/png/%s/' % rtag
     os.system('mkdir -p %s' % pathplot)
 
     if verbtype > 1:
         print 'Making plots...'
         timeinit = time.time()
-        
-    path = pathplot + rtag
+    
+    path = pathplot
     plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara)
 
-    path = pathplot + rtag + '_llik'
+    path = pathplot + '_llik'
     plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
     
     if numbplotside != 0:
-        path = pathplot + rtag
+        path = pathplot
         plot_grid(path, listsampvarb, strgpara, truepara=truepara, scalpara=scalpara, numbplotside=numbplotside)
         
     for k in indxpara:
-        path = pathplot + rtag + '_' + namepara[k]
+        path = pathplot + '_' + namepara[k]
         plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k], truepara=truepara[k])
         
     if numbproc > 1:
-        path = pathplot + rtag + 'gmrb'
+        path = pathplot + 'gmrb'
         plot_gmrb(path, gmrbstat)
             
     if verbtype > 1:
@@ -285,7 +286,7 @@ def work(listobjt, indxprocwork):
     seed()
     
     numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, pathbase, \
-        rtag, numbburn, truepara, numbplotside, factthin, verbtype, numbsampcalc = listobjt
+        rtag, numbburn, truepara, numbplotside, factthin, verbtype, numbsampcalc, factpropeffi = listobjt
        
     thissamp = thissamp[indxprocwork, :]
     thissampvarb = icdf_samp(thissamp, datapara)
@@ -303,7 +304,7 @@ def work(listobjt, indxprocwork):
             targpropeffi = 0.25
             minmpropeffi = targpropeffi / factpropeffi
             maxmpropeffi = targpropeffi * factpropeffi
-            perdpropeffi = 2000 * numbpara
+            perdpropeffi = 400 * numbpara
             cntrprop = zeros(numbpara)
             cntrproptotl = zeros(numbpara)
             optipropdone = False
@@ -312,18 +313,13 @@ def work(listobjt, indxprocwork):
             thissamptemp = copy(thissamp)
         else:
             if verbtype > 0:
-                print 'Retrieving the optimal proposal scale...'
+                print 'Retrieving the optimal proposal scale from %s...' % pathvaripara
             optipropdone = True
             varipara = pf.getdata(pathvaripara)
     else:
+        if verbtype > 0:
+            print 'Skipping proposal scale optimization...'
         optipropdone = True
-
-    if verbtype > 0:
-        print 'pathvaripara'
-        print pathvaripara
-        print 'optipropdone'
-        print optipropdone
-    
 
     global cntrprog, cntrswep
     while cntrswep < numbswep:
