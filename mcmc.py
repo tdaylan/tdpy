@@ -166,7 +166,7 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
 
     thisllik, thissampcalc = llikfunc(icdf_samp(thissamp[0, :], datapara))
     numbsampcalc = len(thissampcalc)
-    listsampcalc = [[] for l in range(numbsampcalc)]
+    listsampcalc = [[] for k in range(numbsampcalc)]
 
     listobjt = numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, pathbase, rtag, numbburn, \
         truepara, numbplotside, factthin, verbtype, numbsampcalc, factpropeffi
@@ -208,6 +208,16 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
         for n in range(numbsampcalc):
             for j in range(numbsamp):
                 print listchan[k][2][j][n].size
+                print 'k, n, j', k, n, j
+                print 'len(listchan)'
+                print len(listchan)
+                print 'len(listchan[k][2])'
+                print len(listchan[k][2])
+                print 'len(listchan[k][2][j])'
+                print len(listchan[k][2][j])
+                print 'lenlistchan[k][2][j][n]'
+                print len(listchan[k][2][j][n])
+                print
                 listsampcalc[n][j, k, :] = listchan[k][2][j][n]
         listllik[:, k] = listchan[k][3]
         listaccp[:, k] = listchan[k][4]
@@ -256,7 +266,7 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     path = pathplot
     plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara)
 
-    path = pathplot + '_llik'
+    path = pathplot + 'llik'
     plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
     
     if numbplotside != 0:
@@ -264,7 +274,7 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
         plot_grid(path, listsampvarb, strgpara, truepara=truepara, scalpara=scalpara, numbplotside=numbplotside)
         
     for k in indxpara:
-        path = pathplot + '_' + namepara[k]
+        path = pathplot + namepara[k]
         plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k], truepara=truepara[k])
         
     if numbproc > 1:
@@ -291,7 +301,6 @@ def work(listobjt, indxprocwork):
     thissamp = thissamp[indxprocwork, :]
     thissampvarb = icdf_samp(thissamp, datapara)
     thisllik, thissampcalc = llikfunc(thissampvarb)
-
     
     global varipara, listsamp, listsampvarb, listllik, listaccp, listindxparamodi
 
@@ -398,8 +407,8 @@ def work(listobjt, indxprocwork):
             listllik[indxsampsave[cntrswep]] = thisllik
             listsamp[indxsampsave[cntrswep], :] = thissamp
             listsampvarb[indxsampsave[cntrswep], :] = thissampvarb
-            for l in range(numbsampcalc):
-                listsampcalc[l].append(thissampcalc[l])
+            for k in range(numbsampcalc):
+                listsampcalc[k].append(thissampcalc[k])
         
         if optipropdone:
             cntrswep += 1
@@ -488,7 +497,6 @@ def plot_gmrb(path, gmrbstat):
 def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara):
 
     indxlistaccp = where(listaccp == True)[0]
-
     binstime = linspace(0., numbswep - 1., 10)
     
     numbcols = 2
@@ -508,7 +516,7 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara
             histaccp = axis.hist(indxlistintc, binstime, color='g')
             axis.set_title(strgpara[k])
     plt.subplots_adjust(hspace=0.3)
-    plt.savefig(path + '_propeffi.png')
+    plt.savefig(path + 'propeffi.png')
     plt.close(figr)
 
 
@@ -668,7 +676,7 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
                 if l == 0 and k != 0:
                     axis.set_ylabel(thisparastrg[k])
         figr.subplots_adjust(bottom=0.2)
-        strg = '_grid'
+        strg = 'grid'
         if numbfram != 1:
             strg += '%04d' % n
         if path == None:
