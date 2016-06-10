@@ -613,9 +613,9 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
     numbplotsidelast = numbpara % numbplotside
     if numbplotsidelast != 0:
         numbfram += 1
-        
+      
     for n in range(numbfram):
-
+        
         if n == numbfram - 1 and numbplotsidelast != 0:
             thisnumbpara = numbplotsidelast
             thislistsamp = listsamp[:, n*numbplotside:]
