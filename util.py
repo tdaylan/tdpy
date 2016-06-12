@@ -124,6 +124,152 @@ def show_memo():
     print '%.3g MB is being used.' % memo
     
 
+def minm(thissamp, func, verbtype=1, varipara=None, maxmswep=None, tolrfunc=1e-6, optiprop=False, pathbase='./', rtag=''):
+
+    print 'TDMN launched...'
+    numbpara = thissamp.size
+    
+    if maxmswep == None:
+        maxmswep = 1000 * numbpara
+    if varipara == None:
+        varipara = ones(numbpara)
+
+    thisfunc = func(thissamp)
+    thisvaripara = varipara
+
+    # proposal scale optimization
+    pathvaripara = pathbase + '/varipara_' + rtag + '.fits'
+    perdpropeffi = 1 * numbpara
+    if optiprop:
+        if not os.path.isfile(pathvaripara): 
+            if verbtype > 0:
+                print 'Optimizing proposal scale...'
+            targpropeffi = 0.25
+        else:
+            if verbtype > 0:
+                print 'Retrieving the optimal proposal scale from %s...' % pathvaripara
+            thisvaripara = pf.getdata(pathvaripara)
+    else:
+        if verbtype > 0:
+            print 'Skipping proposal scale optimization...'
+        optipropdone = True
+
+    boolconv = zeros(numbpara, dtype=bool)
+    rollaccp = zeros((perdpropeffi, numbpara))
+    global cntrswep
+    cntrswep = 0
+    while True:
+        
+        if verbtype == 1 and cntrswep % 1000 == 0:
+            print 'Sweep %d' % cntrswep
+
+        if verbtype > 1:
+            print
+            print '-' * 10
+            print 'Sweep %d' % cntrswep
+            print 'thissamp: '
+            print thissamp
+            print 'thisvaripara'
+            print thisvaripara
+            print
+            
+        # propose a sample
+        indxparamodi = cntrswep % numbpara
+        nextsamp = copy(thissamp)
+        nextsamp[indxparamodi] = randn() * thisvaripara[indxparamodi] + thissamp[indxparamodi]
+        
+        if verbtype > 1:
+            print 'indxparamodi'
+            print indxparamodi
+            print 'nextsamp: '
+            print nextsamp
+
+        # evaluate the log-likelihood
+        nextfunc = func(nextsamp)
+        errrfunc = fabs(nextfunc / thisfunc - 1.)
+
+        if verbtype > 1:
+            print 'thisfunc: '
+            print thisfunc
+            print 'nextfunc: '
+            print nextfunc
+            print 'errrfunc'
+            print errrfunc
+            print 
+            
+        # accept
+        if nextfunc < thisfunc:
+
+            if verbtype > 1:
+                print 'Accepted.'
+
+            # update the minimizer state
+            thisfunc = nextfunc
+            thispara[indxparamodi] = nextsamp[indxparamodi]
+            
+            rollaccp[0, indxparamodi] = 1.
+        
+        else:
+
+            if verbtype > 1:
+                print 'Rejected.'
+
+            rollaccp[0, indxparamodi] = 0.
+        
+        rollaccp = roll(rollaccp, 1, axis=0)
+         
+        if cntrswep % (numbpara * perdpropeffi) == 0 and optiprop:
+            
+            thispropeffi = mean(rollaccp, axis=0)
+            factcorr = 2**(thispropeffi / targpropeffi - 1.)
+            thisvaripara *= factcorr
+           
+            if verbtype > 1:
+                print 'Proposal scale optimization step %d' % (cntrswep / (numbpara * perdpropeffi))
+                print 'Current proposal efficiency'
+                print thispropeffi
+                print 'Correction factor'
+                print factcorr
+                print 'Current variance: '
+                print thisvaripara
+                print
+   
+        if errrfunc < tolrfunc:
+            nextsamp = randn(numbpara) * thisvaripara + thissamp
+        
+            if verbtype > 1:
+                print 'Checking convergence...'
+                print 'nextsamp: '
+                print nextsamp
+
+            # evaluate the log-likelihood
+            nextfunc = func(nextsamp)
+            errrfunctotl = fabs(nextfunc / thisfunc - 1.)
+            thisbool = errrfunctotl < tolrfunc
+        else:
+            thisbool = False
+
+        if thisbool or cntrswep > maxmswep:
+            minmsamp = thissamp
+            minmfunc = thisfunc
+            break
+        else:
+            cntrswep += 1
+
+    if verbtype > 0:
+        print 'Parameter vector at the minimum'
+        print minmsamp
+        print 'Minimum value of the function'
+        print minmfunc
+        print 'Final error'
+        print errrfunc
+        print 'Total number of sweeps'
+        print cntrswep
+        print
+
+    return minmsamp, minmfunc
+
+    
 def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
     
     numbbgcr = cart.shape[0]
