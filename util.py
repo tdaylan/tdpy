@@ -124,7 +124,7 @@ def show_memo():
     print '%.3g MB is being used.' % memo
     
 
-def minm(thissamp, func, verbtype=1, varipara=None, maxmswep=None, tolrfunc=1e-6, optiprop=False, pathbase='./', rtag=''):
+def minm(thissamp, func, verbtype=1, varipara=None, maxmswep=None, limtpara=None, tolrfunc=1e-6, optiprop=False, pathbase='./', rtag=''):
 
     print 'TDMN launched...'
     numbpara = thissamp.size
@@ -184,21 +184,30 @@ def minm(thissamp, func, verbtype=1, varipara=None, maxmswep=None, tolrfunc=1e-6
             print 'nextsamp: '
             print nextsamp
 
-        # evaluate the log-likelihood
-        nextfunc = func(nextsamp)
-        errrfunc = fabs(nextfunc / thisfunc - 1.)
+        if limtpara != None:
+            if nextsamp[indxparamodi] > limt[0, indxparamodi] and nextsamp[indxparamodi] < limt[1, indxparamodi]:
+                boollimt = True
+            else:
+                boollimt = False
+        else:
+            boollimt = True
 
-        if verbtype > 1:
-            print 'thisfunc: '
-            print thisfunc
-            print 'nextfunc: '
-            print nextfunc
-            print 'errrfunc'
-            print errrfunc
-            print 
+        if boollimt:
+            # evaluate the log-likelihood
+            nextfunc = func(nextsamp)
+            errrfunc = fabs(nextfunc / thisfunc - 1.)
+
+            if verbtype > 1:
+                print 'thisfunc: '
+                print thisfunc
+                print 'nextfunc: '
+                print nextfunc
+                print 'errrfunc'
+                print errrfunc
+                print 
             
         # accept
-        if nextfunc < thisfunc:
+        if boollimt and nextfunc < thisfunc:
 
             if verbtype > 1:
                 print 'Accepted.'
