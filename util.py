@@ -243,7 +243,7 @@ def minm(thissamp, func, verbtype=1, varipara=None, maxmswep=None, limtpara=None
                 print thisvaripara
                 print
    
-        if errrfunc < tolrfunc:
+        if boollimt and errrfunc < tolrfunc:
             nextsamp = randn(numbpara) * thisvaripara + thissamp
         
             if verbtype > 1:
