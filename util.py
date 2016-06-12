@@ -246,15 +246,18 @@ def minm(thissamp, func, verbtype=1, varipara=None, maxmswep=None, limtpara=None
         if boollimt and errrfunc < tolrfunc:
             nextsamp = randn(numbpara) * thisvaripara + thissamp
         
-            if verbtype > 1:
-                print 'Checking convergence...'
-                print 'nextsamp: '
-                print nextsamp
-
             # evaluate the log-likelihood
             nextfunc = func(nextsamp)
             errrfunctotl = fabs(nextfunc / thisfunc - 1.)
             thisbool = errrfunctotl < tolrfunc
+            
+            if verbtype > 1:
+                print 'Checking convergence...'
+                print 'nextsamp: '
+                print nextsamp
+                print 'errrfunctotl'
+                print errrfunctotl
+
         else:
             thisbool = False
 
