@@ -185,7 +185,7 @@ def minm(thissamp, func, verbtype=1, varipara=None, maxmswep=None, limtpara=None
             print nextsamp
 
         if limtpara != None:
-            if nextsamp[indxparamodi] > limt[0, indxparamodi] and nextsamp[indxparamodi] < limt[1, indxparamodi]:
+            if nextsamp[indxparamodi] > limtpara[0, indxparamodi] and nextsamp[indxparamodi] < limtpara[1, indxparamodi]:
                 boollimt = True
             else:
                 boollimt = False
