@@ -303,7 +303,7 @@ def plot_heal(heal, titl='', path=None, minmlgal=-180., maxmlgal=180., minmbgal=
     
     exttrofi = [minmlgal, maxmlgal, minmbgal, maxmbgal]
 
-    cart = tdpy.util.retr_cart(heal, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
+    cart = retr_cart(heal, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
     imag = plt.imshow(cart, origin='lower', cmap='Reds', extent=exttrofi)
     plt.colorbar(imag, fraction=0.05)
     plt.title(titl)
