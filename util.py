@@ -299,6 +299,26 @@ class cntr():
         self.cntr = 0
 
 
+def plot_heal(gdat, heal, rofi=True, titl='', path=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90.):
+    
+    if rofi:
+        healtemp = copy(heal)
+        heal = zeros(gdat.numbpixlheal)
+        heal[gdat.indxpixlrofi] = healtemp
+    exttrofi = [minmlgal, maxmlgal, minmbgal, maxmbgal]
+
+    cart = tdpy.util.retr_cart(heal, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
+    imag = plt.imshow(cart, origin='lower', cmap='Reds', extent=exttrofi)
+    plt.colorbar(imag, fraction=0.05)
+    plt.title(titl)
+
+    if path != None:
+        plt.savefig(path)
+        plt.close(figr)
+    else:
+        plt.show()
+    
+
 def cart_heal_depr(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
     
     nbgcr = cart.shape[0]
