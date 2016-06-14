@@ -299,7 +299,7 @@ class cntr():
         self.cntr = 0
 
 
-def plot_heal(gdat, heal, rofi=True, titl='', path=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90.):
+def plot_heal(heal, rofi=True, titl='', path=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90.):
     
     if rofi:
         healtemp = copy(heal)
