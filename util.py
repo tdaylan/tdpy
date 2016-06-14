@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 from numpy import *
 from numpy.random import *
 from numpy.random import choice
