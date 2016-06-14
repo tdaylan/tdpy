@@ -299,12 +299,8 @@ class cntr():
         self.cntr = 0
 
 
-def plot_heal(heal, rofi=True, titl='', path=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90.):
+def plot_heal(heal, titl='', path=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90.):
     
-    if rofi:
-        healtemp = copy(heal)
-        heal = zeros(gdat.numbpixlheal)
-        heal[gdat.indxpixlrofi] = healtemp
     exttrofi = [minmlgal, maxmlgal, minmbgal, maxmbgal]
 
     cart = tdpy.util.retr_cart(heal, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
