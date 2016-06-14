@@ -309,6 +309,9 @@ def plot_heal(heal, titl='', path=None, minmlgal=-180., maxmlgal=180., minmbgal=
     plt.colorbar(imag, fraction=0.05)
     plt.title(titl)
 
+    print 'hey'
+    print 'path'
+    print path
     if path != None:
         plt.savefig(path)
         plt.close(figr)
