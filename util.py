@@ -305,13 +305,12 @@ def plot_heal(heal, titl='', path=None, minmlgal=-180., maxmlgal=180., minmbgal=
     exttrofi = [minmlgal, maxmlgal, minmbgal, maxmbgal]
 
     cart = retr_cart(heal, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
+    
+    figr, axis = plt.subplots(figsize=(8, 8))
     imag = plt.imshow(cart, origin='lower', cmap='Reds', extent=exttrofi)
     plt.colorbar(imag, fraction=0.05)
     plt.title(titl)
 
-    print 'hey'
-    print 'path'
-    print path
     if path != None:
         plt.savefig(path)
         plt.close(figr)
