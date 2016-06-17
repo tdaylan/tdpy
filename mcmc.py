@@ -256,7 +256,7 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     listaccp = listaccp.flatten()
     listindxparamodi = listindxparamodi.flatten()
 
-    pathplot = pathbase + '/png/%s/' % rtag
+    pathplot = pathbase + '/imag/%s/' % rtag
     os.system('mkdir -p %s' % pathplot)
 
     if verbtype > 1:
@@ -490,7 +490,7 @@ def plot_gmrb(path, gmrbstat):
     axis.set_title('Gelman-Rubin Convergence Test')
     axis.set_xlabel('PSRF')
     axis.set_ylabel('$N_p$')
-    figr.savefig(path + '_gmrb.png')
+    figr.savefig(path + '_gmrb.pdf')
     plt.close(figr)
 
         
@@ -516,7 +516,7 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara
             histaccp = axis.hist(indxlistintc, binstime, color='g')
             axis.set_title(strgpara[k])
     plt.subplots_adjust(hspace=0.3)
-    plt.savefig(path + 'propeffi.png')
+    plt.savefig(path + 'propeffi.pdf')
     plt.close(figr)
 
 
@@ -573,7 +573,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
     figr.subplots_adjust(top=0.9, wspace=0.4, bottom=0.2)
 
     if path != None:
-        figr.savefig(path + '_trac.png')
+        figr.savefig(path + '_trac.pdf')
         plt.close(figr)
     else:
         plt.show()
@@ -682,7 +682,7 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
         if path == None:
             plt.show()
         else:
-            plt.savefig(path + strg + '.png')
+            plt.savefig(path + strg + '.pdf')
             plt.close(figr)
     
 

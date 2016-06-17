@@ -47,7 +47,7 @@ def retr_datapara():
     return datapara               
                                 
 # target PDF
-imag = sp.ndimage.imread('turkflag.png')
+imag = sp.ndimage.imread('turkflag.pdf')
 rati = float(imag.shape[0]) / imag.shape[1]
 xinp = linspace(0., 1., imag.shape[1])
 yinp = linspace(0., 1., imag.shape[0])
@@ -63,13 +63,13 @@ pdfn = 0.3 * pdfn[:, :, 0]
 
 figr, axis = plt.subplots()
 axis.imshow(imag, extent=[0., 1., 0., 1.], interpolation='none', aspect=rati)
-plt.savefig('imag.png')
+plt.savefig('imag.pdf')
 plt.close(figr) 
 
 figr, axis = plt.subplots()
 imag = axis.imshow(pdfn, extent=[0., 1., 0., 1.], interpolation='none', aspect=rati)
 plt.colorbar(imag)
-plt.savefig('targ.png')
+plt.savefig('targ.pdf')
 plt.close(figr) 
 
 # MCMC setup
@@ -94,9 +94,9 @@ for k in range(numbfram):
     axis.scatter(listxpos[:indxsamp], listypos[:indxsamp], s=3)
     axis.set_xlim([0., 1.])
     axis.set_ylim([0., 1.])
-    path = pathtemp + '%04d.png' % k
+    path = pathtemp + '%04d.pdf' % k
     plt.savefig(path)
     plt.close(figr) 
 
-cmnd = 'convert -delay 20 %s*.png post.gif' % pathtemp
+cmnd = 'convert -delay 20 %s*.pdf post.gif' % pathtemp
 os.system(cmnd)
