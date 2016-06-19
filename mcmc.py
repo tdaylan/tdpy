@@ -109,84 +109,81 @@ def gmrb_test(griddata):
     return psrf
 
 
-def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, pathbase='./', rtag='', numbburn=None, truepara=None, \
+def init(numbproc, numbswep, llikfunc, datapara, initsamp=None, optiprop=False, pathbase='./', rtag='', numbburn=None, truepara=None, \
     numbplotside=None, factthin=None, verbtype=0, factpropeffi=2.):
+   
+    # construct the global object
+    gdat = util.gdatstrt()
+    gdat.numbproc = numbproc
+    gdat.numbswep = numbswep
+    gdat.llikfunc = llikfunc
+    gdat.datapara = datapara
+    gdat.initsamp = initsamp
+    gdat.optiprop = optiprop
+    gdat.pathbase = pathbase
+    gdat.rtag = rtag
+    gdat.numbburn = numbburn
+    gdat.truepara = truepara
+    gdat.numbplotside = numbplotside
+    gdat.factthin = factthin
+    gdat.verbtype = verbtype
+    gdat.factpropeffi = factpropeffi
     
-    global namepara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara
     namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara = datapara
     
-    global numbpara, indxpara
-    numbpara = len(datapara[0])
-    indxpara = arange(numbpara)
+    gdat.numbpara = len(datapara[0])
+    gdat.indxpara = arange(gdat.numbpara)
         
     # Defaults
     if truepara == None:
-        truepara = array([None] * numbpara)
+        truepara = array([None] * gdat.numbpara)
         
     if numbplotside == None:
-        numbplotside = numbpara
+        numbplotside = gdat.numbpara
 
     # Sampler settings
-    if numbburn == None:
-        numbburn = numbswep / 10
-    if factthin == None:
-        factthin = 4 * numbpara
+    if gdat.numbburn == None:
+        gdat.numbburn = gdat.numbswep / 10
+    if gdat.factthin == None:
+        gdat.factthin = 4 * gdat.numbpara
    
-    indxproc = arange(numbproc)
+    gdat.indxproc = arange(gdat.numbproc)
 
     # sweeps to be saved
-    global save
-    save = zeros(numbswep, dtype=bool)
-    indxswepsave = arange(numbburn, numbswep, factthin)
-    save[indxswepsave] = True
+    gdat.boolsave = zeros(gdat.numbswep, dtype=bool)
+    gdat.indxswepsave = arange(gdat.numbburn, gdat.numbswep, gdat.factthin)
+    gdat.boolsave[gdat.indxswepsave] = True
     
-    if thissamp == None:
-        thissamp = rand(numbproc * numbpara).reshape((numbproc, numbpara))
+    gdat.indxsampsave = zeros(gdat.numbswep, dtype=int)
+    gdat.numbsamp = retr_numbsamp(gdat.numbswep, gdat.numbburn, gdat.factthin)
+    gdat.indxsamp = arange(gdat.numbsamp)
+    gdat.numbsamptotl = gdat.numbsamp * gdat.numbproc
+    gdat.indxsamptotl = arange(gdat.numbsamptotl)
+    gdat.indxsampsave[gdat.indxswepsave] = arange(gdat.numbsamp)
 
-    global indxsampsave
-    indxsampsave = zeros(numbswep, dtype=int)
-    numbsamp = retr_numbsamp(numbswep, numbburn, factthin)
-    indxsampsave[indxswepsave] = arange(numbsamp)
-
-    global listsamp, listsampvarb, listsampcalc, listllik, listaccp, listindxparamodi
-    listsamp = zeros((numbsamp, numbpara)) + -1.
-    listsampvarb = zeros((numbsamp, numbpara))
-    listllik = zeros(numbsamp)
-    listaccp = empty(numbswep, dtype=bool)
-    listindxparamodi = empty(numbswep, dtype=int)
-    
-    global cntrprog, cntrswep
-    cntrprog = -1
-    cntrswep = 0
-    
     # initialize the chain
     
     if verbtype > 1:
         print 'Forking the sampler...'
 
-    thisllik, thissampcalc = llikfunc(icdf_samp(thissamp[0, :], datapara))
-    numbsampcalc = len(thissampcalc)
-    listsampcalc = [[] for k in range(numbsampcalc)]
-
-    listobjt = numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, pathbase, rtag, numbburn, \
-        truepara, numbplotside, factthin, verbtype, numbsampcalc, factpropeffi
+    # get the number of auxiliary variables to be saved for each sample
+    tempsamp = rand(gdat.numbpara)
+    thisllik, thissampcalc = llikfunc(icdf_samp(tempsamp, gdat.datapara))
+    gdat.numbsampcalc = len(thissampcalc)
 
     if numbproc == 1:
-        listchan = [work(listobjt, 0)]
+        listchan = [work(gdat, 0)]
     else:
         pool = mp.Pool(numbproc)
-        workpart = functools.partial(work, listobjt)
+        workpart = functools.partial(work, gdat)
         listchan = pool.map(workpart, indxproc)
-    
+   
         pool.close()
         pool.join()
 
     if verbtype > 0:
         print 'Accumulating samples from all processes...'
         tim0 = time.time()
-
-
-    numbsamp = retr_numbsamp(numbswep, numbburn, factthin)
 
     # parse the sample chain
     listsampvarb = zeros((numbsamp, numbproc, numbpara))
@@ -206,7 +203,7 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
         listsampvarb[:, k, :] = listchan[k][0]
         listsamp[:, k, :] = listchan[k][1]
         for n in range(numbsampcalc):
-            for j in range(numbsamp):
+            for j in indxsamp:
                 print listchan[k][2][j][n].size
                 print 'k, n, j', k, n, j
                 print 'len(listchan)'
@@ -248,10 +245,10 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
             timefinl = time.time()
             print 'Done in %.3g seconds' % (timefinl - timeinit)
 
-    listsampvarb = listsampvarb.reshape((numbsamp * numbproc, numbpara))
-    listsamp = listsamp.reshape((numbsamp * numbproc, numbpara))
+    listsampvarb = listsampvarb.reshape((numbsamptotl, numbpara))
+    listsamp = listsamp.reshape((numbsamptotl, numbpara))
     for n in range(numbsampcalc):
-        listsampcalc[n] = listsampcalc[n].reshape((numbsamp * numbproc, -1))
+        listsampcalc[n] = listsampcalc[n].reshape((numbsamptotl, -1))
     listllik = listllik.flatten()
     listaccp = listaccp.flatten()
     listindxparamodi = listindxparamodi.flatten()
@@ -290,32 +287,38 @@ def init(numbproc, numbswep, llikfunc, datapara, thissamp=None, optiprop=False, 
     return chan
 
 
-def work(listobjt, indxprocwork):
+def work(gdat, indxprocwork):
     
     # re-seed the random number generator for the process
     seed()
     
-    numbproc, numbswep, llikfunc, datapara, thissamp, optiprop, pathbase, \
-        rtag, numbburn, truepara, numbplotside, factthin, verbtype, numbsampcalc, factpropeffi = listobjt
-       
-    thissamp = thissamp[indxprocwork, :]
-    thissampvarb = icdf_samp(thissamp, datapara)
+    listsampvarb = zeros((gdat.numbsamp, gdat.numbpara))
+    listsamp = zeros((gdat.numbsamp, gdat.numbpara)) + -1.
+    listsampcalc = []
+    listllik = zeros(gdat.numbsamp)
+    listaccp = empty(gdat.numbswep, dtype=bool)
+    listindxparamodi = empty(gdat.numbswep, dtype=int)
+    
+    if gdat.initsamp == None:
+        thissamp = rand(gdat.numbpara)
+    else:
+        thissamp = copy(gdat.initsamp)
+
+    thissampvarb = icdf_samp(thissamp, gdat.datapara)
     thisllik, thissampcalc = llikfunc(thissampvarb)
     
-    global varipara, listsamp, listsampvarb, listllik, listaccp, listindxparamodi
-
     # proposal scale optimization
-    pathvaripara = pathbase + '/varipara_' + rtag + '.fits'
+    pathvaripara = gdat.pathbase + '/varipara_' + gdat.rtag + '_%04d.fits' % indxprocwork
     if optiprop:
         if not os.path.isfile(pathvaripara): 
             if verbtype > 0:
                 print 'Optimizing proposal scale...'
             targpropeffi = 0.25
-            minmpropeffi = targpropeffi / factpropeffi
-            maxmpropeffi = targpropeffi * factpropeffi
-            perdpropeffi = 400 * numbpara
-            cntrprop = zeros(numbpara)
-            cntrproptotl = zeros(numbpara)
+            minmpropeffi = gdat.targpropeffi / gdat.factpropeffi
+            maxmpropeffi = gdat.targpropeffi * gdat.factpropeffi
+            perdpropeffi = 400 * gdat.numbpara
+            cntrprop = zeros(gdat.numbpara)
+            cntrproptotl = zeros(gdat.numbpara)
             optipropdone = False
             cntroptisamp = 0
             cntroptimean = 0
@@ -330,11 +333,12 @@ def work(listobjt, indxprocwork):
             print 'Skipping proposal scale optimization...'
         optipropdone = True
 
-    global cntrprog, cntrswep
-    while cntrswep < numbswep:
+    cntrprog = -1
+    cntrswep = 0
+    while cntrswep < gdat.numbswep:
         
         if verbtype > 0:
-            cntrprog = util.show_prog(cntrswep, numbswep, cntrprog, indxprocwork=indxprocwork) 
+            cntrprog = util.show_prog(cntrswep, gdat.numbswep, cntrprog, indxprocwork=indxprocwork) 
 
         if verbtype > 1:
             print
@@ -348,7 +352,7 @@ def work(listobjt, indxprocwork):
             print
             
         # propose a sample
-        indxparamodi = choice(indxpara)
+        indxparamodi = choice(gdat.indxpara)
         nextsamp = copy(thissamp)
         nextsamp[indxparamodi] = randn() * varipara[indxparamodi] + thissamp[indxparamodi]
         
@@ -360,7 +364,7 @@ def work(listobjt, indxprocwork):
 
         if where((nextsamp < 0.) | (nextsamp > 1.))[0].size == 0:
 
-            nextsampvarb = icdf_samp(nextsamp, datapara)
+            nextsampvarb = icdf_samp(nextsamp, gdat.datapara)
 
             if verbtype > 1:
                 print 'nextsampvarb: '
@@ -403,12 +407,11 @@ def work(listobjt, indxprocwork):
          
         listindxparamodi[cntrswep] = indxparamodi
         
-        if save[cntrswep]:
-            listllik[indxsampsave[cntrswep]] = thisllik
-            listsamp[indxsampsave[cntrswep], :] = thissamp
-            listsampvarb[indxsampsave[cntrswep], :] = thissampvarb
-            for k in range(numbsampcalc):
-                listsampcalc[k].append(thissampcalc[k])
+        if gdat.boolsave[cntrswep]:
+            listllik[gdat.indxsampsave[cntrswep]] = copy(thisllik)
+            listsamp[gdat.indxsampsave[cntrswep], :] = copy(thissamp)
+            listsampvarb[gdat.indxsampsave[cntrswep], :] = copy(thissampvarb)
+            listsampcalc.append(copy(thissampcalc))
         
         if optipropdone:
             cntrswep += 1
@@ -417,7 +420,7 @@ def work(listobjt, indxprocwork):
             if listaccp[cntrswep]:
                 cntrprop[indxparamodi] += 1.
 
-            if cntroptisamp % perdpropeffi == 0 and (cntrproptotl > 0).all():
+            if cntroptisamp % gdat.perdpropeffi == 0 and (cntrproptotl > 0).all():
                 
                 thispropeffi = cntrprop / cntrproptotl 
                 print 'Proposal scale optimization step %d' % cntroptimean
@@ -457,14 +460,13 @@ def work(listobjt, indxprocwork):
 
 def retr_atcr(listsamp, numbdela=10):
     
-    numbsamp = listsamp.shape[1]
-    numbpara = listsamp.shape[1]
+    numbparatemp = listsamp.shape[1]
     
     # mean square signal
     meansqrd = mean(listsamp, axis=0)**2
 
     # autocorrelation
-    atcr = empty((numbdela, numbpara))
+    atcr = empty((numbdela, numbparatemp))
     for t in range(numbdela):
         atcr[t, :] = mean(roll(listsamp, t, axis=0) * listsamp - meansqrd[None, :], axis=0)
         

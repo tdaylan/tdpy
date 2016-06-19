@@ -47,7 +47,8 @@ def retr_datapara():
     return datapara               
                                 
 # target PDF
-imag = sp.ndimage.imread('turkflag.pdf')
+path = path = os.environ["TDPY_DATA_PATH"] + '/turkflag.png'
+imag = sp.ndimage.imread(path)
 rati = float(imag.shape[0]) / imag.shape[1]
 xinp = linspace(0., 1., imag.shape[1])
 yinp = linspace(0., 1., imag.shape[0])

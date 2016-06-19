@@ -14,6 +14,12 @@ import healpy as hp
 # utilities
 import sh, os
 
+class gdatstrt(object):
+    
+    def __init__(self):
+        pass
+
+
 def retr_nfwp(nfwg, numbside, norm=None):
     
     edenlocl = 0.3 # [GeV/cm^3]
