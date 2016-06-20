@@ -12,37 +12,40 @@ def retr_llik(sampvarb):
     ypos = sampvarb[1]
 
     llik = sp.interpolate.interp2d(xgrd, ygrd, pdfn)(xpos, ypos)
+    sampcalc = [arange(5), arange(6)]
 
-    return llik, []
+    return llik, sampcalc
+
 
 def retr_datapara():
     
     numbpara = 2
-
-    dictpara = dict()
-    minmpara = zeros(numbpara)
-    maxmpara = zeros(numbpara)
-    namepara = empty(numbpara, dtype=object)
-    scalpara = empty(numbpara, dtype=object)
-    lablpara = empty(numbpara, dtype=object)
-    unitpara = empty(numbpara, dtype=object)
-    varipara = zeros(numbpara)
     
-    dictpara['xpos'] = 0
-    dictpara['ypos'] = 0
-    namepara[0] = 'xpos'
-    namepara[1] = 'ypos'
-    minmpara[:] = 0.
-    maxmpara[:] = 1.
-    scalpara[:] = 'self'
-    lablpara[0] = r'$x$'
-    lablpara[1] = r'$y$'
-    unitpara[:] = ''
-    varipara[:] = 1e-1
+    datapara = tdpy.util.gdatstrt()
 
-    strgpara = lablpara + ' ' + unitpara
-
-    datapara = namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara
+    datapara.indx = dict()
+    datapara.minm = zeros(numbpara)
+    datapara.maxm = zeros(numbpara)
+    datapara.true = zeros(numbpara)
+    datapara.name = empty(numbpara, dtype=object)
+    datapara.scal = empty(numbpara, dtype=object)
+    datapara.labl = empty(numbpara, dtype=object)
+    datapara.unit = empty(numbpara, dtype=object)
+    datapara.vari = zeros(numbpara)
+    
+    datapara.indx['xpos'] = 0
+    datapara.indx['ypos'] = 0
+    datapara.name[0] = 'xpos'
+    datapara.name[1] = 'ypos'
+    datapara.minm[:] = 0.
+    datapara.maxm[:] = 1.
+    datapara.scal[:] = 'self'
+    datapara.labl[0] = r'$x$'
+    datapara.labl[1] = r'$y$'
+    datapara.unit[:] = ''
+    datapara.vari[:] = 1e-1
+    datapara.true[:] = None
+    datapara.strg = datapara.labl + ' ' + datapara.unit
 
     return datapara               
                                 
@@ -75,8 +78,8 @@ plt.close(figr)
 
 # MCMC setup
 verbtype = 1
-numbproc = 1
-numbswep = 1000000
+numbproc = 2
+numbswep = 7
 datapara = retr_datapara()
 optiprop = True
 pathbase = '/Users/tansu/Desktop/'
@@ -90,7 +93,6 @@ pathtemp = pathbase + 'post'
 numbfram = 10
 for k in range(numbfram):
     indxsamp = int(numbsamp * float(k) / numbfram)
-    print indxsamp
     figr, axis = plt.subplots()
     axis.scatter(listxpos[:indxsamp], listypos[:indxsamp], s=3)
     axis.set_xlim([0., 1.])

@@ -7,6 +7,7 @@ from scipy.interpolate import *
 import scipy as sp
 import pyfits as pf
 import time, os
+import copy as copytemp
 
 import multiprocessing as mp, functools
 
@@ -66,12 +67,12 @@ def cdfn_samp(sampvarb, datapara, k=None):
 
 def cdfn_samp_sing(sampvarb, k, datapara):
     
-    if datapara[4][k] == 'self':
-        samp = cdfn_self(sampvarb, datapara[2][k], datapara[3][k])
-    if datapara[4][k] == 'logt':
-        samp = cdfn_logt(sampvarb, datapara[2][k], datapara[3][k])
-    if datapara[4][k] == 'atan':
-        samp = cdfn_atan(sampvarb, datapara[2][k], datapara[3][k])
+    if datapara.scal[k] == 'self':
+        samp = cdfn_self(sampvarb, datapara.minm[k], datapara.maxm[k])
+    if datapara.scal[k] == 'logt':
+        samp = cdfn_logt(sampvarb, datapara.minm[k], datapara.maxm[k])
+    if datapara.scal[k] == 'atan':
+        samp = cdfn_atan(sampvarb, datapara.minm[k], datapara.maxm[k])
         
     return samp
 
@@ -89,12 +90,12 @@ def icdf_samp(samp, datapara, k=None):
 
 def icdf_samp_sing(samp, k, datapara):
 
-    if datapara[4][k] == 'self':
-        sampvarb = icdf_self(samp, datapara[2][k], datapara[3][k])
-    if datapara[4][k] == 'logt':
-        sampvarb = icdf_logt(samp, datapara[2][k], datapara[3][k])
-    if datapara[4][k] == 'atan':
-        sampvarb = icdf_atan(samp, datapara[2][k], datapara[3][k])
+    if datapara.scal[k] == 'self':
+        sampvarb = icdf_self(samp, datapara.minm[k], datapara.maxm[k])
+    if datapara.scal[k] == 'logt':
+        sampvarb = icdf_logt(samp, datapara.minm[k], datapara.maxm[k])
+    if datapara.scal[k] == 'atan':
+        sampvarb = icdf_atan(samp, datapara.minm[k], datapara.maxm[k])
         
     return sampvarb
 
@@ -129,9 +130,9 @@ def init(numbproc, numbswep, llikfunc, datapara, initsamp=None, optiprop=False, 
     gdat.verbtype = verbtype
     gdat.factpropeffi = factpropeffi
     
-    namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara = datapara
+    #namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara = datapara
     
-    gdat.numbpara = len(datapara[0])
+    gdat.numbpara = len(datapara.name)
     gdat.indxpara = arange(gdat.numbpara)
         
     # Defaults
@@ -143,9 +144,9 @@ def init(numbproc, numbswep, llikfunc, datapara, initsamp=None, optiprop=False, 
 
     # Sampler settings
     if gdat.numbburn == None:
-        gdat.numbburn = gdat.numbswep / 10
+        gdat.numbburn = int(floor(0.1 * gdat.numbswep))
     if gdat.factthin == None:
-        gdat.factthin = 4 * gdat.numbpara
+        gdat.factthin = min(gdat.numbswep - gdat.numbburn, 4 * gdat.numbpara)
    
     gdat.indxproc = arange(gdat.numbproc)
 
@@ -162,67 +163,53 @@ def init(numbproc, numbswep, llikfunc, datapara, initsamp=None, optiprop=False, 
     gdat.indxsampsave[gdat.indxswepsave] = arange(gdat.numbsamp)
 
     # initialize the chain
-    
-    if verbtype > 1:
+    if gdat.verbtype > 1:
         print 'Forking the sampler...'
 
     # get the number of auxiliary variables to be saved for each sample
     tempsamp = rand(gdat.numbpara)
-    thisllik, thissampcalc = llikfunc(icdf_samp(tempsamp, gdat.datapara))
-    gdat.numbsampcalc = len(thissampcalc)
+    templlik, tempsampcalc = gdat.llikfunc(icdf_samp(tempsamp, gdat.datapara))
+    gdat.numbsampcalc = len(tempsampcalc)
+    gdat.indxsampcalc = arange(gdat.numbsampcalc)
 
     if numbproc == 1:
         listchan = [work(gdat, 0)]
     else:
         pool = mp.Pool(numbproc)
         workpart = functools.partial(work, gdat)
-        listchan = pool.map(workpart, indxproc)
+        listchan = pool.map(workpart, gdat.indxproc)
    
         pool.close()
         pool.join()
 
-    if verbtype > 0:
+    if gdat.verbtype > 0:
         print 'Accumulating samples from all processes...'
         tim0 = time.time()
 
     # parse the sample chain
-    listsampvarb = zeros((numbsamp, numbproc, numbpara))
-    listsamp = zeros((numbsamp, numbproc, numbpara))
+    listsampvarb = zeros((gdat.numbsamp, gdat.numbproc, gdat.numbpara))
+    listsamp = zeros((gdat.numbsamp, gdat.numbproc, gdat.numbpara))
     listsampcalc = []
-    for n in range(numbsampcalc):
+    for n in gdat.indxsampcalc:
         size = listchan[0][2][0][n].size
-        listsampcalc.append(empty((numbsamp, numbproc, size)))
-        print 'size: ', size
-    print
-    listllik = zeros((numbsamp, numbproc))
-    listaccp = zeros((numbswep, numbproc))
-    listindxparamodi = zeros((numbswep, numbproc))
+        listsampcalc.append(empty((gdat.numbsamp, gdat.numbproc, size)))
+    listllik = zeros((gdat.numbsamp, gdat.numbproc))
+    listaccp = zeros((gdat.numbswep, gdat.numbproc))
+    listindxparamodi = zeros((gdat.numbswep, gdat.numbproc))
 
-    indxproc = arange(numbproc)
-    for k in indxproc:
+    for k in gdat.indxproc:
         listsampvarb[:, k, :] = listchan[k][0]
         listsamp[:, k, :] = listchan[k][1]
-        for n in range(numbsampcalc):
-            for j in indxsamp:
-                print listchan[k][2][j][n].size
-                print 'k, n, j', k, n, j
-                print 'len(listchan)'
-                print len(listchan)
-                print 'len(listchan[k][2])'
-                print len(listchan[k][2])
-                print 'len(listchan[k][2][j])'
-                print len(listchan[k][2][j])
-                print 'lenlistchan[k][2][j][n]'
-                print len(listchan[k][2][j][n])
-                print
+        for j in gdat.indxsamp:
+            for n in gdat.indxsampcalc:
                 listsampcalc[n][j, k, :] = listchan[k][2][j][n]
         listllik[:, k] = listchan[k][3]
         listaccp[:, k] = listchan[k][4]
         listindxparamodi[:, k] = listchan[k][5]
 
     indxlistaccp = where(listaccp == True)[0]
-    propeffi = zeros(numbpara)
-    for k in range(numbpara):
+    propeffi = zeros(gdat.numbpara)
+    for k in gdat.indxpara:
         indxlistpara = where(listindxparamodi == k)[0]
         indxlistintc = intersect1d(indxlistaccp, indxlistpara, assume_unique=True)
         if indxlistpara.size != 0:
@@ -232,53 +219,51 @@ def init(numbproc, numbswep, llikfunc, datapara, initsamp=None, optiprop=False, 
     levi = -log(mean(1. / exp(listllik - minmlistllik))) + minmlistllik
     info = mean(listllik) - levi
     
-    strgpara = lablpara + ' ' + unitpara
-
-    gmrbstat = zeros(numbpara)
+    gmrbstat = zeros(gdat.numbpara)
     if numbproc > 1:
-        if verbtype > 1:
+        if gdat.verbtype > 1:
             print 'Performing Gelman-Rubin convergence test...'
             tim0 = time.time()
-        for k in indxpara:
+        for k in gdat.indxpara:
             gmrbstat[k] = gmrb_test(listsampvarb[:, :, k])
-        if verbtype > 1:
+        if gdat.verbtype > 1:
             timefinl = time.time()
             print 'Done in %.3g seconds' % (timefinl - timeinit)
 
-    listsampvarb = listsampvarb.reshape((numbsamptotl, numbpara))
-    listsamp = listsamp.reshape((numbsamptotl, numbpara))
-    for n in range(numbsampcalc):
-        listsampcalc[n] = listsampcalc[n].reshape((numbsamptotl, -1))
+    listsampvarb = listsampvarb.reshape((gdat.numbsamptotl, gdat.numbpara))
+    listsamp = listsamp.reshape((gdat.numbsamptotl, gdat.numbpara))
+    for n in gdat.indxsampcalc:
+        listsampcalc[n] = listsampcalc[n].reshape((gdat.numbsamptotl, -1))
     listllik = listllik.flatten()
     listaccp = listaccp.flatten()
     listindxparamodi = listindxparamodi.flatten()
 
-    pathplot = pathbase + '/imag/%s/' % rtag
-    os.system('mkdir -p %s' % pathplot)
+    gdat.pathplot = gdat.pathbase + '/imag/%s/' % gdat.rtag
+    os.system('mkdir -p %s' % gdat.pathplot)
 
-    if verbtype > 1:
+    if gdat.verbtype > 1:
         print 'Making plots...'
         timeinit = time.time()
     
-    path = pathplot
-    plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara)
+    path = gdat.pathplot
+    plot_propeffi(path, gdat.numbswep, gdat.numbpara, listaccp, listindxparamodi, gdat.datapara.strg)
 
-    path = pathplot + 'llik'
+    path = gdat.pathplot + 'llik'
     plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
     
     if numbplotside != 0:
-        path = pathplot
-        plot_grid(path, listsampvarb, strgpara, truepara=truepara, scalpara=scalpara, numbplotside=numbplotside)
+        path = gdat.pathplot
+        plot_grid(path, listsampvarb, gdat.datapara.strg, truepara=gdat.datapara.true, scalpara=gdat.datapara.scal, numbplotside=numbplotside)
         
-    for k in indxpara:
-        path = pathplot + namepara[k]
-        plot_trac(path, listsampvarb[:, k], strgpara[k], scalpara=scalpara[k], truepara=truepara[k])
+    for k in gdat.indxpara:
+        path = gdat.pathplot + gdat.datapara.name[k]
+        plot_trac(path, listsampvarb[:, k], gdat.datapara.strg[k], scalpara=gdat.datapara.scal[k], truepara=gdat.datapara.true[k])
         
-    if numbproc > 1:
-        path = pathplot + 'gmrb'
+    if gdat.numbproc > 1 and gdat.numbsamp > 1:
+        path = gdat.pathplot + 'gmrb'
         plot_gmrb(path, gmrbstat)
             
-    if verbtype > 1:
+    if gdat.verbtype > 1:
         timefinl = time.time()
         print 'Done in %.3g seconds' % (timefinl - timeinit)
 
@@ -305,42 +290,44 @@ def work(gdat, indxprocwork):
         thissamp = copy(gdat.initsamp)
 
     thissampvarb = icdf_samp(thissamp, gdat.datapara)
-    thisllik, thissampcalc = llikfunc(thissampvarb)
+    thisllik, thissampcalc = gdat.llikfunc(thissampvarb)
+    
+    datapara = copytemp.deepcopy(gdat.datapara)
     
     # proposal scale optimization
-    pathvaripara = gdat.pathbase + '/varipara_' + gdat.rtag + '_%04d.fits' % indxprocwork
-    if optiprop:
+    pathvaripara = gdat.pathbase + '/varipara_' + gdat.rtag + '.fits'
+    if gdat.optiprop:
         if not os.path.isfile(pathvaripara): 
-            if verbtype > 0:
+            if gdat.verbtype > 0 and indxprocwork == 0:
                 print 'Optimizing proposal scale...'
             targpropeffi = 0.25
-            minmpropeffi = gdat.targpropeffi / gdat.factpropeffi
-            maxmpropeffi = gdat.targpropeffi * gdat.factpropeffi
+            minmpropeffi = targpropeffi / gdat.factpropeffi
+            maxmpropeffi = targpropeffi * gdat.factpropeffi
             perdpropeffi = 400 * gdat.numbpara
             cntrprop = zeros(gdat.numbpara)
             cntrproptotl = zeros(gdat.numbpara)
-            optipropdone = False
+            gdat.optipropdone = False
             cntroptisamp = 0
             cntroptimean = 0
             thissamptemp = copy(thissamp)
         else:
-            if verbtype > 0:
+            if gdat.verbtype > 0 and indxprocwork == 0:
                 print 'Retrieving the optimal proposal scale from %s...' % pathvaripara
-            optipropdone = True
+            gdat.optipropdone = True
             varipara = pf.getdata(pathvaripara)
     else:
-        if verbtype > 0:
+        if gdat.verbtype > 0 and indxprocwork == 0:
             print 'Skipping proposal scale optimization...'
-        optipropdone = True
+        gdat.optipropdone = True
 
     cntrprog = -1
     cntrswep = 0
     while cntrswep < gdat.numbswep:
         
-        if verbtype > 0:
+        if gdat.verbtype > 0:
             cntrprog = util.show_prog(cntrswep, gdat.numbswep, cntrprog, indxprocwork=indxprocwork) 
 
-        if verbtype > 1:
+        if gdat.verbtype > 1:
             print
             print '-' * 10
             print 'Sweep %d' % cntrswep
@@ -354,9 +341,9 @@ def work(gdat, indxprocwork):
         # propose a sample
         indxparamodi = choice(gdat.indxpara)
         nextsamp = copy(thissamp)
-        nextsamp[indxparamodi] = randn() * varipara[indxparamodi] + thissamp[indxparamodi]
+        nextsamp[indxparamodi] = randn() * gdat.datapara.vari[indxparamodi] + thissamp[indxparamodi]
         
-        if verbtype > 1:
+        if gdat.verbtype > 1:
             print 'indxparamodi'
             print namepara[indxparamodi]
             print 'nextsamp: '
@@ -366,15 +353,15 @@ def work(gdat, indxprocwork):
 
             nextsampvarb = icdf_samp(nextsamp, gdat.datapara)
 
-            if verbtype > 1:
+            if gdat.verbtype > 1:
                 print 'nextsampvarb: '
                 print nextsampvarb
 
             # evaluate the log-likelihood
-            nextllik, nextsampcalc = llikfunc(nextsampvarb)
+            nextllik, nextsampcalc = gdat.llikfunc(nextsampvarb)
             accpprob = exp(nextllik - thisllik)
 
-            if verbtype > 1:
+            if gdat.verbtype > 1:
                 print 'thisllik: '
                 print thisllik
                 print 'nextllik: '
@@ -385,7 +372,7 @@ def work(gdat, indxprocwork):
         # accept
         if accpprob >= rand():
 
-            if verbtype > 1:
+            if gdat.verbtype > 1:
                 print 'Accepted.'
 
             # store utility variables
@@ -399,7 +386,7 @@ def work(gdat, indxprocwork):
         
         else:
 
-            if verbtype > 1:
+            if gdat.verbtype > 1:
                 print 'Rejected.'
 
             # store the utility variables
@@ -413,16 +400,16 @@ def work(gdat, indxprocwork):
             listsampvarb[gdat.indxsampsave[cntrswep], :] = copy(thissampvarb)
             listsampcalc.append(copy(thissampcalc))
         
-        if optipropdone:
+        if gdat.optipropdone:
             cntrswep += 1
         else:
             cntrproptotl[indxparamodi] += 1.
             if listaccp[cntrswep]:
                 cntrprop[indxparamodi] += 1.
 
-            if cntroptisamp % gdat.perdpropeffi == 0 and (cntrproptotl > 0).all():
+            if cntroptisamp % perdpropeffi == 0 and (cntrproptotl > 0).all():
                 
-                thispropeffi = cntrprop / cntrproptotl 
+                thispropeffi = cntrprop / cntrproptotl
                 print 'Proposal scale optimization step %d' % cntroptimean
                 print 'Current proposal efficiency'
                 print thispropeffi
@@ -432,14 +419,14 @@ def work(gdat, indxprocwork):
                 print std(thispropeffi)
                 if (thispropeffi > minmpropeffi).all() and (thispropeffi < maxmpropeffi).all():
                     print 'Optimized variance: '
-                    print varipara
+                    print datapara.vari
                     print 'Writing the optimized variance to %s...' % pathvaripara
-                    optipropdone = True
+                    gdat.optipropdone = True
                     thissamp = thissamptemp
-                    pf.writeto(pathvaripara, varipara, clobber=True)
+                    pf.writeto(pathvaripara, datapara.vari, clobber=True)
                 else:
                     factcorr = 2**(thispropeffi / targpropeffi - 1.)
-                    varipara *= factcorr
+                    gdat.datapara.vari *= factcorr
                     cntrprop[:] = 0.
                     cntrproptotl[:] = 0.
                     print 'Current sample'
@@ -447,11 +434,10 @@ def work(gdat, indxprocwork):
                     print 'Correction factor'
                     print factcorr
                     print 'Current variance: '
-                    print varipara
+                    print datapara.vari
                     print
                 cntroptimean += 1
             cntroptisamp += 1
-
     
     chan = [listsampvarb, listsamp, listsampcalc, listllik, listaccp, listindxparamodi]
 
