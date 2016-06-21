@@ -110,7 +110,7 @@ def gmrb_test(griddata):
     return psrf
 
 
-def init(numbproc, numbswep, llikfunc, datapara, initsamp=None, optiprop=False, pathbase='./', rtag='', numbburn=None, truepara=None, \
+def init(numbproc, numbswep, llikfunc, datapara, initsamp=None, optiprop=False, gdatextr=None, pathbase='./', rtag='', numbburn=None, truepara=None, \
     numbplotside=None, factthin=None, verbtype=0, factpropeffi=2.):
    
     # construct the global object
@@ -128,7 +128,8 @@ def init(numbproc, numbswep, llikfunc, datapara, initsamp=None, optiprop=False, 
     gdat.factthin = factthin
     gdat.verbtype = verbtype
     gdat.factpropeffi = factpropeffi
-    
+    gdat.gdatextr = gdatextr
+
     if gdat.verbtype > 1:
         print 'TDMC initialized.'
     
@@ -177,7 +178,7 @@ def init(numbproc, numbswep, llikfunc, datapara, initsamp=None, optiprop=False, 
 
     # get the number of auxiliary variables to be saved for each sample
     tempsamp = rand(gdat.numbpara)
-    templlik, tempsampcalc = gdat.llikfunc(icdf_samp(tempsamp, gdat.datapara))
+    templlik, tempsampcalc = gdat.llikfunc(icdf_samp(tempsamp, gdat.datapara), gdat.gdatextr)
     gdat.numbsampcalc = len(tempsampcalc)
     gdat.indxsampcalc = arange(gdat.numbsampcalc)
 
@@ -299,7 +300,7 @@ def work(gdat, indxprocwork):
         thissamp = copy(gdat.initsamp[indxprocwork, :])
 
     thissampvarb = icdf_samp(thissamp, gdat.datapara)
-    thisllik, thissampcalc = gdat.llikfunc(thissampvarb)
+    thisllik, thissampcalc = gdat.llikfunc(thissampvarb, gdat.gdatextr)
     
     if gdat.verbtype > 1:
         print 'Process %d' % indxprocwork
@@ -375,7 +376,7 @@ def work(gdat, indxprocwork):
                 print nextsampvarb
 
             # evaluate the log-likelihood
-            nextllik, nextsampcalc = gdat.llikfunc(nextsampvarb)
+            nextllik, nextsampcalc = gdat.llikfunc(nextsampvarb, gdat.gdatextr)
             accpprob = exp(nextllik - thisllik)
 
             if gdat.verbtype > 1:
