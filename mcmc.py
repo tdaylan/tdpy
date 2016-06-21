@@ -124,13 +124,13 @@ def init(numbproc, numbswep, llikfunc, datapara, initsamp=None, optiprop=False, 
     gdat.pathbase = pathbase
     gdat.rtag = rtag
     gdat.numbburn = numbburn
-    gdat.truepara = truepara
     gdat.numbplotside = numbplotside
     gdat.factthin = factthin
     gdat.verbtype = verbtype
     gdat.factpropeffi = factpropeffi
     
-    #namepara, strgpara, minmpara, maxmpara, scalpara, lablpara, unitpara, varipara, dictpara = datapara
+    if gdat.verbtype > 1:
+        print 'TDMC initialized.'
     
     gdat.numbpara = len(datapara.name)
     gdat.indxpara = arange(gdat.numbpara)
@@ -165,6 +165,15 @@ def init(numbproc, numbswep, llikfunc, datapara, initsamp=None, optiprop=False, 
     # initialize the chain
     if gdat.verbtype > 1:
         print 'Forking the sampler...'
+        print 'datapara'
+        print datapara.indx
+        print datapara.minm
+        print datapara.maxm
+        print datapara.name
+        print datapara.scal
+        print datapara.labl
+        print datapara.unit
+        print datapara.vari
 
     # get the number of auxiliary variables to be saved for each sample
     tempsamp = rand(gdat.numbpara)
@@ -287,11 +296,19 @@ def work(gdat, indxprocwork):
     if gdat.initsamp == None:
         thissamp = rand(gdat.numbpara)
     else:
-        thissamp = copy(gdat.initsamp)
+        thissamp = copy(gdat.initsamp[indxprocwork, :])
 
     thissampvarb = icdf_samp(thissamp, gdat.datapara)
     thisllik, thissampcalc = gdat.llikfunc(thissampvarb)
     
+    if gdat.verbtype > 1:
+        print 'Process %d' % indxprocwork
+        print 'thissamp'
+        print thissamp
+        print 'thissampvarb'
+        print thissampvarb
+        print
+
     datapara = copytemp.deepcopy(gdat.datapara)
     
     # proposal scale optimization
@@ -345,7 +362,7 @@ def work(gdat, indxprocwork):
         
         if gdat.verbtype > 1:
             print 'indxparamodi'
-            print namepara[indxparamodi]
+            print datapara.name[indxparamodi]
             print 'nextsamp: '
             print nextsamp
 
