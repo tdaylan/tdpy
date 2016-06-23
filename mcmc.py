@@ -548,7 +548,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
         figr.suptitle(titl, fontsize=18)
     for n, axis in enumerate(axrw):
         if n == 0:
-            axis.plot(listpara)
+            axis.plot(listpara, lw=1)
             axis.set_xlabel('$i_{samp}$')
             axis.set_ylabel(labl)
             if truepara != None:
