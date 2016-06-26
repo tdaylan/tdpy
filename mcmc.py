@@ -310,12 +310,13 @@ def work(gdat, indxprocwork):
         print thissampvarb
         print
 
-    datapara = copytemp.deepcopy(gdat.datapara)
+    varipara = copy(gdat.datapara.vari)
     
     # proposal scale optimization
     pathvaripara = gdat.pathbase + '/varipara_' + gdat.rtag + '.fits'
     if gdat.optiprop:
-        if not os.path.isfile(pathvaripara): 
+        # temp
+        if True or not os.path.isfile(pathvaripara): 
             if gdat.verbtype > 0 and indxprocwork == 0:
                 print 'Optimizing proposal scale...'
             targpropeffi = 0.25
@@ -327,7 +328,6 @@ def work(gdat, indxprocwork):
             gdat.optipropdone = False
             cntroptisamp = 0
             cntroptimean = 0
-            thissamptemp = copy(thissamp)
         else:
             if gdat.verbtype > 0 and indxprocwork == 0:
                 print 'Retrieving the optimal proposal scale from %s...' % pathvaripara
@@ -359,7 +359,7 @@ def work(gdat, indxprocwork):
         # propose a sample
         indxparamodi = choice(gdat.indxpara)
         nextsamp = copy(thissamp)
-        nextsamp[indxparamodi] = randn() * gdat.datapara.vari[indxparamodi] + thissamp[indxparamodi]
+        nextsamp[indxparamodi] = randn() * varipara[indxparamodi] + thissamp[indxparamodi]
         
         if gdat.verbtype > 1:
             print 'indxparamodi'
@@ -437,14 +437,13 @@ def work(gdat, indxprocwork):
                 print std(thispropeffi)
                 if (thispropeffi > minmpropeffi).all() and (thispropeffi < maxmpropeffi).all():
                     print 'Optimized variance: '
-                    print datapara.vari
+                    print varipara
                     print 'Writing the optimized variance to %s...' % pathvaripara
                     gdat.optipropdone = True
-                    thissamp = thissamptemp
-                    pf.writeto(pathvaripara, datapara.vari, clobber=True)
+                    pf.writeto(pathvaripara, varipara, clobber=True)
                 else:
                     factcorr = 2**(thispropeffi / targpropeffi - 1.)
-                    gdat.datapara.vari *= factcorr
+                    varipara *= factcorr
                     cntrprop[:] = 0.
                     cntrproptotl[:] = 0.
                     print 'Current sample'
@@ -452,7 +451,7 @@ def work(gdat, indxprocwork):
                     print 'Correction factor'
                     print factcorr
                     print 'Current variance: '
-                    print datapara.vari
+                    print varipara
                     print
                 cntroptimean += 1
             cntroptisamp += 1
@@ -543,6 +542,11 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
     if quan:
         quanarry = sp.stats.mstats.mquantiles(listpara, prob=[0.025, 0.16, 0.84, 0.975])
 
+    if scalpara == 'logt':
+        numbtick = 5
+        listtick = logspace(log10(minmpara), log10(maxmpara), numbtick)
+        listlabltick = ['%.3g' % tick for tick in listtick]
+    
     figr, axrw = plt.subplots(1, 2, figsize=(14, 7))
     if titl != None:
         figr.suptitle(titl, fontsize=18)
@@ -555,6 +559,8 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
                 axis.axhline(y=truepara, color='g')
             if scalpara == 'logt':
                 axis.set_yscale('log')
+                axis.set_yticks(listtick)
+                axis.set_yticklabels(listlabltick)
             axis.set_ylim(limspara)
             if quan:
                 axis.axhline(quanarry[0], color='b', ls='--')
@@ -569,6 +575,8 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
                 axis.axvline(truepara, color='g')
             if scalpara == 'logt':
                 axis.set_xscale('log')
+                axis.set_xticks(listtick)
+                axis.set_xticklabels(listlabltick)
             axis.set_xlim(limspara)
             if quan:
                 axis.axvline(quanarry[0], color='b', ls='--')

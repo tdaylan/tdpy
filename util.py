@@ -306,8 +306,13 @@ class cntr():
         self.cntr = 0
 
 
-def plot_heal(heal, titl='', path=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90.):
+def plot_heal(path, heal, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90.):
     
+    if indxpixlrofi != None:
+        healtemp = zeros(numbpixl)
+        healtemp[indxpixlrofi] = heal
+        heal = healtemp
+
     exttrofi = [minmlgal, maxmlgal, minmbgal, maxmbgal]
 
     cart = retr_cart(heal, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
@@ -317,11 +322,8 @@ def plot_heal(heal, titl='', path=None, minmlgal=-180., maxmlgal=180., minmbgal=
     plt.colorbar(imag, fraction=0.05)
     plt.title(titl)
 
-    if path != None:
-        plt.savefig(path)
-        plt.close(figr)
-    else:
-        plt.show()
+    plt.savefig(path)
+    plt.close(figr)
     
 
 def cart_heal_depr(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
