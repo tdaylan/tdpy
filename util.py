@@ -37,7 +37,7 @@ def retr_nfwp(nfwg, numbside, norm=None):
     sadi = linspace(minmsadi, maxmsadi, nsadi)
     
 
-    lghp, bghp, numbside, numbpixl, apix = retr_healgrid(numbside)
+    lghp, bghp, numbpixl, apix = retr_healgrid(numbside)
     
     cosigahp = cos(deg2rad(lghp)) * cos(deg2rad(bghp))
     gahp = rad2deg(arccos(cosigahp))
@@ -75,6 +75,14 @@ def mexp(numb):
         strg = '%.3g' % numb
 
     return strg
+
+
+def show(*listargs):
+
+    print 'hey'
+    for args in listargs:
+        print args
+    print 
 
 
 def retr_p4dm_spec(anch, part='el'):
@@ -284,7 +292,7 @@ def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., 
     
     numbbgcr = cart.shape[0]
     numblgcr = cart.shape[1]
-    lghp, bghp, numbside, numbpixl, apix = retr_healgrid(numbside)
+    lghp, bghp, numbpixl, apix = retr_healgrid(numbside)
     
     indxlgcr = (numblgcr * (lghp - minmlgal) / (maxmlgal - minmlgal)).astype(int)
     indxbgcr = (numbbgcr * (bghp - minmbgal) / (maxmbgal - minmbgal)).astype(int)
@@ -330,7 +338,7 @@ def cart_heal_depr(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=
     
     nbgcr = cart.shape[0]
     nlgcr = cart.shape[1]
-    lghp, bghp, numbside, numbpixl, apix = retr_healgrid(numbside)
+    lghp, bghp, numbpixl, apix = retr_healgrid(numbside)
     heal = zeros(numbpixl)
     jpixl = where((minmlgal < lghp) & (lghp < maxmlgal) & (minmbgal < bghp) & (bghp < maxmbgal))[0]
     jlgcr = (nlgcr * (lghp[jpixl] - minmlgal) / (maxmlgal - minmlgal)).astype(int)
@@ -349,7 +357,7 @@ def retr_healgrid(numbside):
     lghp = ((rad2deg(phhp) - 180.) % 360.) - 180. # [deg]
     bghp = 90. - rad2deg(thhp)
 
-    return lghp, bghp, numbside, numbpixl, apix
+    return lghp, bghp, numbpixl, apix
 
 
 def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, reso=0.1):
@@ -372,7 +380,7 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
     bgcr = linspace(minmbgal, maxmbgal, numbbinsbgcr)
     ibgcr = arange(numbbinsbgcr)
     
-    lghp, bghp, numbside, numbpixl, apix = retr_healgrid(numbsideinpt)
+    lghp, bghp, numbpixl, apix = retr_healgrid(numbsideinpt)
 
     bgcrmesh, lgcrmesh = meshgrid(bgcr, lgcr)
     
