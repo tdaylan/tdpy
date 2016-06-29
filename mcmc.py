@@ -363,7 +363,7 @@ def work(gdat, indxprocwork):
         
         if gdat.verbtype > 1:
             print 'indxparamodi'
-            print datapara.name[indxparamodi]
+            print gdat.datapara.name[indxparamodi]
             print 'nextsamp: '
             print nextsamp
 

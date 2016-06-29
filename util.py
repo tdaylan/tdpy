@@ -452,3 +452,210 @@ def plot_braz(ax, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mcol=
     axis.plot(xdat, percentile(ydat, 50., 0), color=mcol, label=labl, alpha=alpha)
     axis.fill_between(xdat, percentile(ydat, 2.5, 0), percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)#, label='95% C.L.')
     axis.fill_between(xdat, percentile(ydat, 16., 0), percentile(ydat, 84., 0), color=dcol, alpha=alpha)#, label='68% C.L.')
+
+
+def retr_fermpsfn(enerthis, thisangl):
+   
+    parastrg = ['ntail', 'score', 'gcore', 'stail', 'gtail']
+    
+    path = os.environ["PCAT_DATA_PATH"] + '/irfn/psf_P8R2_SOURCE_V6_PSF.fits'
+    irfn = pf.getdata(path, 1)
+    minmenerirfn = irfn['energ_lo'].squeeze() * 1e-3 # [GeV]
+    maxmenerirfn = irfn['energ_hi'].squeeze() * 1e-3 # [GeV]
+    meanenerirfn = sqrt(minmenerirfn * maxmenerirfn)
+
+    numbenerthis = enerthis.size
+    indxenerthis = arange(numbenerthis)
+    numbenerirfn = meanenerirfn.size
+    numbevtt = 4
+    indxevtt = arange(numbevtt)
+    numbfermscalpara = 3
+    numbfermformpara = 5
+    
+    fermscal = zeros((numbevtt, numbfermscalpara))
+    fermform = zeros((numbenerthis, numbevtt, numbfermformpara))
+    
+    for m in indxevtt:
+        fermscal[m, :] = pf.getdata(path, 2 + 3 * indxevtt[m])['PSFSCALE']
+        irfn = pf.getdata(path, 1 + 3 * indxevtt[m])
+        for k in range(numbfermformpara):
+            fermform[:, m, k] = interp1d(meanenerirfn, mean(irfn[parastrg[k]].squeeze(), axis=0))(enerthis)
+
+    factener = (10. * enerthis[:, None])**fermscal[None, :, 2]
+    fermscalfact = sqrt((fermscal[None, :, 0] * factener)**2 + fermscal[None, :, 1]**2)
+    
+    # convert N_tail to f_core
+    for m in indxevtt:
+        for i in indxenerthis:
+            fermform[i, m, 0] = 1. / (1. + fermform[i, m, 0] * fermform[i, m, 3]**2 / fermform[i, m, 1]**2)
+
+    #temp = sqrt(2. - 2. * cos(thisangl[None, :, None]))
+    #scalangl = 2. * arcsin(temp / 2.) / fermscalfact[:, None, :]
+    
+    fermform[:, :, 1] = fermscalfact * fermform[:, :, 1]
+    fermform[:, :, 3] = fermscalfact * fermform[:, :, 3]
+
+    frac = fermform[:, :, 0]
+    sigc = fermform[:, :, 1]
+    gamc = fermform[:, :, 2]
+    sigt = fermform[:, :, 3]
+    gamt = fermform[:, :, 4]
+   
+    # temp
+    thisangl = thisangl[None, :, None]
+    #thisangl = scalangl
+    fermpsfn = retr_doubking(thisangl, frac[:, None, :], sigc[:, None, :], gamc[:, None, :], sigt[:, None, :], gamt[:, None, :])
+
+    return fermpsfn
+
+
+def retr_doubking(scaldevi, frac, sigc, gamc, sigt, gamt):
+
+    psfn = frac / 2. / pi / sigc**2 * (1. - 1. / gamc) * (1. + scaldevi**2 / 2. / gamc / sigc**2)**(-gamc) + \
+        (1. - frac) / 2. / pi / sigt**2 * (1. - 1. / gamt) * (1. + scaldevi**2 / 2. / gamt / sigt**2)**(-gamt)
+    
+    return psfn
+
+
+def retr_beam(enerthis, indxevttthis, numbside, maxmmpol, fulloutp=False):
+   
+    numbpixl = 12 * numbside**2
+    apix = 4. * pi / numbpixl
+
+    numbener = enerthis.size
+    numbevtt = indxevttthis.size
+
+    # alm of the delta function at the North Pole
+    mapsinpt = zeros(numbpixl)
+    mapsinpt[:4] = 1.
+    mapsinpt /= sum(mapsinpt) * apix
+    almcinpt = real(hp.map2alm(mapsinpt, lmax=maxmmpol)[:maxmmpol+1])
+    
+    # alm of the point source at the North Pole
+    lgalgrid, bgalgrid, numbpixl, apix = retr_healgrid(numbside)
+    dir1 = array([lgalgrid, bgalgrid])
+    dir2 = array([0., 90.])
+    thisangl = hp.rotator.angdist(dir1, dir2, lonlat=True)
+    mapsoutp = retr_fermpsfn(enerthis, thisangl)
+    almcoutp = empty((numbener, maxmmpol+1, numbevtt))
+    for i in range(numbener):
+        for m in range(numbevtt):
+            almcoutp[i, :, m] = real(hp.map2alm(mapsoutp[i, :, m], lmax=maxmmpol)[:maxmmpol+1])
+    
+    tranfunc = almcoutp / almcinpt[None, :, None]
+
+    if fulloutp:
+        return tranfunc, almcinpt, almcoutp
+    else:
+        return tranfunc
+
+
+def smth_ferm(mapsinpt, enerthis, indxevttthis, maxmmpol=None, makeplot=False, gaus=False):
+    
+    numbpixl = mapsinpt.shape[1]
+
+    numbside = int(sqrt(numbpixl / 12))
+    if maxmmpol == None:
+        maxmmpol = 3 * numbside - 1
+
+    numbener = enerthis.size
+    numbevtt = indxevttthis.size
+    
+    numbalmc = (maxmmpol + 1) * (maxmmpol + 2) / 2
+    
+    # get the beam
+    beam = retr_beam(enerthis, indxevttthis, numbside, maxmmpol)
+    
+    # construct the transfer function
+    tranfunc = ones((numbener, numbalmc, numbevtt))
+    cntr = 0
+    for n in arange(maxmmpol+1)[::-1]:
+        tranfunc[:, cntr:cntr+n+1, :] = beam[:, maxmmpol-n:, :]
+        cntr += n + 1
+
+    mapsoutp = empty_like(mapsinpt)
+
+    for i in arange(enerthis.size):
+        for m in arange(indxevttthis.size):
+            almc = hp.map2alm(mapsinpt[i, :, m], lmax=maxmmpol)
+            almc *= tranfunc[i, :, m]
+            mapsoutp[i, :, m] = hp.alm2map(almc, numbside, lmax=maxmmpol)
+    
+    return mapsoutp
+
+
+def plot_fermsmth():
+
+    numbside = 256
+    numbpixl = 12 * numbside**2
+    maxmmpol = 3 * numbside - 1
+    mpol = arange(maxmmpol + 1)
+    
+    binsenerplot = array([0.3, 1., 3., 10.])
+    meanenerplot = sqrt(binsenerplot[1:] * binsenerplot[:-1])
+    numbenerplot = meanenerplot.size
+    indxevttplot = arange(2, 4)
+    numbevttplot = indxevttplot.size
+    tranfunc, almcinpt, almcoutp = retr_beam(meanenerplot, indxevttplot, numbside, maxmmpol, fulloutp=True)
+
+    figr, axis = plt.subplots()
+
+    plt.loglog(mpol, almcinpt, label='HealPix')
+    plt.loglog(mpol, sqrt((2. * mpol + 1.) / 4. / pi), label='Analytic')
+    path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/almcinpt.pdf'
+    plt.legend()
+    figr.savefig(path)
+    plt.close(figr)
+    
+    figr, axis = plt.subplots()
+    for i in arange(meanenerplot.size):
+        for m in arange(indxevttplot.size):
+            plt.loglog(mpol, almcoutp[i, :, m], label='$E=%.3g$, PSF%d' % (meanenerplot[i], indxevttplot[m]))
+    plt.legend(loc=3)
+    path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/almcoutp.pdf'
+    figr.savefig(path)
+    plt.close(figr)
+        
+    figr, axis = plt.subplots()
+    for i in arange(meanenerplot.size):
+        for m in arange(indxevttplot.size):
+            plt.loglog(mpol, tranfunc[i, :, m], label='$E=%.3g$, PSF%d' % (meanenerplot[i], indxevttplot[m]))
+    plt.legend(loc=3)
+    path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/tranfunc.pdf'
+    figr.savefig(path)
+    plt.close(figr)
+    
+    maxmgang = 20.
+    minmlgal = -maxmgang
+    maxmlgal = maxmgang
+    minmbgal = -maxmgang
+    maxmbgal = maxmgang
+        
+    # get the Planck radiance map
+    path = os.environ["FERM_IGAL_DATA_PATH"] + '/HFI_CompMap_ThermalDustModel_2048_R1.20.fits'
+    maps = pf.getdata(path, 1)['RADIANCE']
+    mapstemp = hp.ud_grade(maps, numbside, order_in='NESTED', order_out='RING')
+    maps = empty((numbenerplot, numbpixl, numbevttplot))
+    for i in arange(numbenerplot):
+        for m in arange(numbevttplot):
+             maps[i, :, m] = mapstemp
+
+    # smooth the map with the Fermi-LAT kernel
+    mapssmthferm = smth_ferm(maps, meanenerplot, indxevttplot)
+    
+    # smooth the map with the Gaussian kernel
+    mapssmthgaus =  hp.sphtfunc.smoothing(mapstemp, sigma=deg2rad(0.5))
+
+    # plot the maps
+    path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/maps.pdf'
+    plot_heal(path, mapstemp, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
+
+    for i in arange(meanenerplot.size):
+        for m in arange(indxevttplot.size):
+            path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/mapssmthferm%d%d.pdf' % (i, m)
+            plot_heal(path, mapssmthferm[i, :, m], minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
+            
+    path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/mapssmthgaus.pdf'
+    plot_heal(path, mapssmthgaus, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
+
+
