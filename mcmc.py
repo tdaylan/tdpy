@@ -461,22 +461,50 @@ def work(gdat, indxprocwork):
     return chan
 
 
-def retr_atcr(listsamp, numbdela=10):
+def retr_atcr(listsampinpt, numbtimeatcr=5):
     
-    numbparatemp = listsamp.shape[1]
-    
-    # mean square signal
-    meansqrd = mean(listsamp, axis=0)**2
+    numbsamp = listsampinpt.shape[0]
+    numbproc = listsampinpt.shape[1]
+    numbpara = listsampinpt.shape[2]
 
-    # autocorrelation
-    atcr = empty((numbdela, numbparatemp))
-    for t in range(numbdela):
-        atcr[t, :] = mean(roll(listsamp, t, axis=0) * listsamp - meansqrd[None, :], axis=0)
-        
-    # normalize the autocorrelation
-    atcr /= amax(atcr, axis=0)
-         
-    return atcr
+    # normalize the samples
+    listsamp = copy(listsampinpt)
+    listsamp -= mean(listsamp, axis=0)
+    listsamp /= std(listsamp, axis=0)
+
+    # compute the autocorrelation
+    atcr = []
+    timeatcr = 0
+    boolcomp = False
+    n = 0
+    while True:
+        atcrtemp = mean(roll(listsamp, n, axis=0) * listsamp, axis=0)
+        atcr.append(atcrtemp)
+        if mean(atcr[n]) < 0.37:
+            if not boolcomp:
+                timeatcr = n
+            boolcomp = True
+        if n == numbtimeatcr * timeatcr and boolcomp or n == numbsamp:
+            if not (n == numbtimeatcr * timeatcr and boolcomp):
+                print 'Autocorrelation calculation failed.'
+            break
+
+        if n % 1 == 0:
+            print 'Autocorrelation time calculation, iteration number %d' % n
+            print mean(atcr[n])
+            if boolcomp:
+                print timeatcr
+            print
+        n += 1
+
+    numbtime = numbtimeatcr * timeatcr
+    atcroutp = empty((numbtime, numbproc, numbpara))
+    for n in range(numbtime):
+        atcroutp[n, :, :] = atcr[n]
+    
+    atcrmean = mean(mean(atcroutp, axis=1), axis=1)
+
+    return atcrmean, timeatcr
 
 
 def retr_numbsamp(numbswep, numbburn, factthin):
@@ -496,6 +524,18 @@ def plot_gmrb(path, gmrbstat):
     axis.set_xlabel('PSRF')
     axis.set_ylabel('$N_p$')
     figr.savefig(path + '_gmrb.pdf')
+    plt.close(figr)
+
+
+def plot_atcr(path, atcrmean)
+
+    figr, axis = plt.subplots()
+    numbsampatcr = atcrmean.size
+    axis.plot(arange(numbsampatcr), atcrmean)
+    axis.set_xlabel('Sample index')
+    axis.set_ylabel(r'$\tilde{\eta}$')
+    plt.tight_layout()
+    figr.savefig(path + '_atcr.pdf')
     plt.close(figr)
 
         
