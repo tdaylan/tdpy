@@ -229,16 +229,33 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     levi = -log(mean(1. / exp(listllik - minmlistllik))) + minmlistllik
     info = mean(listllik) - levi
     
+    gdat.pathplot = gdat.pathbase + '/imag/%s/' % gdat.rtag
+    os.system('mkdir -p %s' % gdat.pathplot)
+
     gmrbstat = zeros(gdat.numbpara)
-    if numbproc > 1:
+    if gdat.numbsamp > 1:
+    
         if gdat.verbtype > 1:
-            print 'Performing Gelman-Rubin convergence test...'
+            print 'Calculating autocorrelation...'
             tim0 = time.time()
-        for k in gdat.indxpara:
-            gmrbstat[k] = gmrb_test(listsampvarb[:, :, k])
+        atcr, timeatcr = retr_atcr(listsamp)
         if gdat.verbtype > 1:
             timefinl = time.time()
             print 'Done in %.3g seconds' % (timefinl - timeinit)
+        path = gdat.pathplot
+        plot_atcr(path, atcr)
+    
+        if gdat.numbproc > 1:
+            if gdat.verbtype > 1:
+                print 'Performing Gelman-Rubin convergence test...'
+                tim0 = time.time()
+            for k in gdat.indxpara:
+                gmrbstat[k] = gmrb_test(listsampvarb[:, :, k])
+            if gdat.verbtype > 1:
+                timefinl = time.time()
+                print 'Done in %.3g seconds' % (timefinl - timeinit)
+            path = gdat.pathplot
+            plot_gmrb(path, gmrbstat)
 
     listsampvarb = listsampvarb.reshape((gdat.numbsamptotl, gdat.numbpara))
     listsamp = listsamp.reshape((gdat.numbsamptotl, gdat.numbpara))
@@ -247,9 +264,6 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     listllik = listllik.flatten()
     listaccp = listaccp.flatten()
     listindxparamodi = listindxparamodi.flatten()
-
-    gdat.pathplot = gdat.pathbase + '/imag/%s/' % gdat.rtag
-    os.system('mkdir -p %s' % gdat.pathplot)
 
     if gdat.verbtype > 1:
         print 'Making plots...'
@@ -269,10 +283,6 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
         path = gdat.pathplot + gdat.datapara.name[k]
         plot_trac(path, listsampvarb[:, k], gdat.datapara.strg[k], scalpara=gdat.datapara.scal[k], truepara=gdat.datapara.true[k])
         
-    if gdat.numbproc > 1 and gdat.numbsamp > 1:
-        path = gdat.pathplot + 'gmrb'
-        plot_gmrb(path, gmrbstat)
-            
     if gdat.verbtype > 1:
         timefinl = time.time()
         print 'Done in %.3g seconds' % (timefinl - timeinit)
@@ -492,12 +502,8 @@ def retr_atcr(listsampinpt, numbtimeatcr=5):
                 print 'Autocorrelation calculation failed.'
             break
 
-        if n % 1 == 0:
+        if n % 1 == 100:
             print 'Autocorrelation time calculation, iteration number %d' % n
-            print mean(atcr[n])
-            if boolcomp:
-                print timeatcr
-            print
         n += 1
 
     numbtime = numbtimeatcr * timeatcr
@@ -526,19 +532,19 @@ def plot_gmrb(path, gmrbstat):
     axis.set_title('Gelman-Rubin Convergence Test')
     axis.set_xlabel('PSRF')
     axis.set_ylabel('$N_p$')
-    figr.savefig(path + '_gmrb.pdf')
+    figr.savefig(path + 'gmrb.pdf')
     plt.close(figr)
 
 
-def plot_atcr(path, atcrmean):
+def plot_atcr(path, atcr):
 
     figr, axis = plt.subplots()
-    numbsampatcr = atcrmean.size
-    axis.plot(arange(numbsampatcr), atcrmean)
+    numbsampatcr = atcr.size
+    axis.plot(arange(numbsampatcr), atcr)
     axis.set_xlabel('Sample index')
     axis.set_ylabel(r'$\tilde{\eta}$')
     plt.tight_layout()
-    figr.savefig(path + '_atcr.pdf')
+    figr.savefig(path + 'atcr.pdf')
     plt.close(figr)
 
         
