@@ -147,7 +147,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     if gdat.numbburn == None:
         gdat.numbburn = int(floor(0.1 * gdat.numbswep))
     if gdat.factthin == None:
-        gdat.factthin = min(gdat.numbswep - gdat.numbburn, 4 * gdat.numbpara)
+        gdat.factthin = min(gdat.numbswep - gdat.numbburn, 20 * gdat.numbpara)
    
     gdat.indxproc = arange(gdat.numbproc)
 
