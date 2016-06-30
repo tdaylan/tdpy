@@ -314,19 +314,34 @@ class cntr():
         self.cntr = 0
 
 
-def plot_heal(path, heal, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90.):
+def plot_heal(path, heal, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., resi=False, satu=False):
     
     if indxpixlrofi != None:
         healtemp = zeros(numbpixl)
         healtemp[indxpixlrofi] = heal
         heal = healtemp
 
+    # saturate the map
+    if satu:
+        healtemp = copy(heal)
+        heal = healtemp
+        if not resi:
+            satu = 0.1 * amax(heal)
+        else:
+            satu = 0.1 * min(fabs(amin(heal)), amax(heal))
+            heal[where(heal < -satu)] = -satu
+        heal[where(heal > satu)] = satu
+
     exttrofi = [minmlgal, maxmlgal, minmbgal, maxmbgal]
 
     cart = retr_cart(heal, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
     
     figr, axis = plt.subplots(figsize=(8, 8))
-    imag = plt.imshow(cart, origin='lower', cmap='Reds', extent=exttrofi)
+    if resi:
+        cmap = 'RdBu'
+    else:
+        cmap = 'Reds'
+    imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi)
     plt.colorbar(imag, fraction=0.05)
     plt.title(titl)
 

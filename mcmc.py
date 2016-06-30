@@ -110,7 +110,7 @@ def gmrb_test(griddata):
     return psrf
 
 
-def init(numbproc, numbswep, llikfunc, datapara, initsamp=None, optiprop=False, gdatextr=None, pathbase='./', rtag='', numbburn=None, truepara=None, \
+def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=True, gdatextr=None, pathbase='./', rtag='', numbburn=None, truepara=None, \
     numbplotside=None, factthin=None, verbtype=0, factpropeffi=2.):
    
     # construct the global object
@@ -462,10 +462,13 @@ def work(gdat, indxprocwork):
 
 
 def retr_atcr(listsampinpt, numbtimeatcr=5):
-    
+   
     numbsamp = listsampinpt.shape[0]
     numbproc = listsampinpt.shape[1]
     numbpara = listsampinpt.shape[2]
+    
+    if numbsamp == 1:
+        return array([1.]), 0
 
     # normalize the samples
     listsamp = copy(listsampinpt)
@@ -527,7 +530,7 @@ def plot_gmrb(path, gmrbstat):
     plt.close(figr)
 
 
-def plot_atcr(path, atcrmean)
+def plot_atcr(path, atcrmean):
 
     figr, axis = plt.subplots()
     numbsampatcr = atcrmean.size
