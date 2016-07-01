@@ -20,6 +20,28 @@ class gdatstrt(object):
         pass
 
 
+def retr_postvarb(listvarb):
+
+    shap = zeros(len(listvarb.shape), dtype=int)
+    shap[0] = 3
+    shap[1:] = listvarb.shape[1:]
+    shap = list(shap)
+    postvarb = zeros(shap)
+    
+    postvarb[0, :] = percentile(listvarb, 50., axis=0)
+    postvarb[1, :] = percentile(listvarb, 16., axis=0)
+    postvarb[2, :] = percentile(listvarb, 84., axis=0)
+
+    return postvarb
+
+
+def retr_errrvarb(postvarb):
+
+    errr = fabs(postvarb[0, :] - postvarb[1:3, :])
+
+    return errr
+
+
 def retr_nfwp(nfwg, numbside, norm=None):
     
     edenlocl = 0.3 # [GeV/cm^3]

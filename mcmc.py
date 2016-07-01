@@ -671,7 +671,12 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
             bins[:, k] = icdf_logt(linspace(0., 1., numbbins + 1), lims[0, k], lims[1, k])
         if scalpara[k] == 'atan':
             bins[:, k] = icdf_atan(linspace(0., 1., numbbins + 1), lims[0, k], lims[1, k])
-            
+         
+    print 'hey'
+    print 'bins[:, 3]'
+    print bins[:, 3]
+
+
     numbfram = numbpara // numbplotside
     numbplotsidelast = numbpara % numbplotside
     if numbplotsidelast != 0:
@@ -718,6 +723,27 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
                         axis.axvline(thisquan[2], color='b', ls='-.')
                         axis.axvline(thisquan[3], color='b', ls='--')
                 else:
+
+                    if k == 3 and l == 2:
+                        print 'hey'
+                        print 'k, l'
+                        print k, l
+                        print 'thisbins[:, l]'
+                        print thisbins[:, l]
+                        #print 'thislistsamp[:, l]'
+                        #print thislistsamp[:, l]
+                        print 'hist'
+                        print axis.hist(thislistsamp[:, l], bins=thisbins[:, l])[0]
+                        print 'thisbins[:, k]'
+                        print thisbins[:, k]
+                        #print 'thislistsamp[:, k]'
+                        #print thislistsamp[:, k]
+                        print 'hist'
+                        print axis.hist(thislistsamp[:, k], bins=thisbins[:, k])[0]
+                        print 'hist2d'
+                        print axis.hist2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]], cmap='Blues')[0]
+                        print
+
                     h = axis.hist2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]], cmap='Blues')
                     if thistruepara[l] != None and thistruepara[k] != None:
                         axis.scatter(thistruepara[l], thistruepara[k], color='r', marker='o')
