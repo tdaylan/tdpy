@@ -17,11 +17,9 @@ def retr_llik(sampvarb):
     return llik, sampcalc
 
 
-def retr_datapara():
+def retr_datapara(numbpara):
     
-    numbpara = 2
-    
-    datapara = tdpy.util.gdatstrt()
+    datapara = gdatstrt()
 
     datapara.indx = dict()
     datapara.minm = zeros(numbpara)
@@ -65,20 +63,10 @@ for k in range(3):
     pdfn[:, :, k] = sp.interpolate.interp2d(xinp, yinp, imag[:, :, k])(xgrd, ygrd)
 pdfn = 0.3 * pdfn[:, :, 0]
 
-figr, axis = plt.subplots()
-axis.imshow(imag, extent=[0., 1., 0., 1.], interpolation='none', aspect=rati)
-plt.savefig('imag.pdf')
-plt.close(figr) 
 
-figr, axis = plt.subplots()
-imag = axis.imshow(pdfn, extent=[0., 1., 0., 1.], interpolation='none', aspect=rati)
-plt.colorbar(imag)
-plt.savefig('targ.pdf')
-plt.close(figr) 
-
-# MCMC setup
-datapara = retr_datapara()
-
+# construct the parameter object
+datapara = retr_datapara(2)
+datapara.defn_para()
 # run MCMC
 sampbund = tdpy.mcmc.init(retr_llik, datapara)
 

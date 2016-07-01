@@ -20,6 +20,36 @@ class gdatstrt(object):
         pass
 
 
+class datapara(object):
+
+    def __init__(self, numbpara)
+        
+        self.numbpara = numbpara
+        self.minm = zeros(numbpara)
+        self.maxm = zeros(numbpara)
+        self.true = zeros(numbpara)
+        self.name = empty(numbpara, dtype=object)
+        self.scal = empty(numbpara, dtype=object)
+        self.labl = empty(numbpara, dtype=object)
+        self.unit = empty(numbpara, dtype=object)
+        self.vari = zeros(numbpara)
+        self.cntr = 0
+    
+    def defn_para(name, minm, maxm, scal, labl, unit, vari, true)
+        
+        datapara.indx[name] = 0
+        datapara.name[cntr] = name
+        datapara.minm[cntr] = minm
+        datapara.maxm[cntr] = maxm
+        datapara.scal[cntr] = scal
+        datapara.labl[cntr] = labl
+        datapara.unit[cntr] = unit
+        datapara.vari[cntr] = vari
+        datapara.true[cntr] = true
+        datapara.strg[cntr] = datapara.labl + ' ' + datapara.unit
+        cntr += 1
+
+
 def retr_postvarb(listvarb):
 
     shap = zeros(len(listvarb.shape), dtype=int)
