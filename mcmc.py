@@ -724,27 +724,10 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
                         axis.axvline(thisquan[3], color='b', ls='--')
                 else:
 
-                    if k == 3 and l == 2:
-                        print 'hey'
-                        print 'k, l'
-                        print k, l
-                        print 'thisbins[:, l]'
-                        print thisbins[:, l]
-                        #print 'thislistsamp[:, l]'
-                        #print thislistsamp[:, l]
-                        print 'hist'
-                        print axis.hist(thislistsamp[:, l], bins=thisbins[:, l])[0]
-                        print 'thisbins[:, k]'
-                        print thisbins[:, k]
-                        #print 'thislistsamp[:, k]'
-                        #print thislistsamp[:, k]
-                        print 'hist'
-                        print axis.hist(thislistsamp[:, k], bins=thisbins[:, k])[0]
-                        print 'hist2d'
-                        print axis.hist2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]], cmap='Blues')[0]
-                        print
-
-                    h = axis.hist2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]], cmap='Blues')
+                    axis.hist2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]], cmap='Blues')
+                    #hist = histogram2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]])[0]
+                    #axis.pcolormesh(thisbins[:, l], thisbins[:, k], hist, cmap='Blues')
+                    
                     if thistruepara[l] != None and thistruepara[k] != None:
                         axis.scatter(thistruepara[l], thistruepara[k], color='r', marker='o')
                     if thisscalpara[k] == 'logt':

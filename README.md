@@ -11,6 +11,11 @@ You can install `tdpy` by running the `setup.py` script.
 python setup.py install
 ```
 
+### Features
+## Adaptivity
+## Collection of intermediate variables
+## Multiprocessing
+
 ### Usage
 
 ```
