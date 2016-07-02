@@ -672,11 +672,6 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
         if scalpara[k] == 'atan':
             bins[:, k] = icdf_atan(linspace(0., 1., numbbins + 1), lims[0, k], lims[1, k])
          
-    print 'hey'
-    print 'bins[:, 3]'
-    print bins[:, 3]
-
-
     numbfram = numbpara // numbplotside
     numbplotsidelast = numbpara % numbplotside
     if numbplotsidelast != 0:
@@ -724,8 +719,9 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
                         axis.axvline(thisquan[3], color='b', ls='--')
                 else:
 
-                    axis.hist2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]], cmap='Blues')
-                    #hist = histogram2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]])[0]
+                    #axis.hist2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]], cmap='Blues')
+                    hist = histogram2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]])[0]
+                    axis.pcolor(thisbins[:, l], thisbins[:, k], hist, cmap='Blues')
                     #axis.pcolormesh(thisbins[:, l], thisbins[:, k], hist, cmap='Blues')
                     
                     if thistruepara[l] != None and thistruepara[k] != None:

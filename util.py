@@ -614,6 +614,9 @@ def retr_beam(enerthis, indxevttthis, numbside, maxmmpol, fulloutp=False):
             almcoutp[i, :, m] = real(hp.map2alm(mapsoutp[i, :, m], lmax=maxmmpol)[:maxmmpol+1])
     
     tranfunc = almcoutp / almcinpt[None, :, None]
+    
+    # temp
+    tranfunc /= tranfunc[:, 0, :][:, None, :]
 
     if fulloutp:
         return tranfunc, almcinpt, almcoutp
