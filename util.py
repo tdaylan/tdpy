@@ -696,7 +696,7 @@ def make_maps_work(gdat, indxprocwork):
             os.system(cmnd)
 
         cmnd = 'gtbin evfile=' + filt + ' scfile=NONE outfile=' + cnts + \
-            ' ebinalg=FILE ebinfile=$TDPY_DATA_PATH/gtbndefn_%s.fits ' % gdat.strgener[indxprocwork] + \
+            ' ebinalg=FILE ebinfile=$TDPY_DATA_PATH/%s ' % gdat.strgener[indxprocwork] + \
             'algorithm=HEALPIX hpx_ordering_scheme=RING coordsys=GAL hpx_order=%d hpx_ebin=yes' % log2(gdat.numbside[indxprocwork])
         if gdat.test:
             print cmnd
