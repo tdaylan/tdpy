@@ -5,14 +5,10 @@ from numpy.random import choice
 from scipy.integrate import *
 from scipy.interpolate import *
 import scipy as sp
-
 import pyfits as pf
-
-# astro & healpix
 import healpy as hp
-
-# utilities
-import sh, os
+import sh, os, functools
+import multiprocessing as mp
 
 class gdatstrt(object):
     
@@ -626,6 +622,8 @@ def retr_beam(enerthis, indxevttthis, numbside, maxmmpol, fulloutp=False):
 
 def make_maps_main(gdat):
     
+    gdat.indxevtt = arange(4)
+
     numbproc = len(gdat.rtag)
     indxproc = arange(numbproc)
     
@@ -645,8 +643,8 @@ def make_maps_work(gdat, indxprocwork):
     os.system(cmnd)
 
     # make file lists
-    infl = '$PCAT_DATA_PATH/phot_%s.txt' % gdat.rtag[indxprocwork]
-    spac = '$PCAT_DATA_PATH/spac_%s.txt' % gdat.rtag[indxprocwork]
+    infl = '$TDPY_DATA_PATH/phot_%s.txt' % gdat.rtag[indxprocwork]
+    spac = '$TDPY_DATA_PATH/spac_%s.txt' % gdat.rtag[indxprocwork]
         
     numbweek = (gdat.weekfinl[indxprocwork] - gdat.weekinit[indxprocwork]) * gdat.listtimefrac[indxprocwork]
     listweek = floor(linspace(gdat.weekinit[indxprocwork], gdat.weekfinl[indxprocwork] - 1, numbweek)).astype(int)
@@ -659,7 +657,7 @@ def make_maps_work(gdat, indxprocwork):
         os.system(cmnd)
         cmnd = 'ls -d -1 $FERMI_DATA/weekly/%s/*_w%03d_* >> ' % (gdat.photpath[indxprocwork], week) + infl
         os.system(cmnd)
-    for m in indxevtt:
+    for m in gdat.indxevtt:
 
         if gdat.reco[indxprocwork] == 7:
             if m == 3:
@@ -676,11 +674,11 @@ def make_maps_work(gdat, indxprocwork):
             thisevtt = gdat.evtt[m]
             strgpsfn = 'evtype=%d' % thisevtt
          
-        sele = '$PCAT_DATA_PATH/sele_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
-        filt = '$PCAT_DATA_PATH/filt_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
-        live = '$PCAT_DATA_PATH/live_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
-        cnts = '$PCAT_DATA_PATH/cnts_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
-        expo = '$PCAT_DATA_PATH/expo_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
+        sele = '$TDPY_DATA_PATH/sele_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
+        filt = '$TDPY_DATA_PATH/filt_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
+        live = '$TDPY_DATA_PATH/live_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
+        cnts = '$TDPY_DATA_PATH/cnts_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
+        expo = '$TDPY_DATA_PATH/expo_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
 
         cmnd = 'gtselect infile=' + infl + ' outfile=' + sele + gdat.strgregi[indxprocwork] + \
             gdat.strgtime[indxprocwork] + ' emin=100 emax=100000 zmax=90 evclass=%d %s' % (gdat.evtc[indxprocwork], strgpsfn)
@@ -698,7 +696,7 @@ def make_maps_work(gdat, indxprocwork):
             os.system(cmnd)
 
         cmnd = 'gtbin evfile=' + filt + ' scfile=NONE outfile=' + cnts + \
-            ' ebinalg=FILE ebinfile=/n/fink1/fermi/exposure/gcps_time/gtbndefn.fits ' + \
+            ' ebinalg=FILE ebinfile=$TDPY_DATA_PATH/gtbndefn_%s.fits ' % gdat.strgener[indxprocwork] + \
             'algorithm=HEALPIX hpx_ordering_scheme=RING coordsys=GAL hpx_order=%d hpx_ebin=yes' % log2(gdat.numbside[indxprocwork])
         if gdat.test:
             print cmnd
