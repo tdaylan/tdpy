@@ -624,6 +624,103 @@ def retr_beam(enerthis, indxevttthis, numbside, maxmmpol, fulloutp=False):
         return tranfunc
 
 
+def make_maps_main(gdat):
+    
+    numbproc = len(gdat.rtag)
+    indxproc = arange(numbproc)
+    
+    # process pool
+    pool = mp.Pool(numbproc)
+
+    # spawn the processes
+    make_maps_part = functools.partial(make_maps_work, gdat)
+    pool.map(make_maps_part, indxproc)
+    pool.close()
+    pool.join()
+
+
+def make_maps_work(gdat, indxprocwork):
+
+    cmnd = 'mkdir -p $FERMI_DATA/exposure/%s' % gdat.rtag[indxprocwork]
+    os.system(cmnd)
+
+    # make file lists
+    infl = '$PCAT_DATA_PATH/phot_%s.txt' % gdat.rtag[indxprocwork]
+    spac = '$PCAT_DATA_PATH/spac_%s.txt' % gdat.rtag[indxprocwork]
+        
+    numbweek = (gdat.weekfinl[indxprocwork] - gdat.weekinit[indxprocwork]) * gdat.listtimefrac[indxprocwork]
+    listweek = floor(linspace(gdat.weekinit[indxprocwork], gdat.weekfinl[indxprocwork] - 1, numbweek)).astype(int)
+    cmnd = 'rm ' + infl
+    os.system(cmnd)
+    cmnd = 'rm ' + spac
+    os.system(cmnd)
+    for week in listweek:
+        cmnd = 'ls -d -1 $FERMI_DATA/weekly/spacecraft/*_w%03d_* >> ' % week + spac
+        os.system(cmnd)
+        cmnd = 'ls -d -1 $FERMI_DATA/weekly/%s/*_w%03d_* >> ' % (gdat.photpath[indxprocwork], week) + infl
+        os.system(cmnd)
+    for m in indxevtt:
+
+        if gdat.reco[indxprocwork] == 7:
+            if m == 3:
+                thisevtt = 1
+                thisevttdepr = 0
+            elif m == 2:
+                thisevtt = 2
+                thisevttdepr = 1
+            else:
+                continue
+            strgpsfn = 'convtype=%d' % thisevttdepr
+
+        if gdat.reco[indxprocwork] == 8:
+            thisevtt = gdat.evtt[m]
+            strgpsfn = 'evtype=%d' % thisevtt
+         
+        sele = '$PCAT_DATA_PATH/sele_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
+        filt = '$PCAT_DATA_PATH/filt_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
+        live = '$PCAT_DATA_PATH/live_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
+        cnts = '$PCAT_DATA_PATH/cnts_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
+        expo = '$PCAT_DATA_PATH/expo_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
+
+        cmnd = 'gtselect infile=' + infl + ' outfile=' + sele + gdat.strgregi[indxprocwork] + \
+            gdat.strgtime[indxprocwork] + ' emin=100 emax=100000 zmax=90 evclass=%d %s' % (gdat.evtc[indxprocwork], strgpsfn)
+        if gdat.test:
+            print cmnd
+            print ''
+        else:
+            os.system(cmnd)
+
+        cmnd = 'gtmktime evfile=' + sele + ' scfile=' + spac + ' filter="DATA_QUAL==1 && LAT_CONFIG==1"' + ' outfile=' + filt + ' roicut=no'
+        if gdat.test:
+            print cmnd
+            print ''
+        else:
+            os.system(cmnd)
+
+        cmnd = 'gtbin evfile=' + filt + ' scfile=NONE outfile=' + cnts + \
+            ' ebinalg=FILE ebinfile=/n/fink1/fermi/exposure/gcps_time/gtbndefn.fits ' + \
+            'algorithm=HEALPIX hpx_ordering_scheme=RING coordsys=GAL hpx_order=%d hpx_ebin=yes' % log2(gdat.numbside[indxprocwork])
+        if gdat.test:
+            print cmnd
+            print ''
+        else:
+            os.system(cmnd)
+
+        cmnd = 'gtltcube evfile=' + filt + ' scfile=' + spac + ' outfile=' + live + ' dcostheta=0.025 binsz=1'
+        if gdat.test:
+            print cmnd
+            print ''
+        else:
+            os.system(cmnd)
+
+        cmnd = 'gtexpcube2 infile=' + live + ' cmap=' + cnts + ' outfile=' + expo + ' irfs=CALDB evtype=%03d bincalc=CENTER' % thisevtt
+        if gdat.test:
+            print cmnd
+            print ''
+        else:
+            os.system(cmnd)
+
+
 def smth_ferm(mapsinpt, enerthis, indxevttthis, maxmmpol=None, makeplot=False, gaus=False):
     
     numbpixl = mapsinpt.shape[1]
