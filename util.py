@@ -427,6 +427,33 @@ def retr_healgrid(numbside):
     return lghp, bghp, numbpixl, apix
 
 
+def retr_isot(binsener, numbside=256):
+    
+    diffener = binsener[1:] - binsener[:-1]
+    numbpixl = 12 * numbside**2
+    numbener = binsener.size - 1
+    numbsamp = 10
+
+    # get the best-fit isotropic flux given by the Fermi-LAT collaboration
+    path = os.environ["TDPY_DATA_PATH"] + '/iso_P8R2_ULTRACLEAN_V6_v06.txt'
+    isotdata = loadtxt(path)
+    enerisot = isotdata[:, 0] * 1e-3 # [GeV]
+    isotfluxtemp = isotdata[:, 1] * 1e3 # [1/cm^2/s/sr/GeV]
+    
+    # sampling energy grid
+    binsenersamp = logspace(log10(amin(binsener)), log10(amax(binsener)), numbsamp * numbener)
+    
+    # interpolate the flux over the sampling energy grid
+    isotfluxtemp = interp(binsenersamp, enerisot, isotfluxtemp)
+    
+    # take the mean flux in the desired energy bins
+    isotflux = empty((numbener, numbpixl))
+    for i in range(numbener):
+        isotflux[i, :] = trapz(isotfluxtemp[i*numbsamp:(i+1)*numbsamp], binsenersamp[i*numbsamp:(i+1)*numbsamp]) / diffener[i]
+        
+    return isotflux
+
+
 def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, reso=0.1):
     
     if indxpixlrofi == None:
