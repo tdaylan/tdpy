@@ -723,7 +723,8 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
                     hist = histogram2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]])[0]
                     axis.pcolor(thisbins[:, l], thisbins[:, k], hist, cmap='Blues')
                     #axis.pcolormesh(thisbins[:, l], thisbins[:, k], hist, cmap='Blues')
-                    
+                    axis.set_xlim([amin(thisbins[:, l]), amax(thisbins[:, l])])
+                    axis.set_ylim([amin(thisbins[:, k]), amax(thisbins[:, k])])
                     if thistruepara[l] != None and thistruepara[k] != None:
                         axis.scatter(thistruepara[l], thistruepara[k], color='r', marker='o')
                     if thisscalpara[k] == 'logt':
