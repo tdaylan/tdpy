@@ -338,7 +338,6 @@ def test_minm():
     thissamp = rand(numbpara)
     minm(thissamp, func_test, verbtype=1, factcorrscal=100., stdvpara=stdvpara, maxmswep=None, limtpara=None, tolrfunc=1e-6, pathbase='./', rtag='')
 
-#test_minm()
 
 def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
     
@@ -762,33 +761,37 @@ def retr_beam(enerthis, indxevttthis, numbside, maxmmpol, fulloutp=False):
         return tranfunc
 
 
-def make_maps_main(gdat):
+def make_maps_main(gdat, pathdata):
     
     gdat.indxevtt = arange(4)
 
-    numbproc = len(gdat.rtag)
+    gdat.pathdata = pathdata
+    
+    gdat.evtt = [4, 8, 16, 32]
+
+    numbproc = len(gdat.timetype)
     indxproc = arange(numbproc)
     
-    # process pool
-    pool = mp.Pool(numbproc)
+    if numbproc == 1:
+        make_maps_work(gdat, 0)
+    else:
+        # process pool
+        pool = mp.Pool(numbproc)
 
-    # spawn the processes
-    make_maps_part = functools.partial(make_maps_work, gdat)
-    pool.map(make_maps_part, indxproc)
-    pool.close()
-    pool.join()
+        # spawn the processes
+        make_maps_part = functools.partial(make_maps_work, gdat)
+        pool.map(make_maps_part, indxproc)
+        pool.close()
+        pool.join()
 
 
 def make_maps_work(gdat, indxprocwork):
 
-    cmnd = 'mkdir -p $FERMI_DATA/exposure/%s' % gdat.rtag[indxprocwork]
-    os.system(cmnd)
-
     # make file lists
-    infl = '$TDPY_DATA_PATH/phot_%s.txt' % gdat.rtag[indxprocwork]
-    spac = '$TDPY_DATA_PATH/spac_%s.txt' % gdat.rtag[indxprocwork]
+    infl = gdat.pathdata + '/phot_%s_%s_%s.fits' % (gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+    spac = gdat.pathdata + '/spac_%s_%s_%s.fits' % (gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
         
-    numbweek = (gdat.weekfinl[indxprocwork] - gdat.weekinit[indxprocwork]) * gdat.listtimefrac[indxprocwork]
+    numbweek = (gdat.weekfinl[indxprocwork] - gdat.weekinit[indxprocwork]) * gdat.timefrac[indxprocwork]
     listweek = floor(linspace(gdat.weekinit[indxprocwork], gdat.weekfinl[indxprocwork] - 1, numbweek)).astype(int)
     cmnd = 'rm ' + infl
     os.system(cmnd)
@@ -801,7 +804,7 @@ def make_maps_work(gdat, indxprocwork):
         os.system(cmnd)
     for m in gdat.indxevtt:
 
-        if gdat.reco[indxprocwork] == 7:
+        if gdat.recotype[indxprocwork] == 'rec7':
             if m == 3:
                 thisevtt = 1
                 thisevttdepr = 0
@@ -812,15 +815,15 @@ def make_maps_work(gdat, indxprocwork):
                 continue
             strgpsfn = 'convtype=%d' % thisevttdepr
 
-        if gdat.reco[indxprocwork] == 8:
+        if gdat.recotype[indxprocwork] == 'rec8':
             thisevtt = gdat.evtt[m]
             strgpsfn = 'evtype=%d' % thisevtt
          
-        sele = '$TDPY_DATA_PATH/sele_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
-        filt = '$TDPY_DATA_PATH/filt_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
-        live = '$TDPY_DATA_PATH/live_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
-        cnts = '$TDPY_DATA_PATH/cnts_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
-        expo = '$TDPY_DATA_PATH/expo_evtt%03d_%s.fits' % (thisevtt, gdat.rtag[indxprocwork])
+        sele = gdat.pathdata + '/sele_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+        filt = gdat.pathdata + '/filt_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+        live = gdat.pathdata + '/live_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+        cnts = gdat.pathdata + '/cnts_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+        expo = gdat.pathdata + '/expo_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
 
         cmnd = 'gtselect infile=' + infl + ' outfile=' + sele + gdat.strgregi[indxprocwork] + \
             gdat.strgtime[indxprocwork] + ' emin=100 emax=100000 zmax=90 evclass=%d %s' % (gdat.evtc[indxprocwork], strgpsfn)
@@ -838,7 +841,7 @@ def make_maps_work(gdat, indxprocwork):
             os.system(cmnd)
 
         cmnd = 'gtbin evfile=' + filt + ' scfile=NONE outfile=' + cnts + \
-            ' ebinalg=FILE ebinfile=$TDPY_DATA_PATH/%s ' % gdat.strgener[indxprocwork] + \
+            ' ebinalg=FILE ebinfile=%s/%s ' % (gdat.pathdata, gdat.strgener[indxprocwork]) + \
             'algorithm=HEALPIX hpx_ordering_scheme=RING coordsys=GAL hpx_order=%d hpx_ebin=yes' % log2(gdat.numbside[indxprocwork])
         if gdat.test:
             print cmnd
