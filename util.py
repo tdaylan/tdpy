@@ -366,6 +366,121 @@ class cntr():
         self.cntr = 0
 
 
+def prep_maps(recotype, enertype, regitype, pathdata):
+    
+    if enertype == 'back':
+        numbener = 30
+        minmener = 0.1
+        maxmener = 100.
+        binsener = logspace(log10(minmener), log10(maxmener), numbener)
+    else:
+        binsener = array([0.1, 0.3, 1., 3., 10., 100.])
+        numbener = binsener.size - 1
+
+    numbside = 256
+    numbpixl = 12 * numbside**2
+    numbevtt = 4
+    evtt = array([4, 8, 16, 32])
+    
+    indxevtt = arange(numbevtt)
+
+    liststrgener = ['ENERGY1', 'ENERGY2', 'ENERGY3', 'ENERGY4', 'ENERGY5']
+    liststrgchan = ['CHANNEL1', 'CHANNEL2', 'CHANNEL3', 'CHANNEL4', 'CHANNEL5']
+    listdatatype = ['cmp0', 'cmp1', 'cmp2', 'cmp3', 'full']
+    
+    cnts = zeros((numbener, numbpixl, numbevtt))
+    expo = zeros((numbener, numbpixl, numbevtt))
+    flux = zeros((numbener, numbpixl, numbevtt))
+    
+    for k, datatype in enumerate(listdatatype):
+    
+        for m in indxevtt:
+
+            if recotype == 'rec7':
+                if m < 2:
+                    continue
+                elif m == 2:
+                    thisevtt = 2
+                elif m == 3:
+                    thisevtt = 1
+            else:
+                thisevtt = evtt[m]
+
+            path = pathdata + '/expo_evtt%03d_%s_%s.fits' % (thisevtt, recotype, enertype)
+            expoarry = pf.getdata(path, 1)
+            for i in indxener:
+                expo[i, :, m] = expoarry[liststrgener[i]]
+
+            path = pathdata + '/cnts_evtt%03d_%s_%s.fits' % (thisevtt, recotype, enertype)
+            cntsarry = pf.getdata(path)
+            for i in indxener:
+                cnts[i, :, m] = cntsarry[liststrgchan[i]]
+
+        indxexpo = where(expo > 0.) 
+        flux[indxexpo] = cnts[indxexpo] / expo[indxexpo] / apix
+        flux /= diffener[:, None, None]
+
+        if regitype == 'ngal':
+            for i in indxener:
+                for m in indxevtt:
+                    
+                    if recotype == 'rec7':
+                        if m < 2:
+                            continue
+                        elif m == 2:
+                            thisevtt = 2
+                        elif m == 3:
+                            thisevtt = 1
+                    else:
+                        thisevtt = evtt[m]
+
+                    almc = hp.map2alm(flux[i, :, m])
+                    hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
+                    flux[i, :, m] = hp.alm2map(almc, numbside)
+
+                    almc = hp.map2alm(expo[i, :, m])
+                    hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
+                    expo[i, :, m] = hp.alm2map(almc, numbside)
+
+        path = pathdata + '/fermexpo_%s_%s_%s.fits' % (recotype, enertype, regitype)
+        pf.writeto(path, expo, clobber=True)
+
+        path = pathdata + '/fermflux_%s_%s_%s.fits' % (recotype, enertype, regitype)
+        pf.writeto(path, flux, clobber=True)
+
+
+def prep_fdfm(regitype, enertype, pathdata):
+    
+    numbside = 256
+    indxevtt = arange(4)
+    binsener = array([0.1, 0.3, 1., 3., 10., 100.])
+   
+    meanener = sqrt(binsener[1:] * binsener[:-1])
+    numbpixl = 12 * numbside**2
+    numbener = binsener.size - 1
+    numbevtt = evtt.size
+
+    # get the Fermi-LAT diffuse model
+    temp = tdpy.util.retr_fdfm(binsener, numbside)
+    
+    # rotate if necessary
+    fdfmflux = zeros((numbener, numbpixl))
+    for m in arange(numbevtt):
+        if regitype == 'ngal':
+            for i in range(numbener):
+                almc = hp.map2alm(fdfmfluxigaltemp[i, :])
+                hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
+                fdfmflux[i, :, m] = hp.alm2map(almc, numbside)
+        else:
+            fdfmflux[:, :, m] = temp
+
+    # smooth the model
+    fdfmflux = smth_ferm(maps, meanener, indxevtt)
+
+    path = pathdata + '/fdfmflux_%s_%s_%s.fits' % (recotype, enertype, regitype)
+    pf.writeto(path, fdfmfluxigal, clobber=True)
+
+
 def plot_heal(path, heal, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., resi=False, satu=False):
     
     if indxpixlrofi != None:
@@ -501,7 +616,7 @@ def retr_fdfm(binsener, numbside=256, vfdm=7):
 
     numbpixl = numbside**2 * 12
     
-    path = os.environ["PCAT_DATA_PATH"] + '/'
+    path = os.environ["TDPY_DATA_PATH"] + '/'
     if vfdm == 2:
         path += 'gll_iem_v02.fit'
     if vfdm == 3:
