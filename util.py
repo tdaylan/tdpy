@@ -760,13 +760,46 @@ def retr_beam(enerthis, indxevttthis, numbside, maxmmpol, fulloutp=False):
 
 def make_maps_main(gdat, pathdata):
     
+    numbproc = len(gdat.recotype)
+    
+    if not hasattr(gdat, 'timetype'):
+        gdat.timetype = ['tim0' for k in range(numbproc)]
+    if not hasattr(gdat, 'enertype'):
+        gdat.enertype = ['pnts' for k in range(numbproc)]
+    if not hasattr(gdat, 'strgtime'):
+        gdat.strgtime = ['tmin=INDEF tmax=INDEF' for k in range(numbproc)]
+    if not hasattr(gdat, 'timefrac'):
+        gdat.timefrac = [1. for k in range(numbproc)]
+    if not hasattr(gdat, 'numbside'):
+        gdat.numbside = [256 for k in range(numbproc)]
+    if not hasattr(gdat, 'test'):
+        gdat.test = False
+
+    gdat.evtc = []
+    gdat.photpath = []
+    for n in range(numbproc):
+        if gdat.recotype[n] == 'rec7':
+            gdat.evtc.append(2)
+            gdat.photpath.append('p7v6c')
+            gdat.strgtime.append('tmin=239155201 tmax=364953603')
+            gdat.weekinit.append(9)
+            gdat.weekfinl.append(218)
+        if gdat.recotype[n] == 'rec8':
+            gdat.evtc.append(128)
+            gdat.photpath.append('photon')
+            gdat.strgtime.append('tmin=INDEF tmax=INDEF')
+            gdat.weekinit.append(11)
+            gdat.weekfinl.append(420)
+    
+    gdat.strgener = ['gtbndefn_%s.fits' % gdat.enertype[k] for k in range(numbproc)]
+    gdat.strgregi = [' ra=INDEF dec=INDEF rad=INDEF ' for k in range(numbproc)]
+    
     gdat.indxevtt = arange(4)
 
     gdat.pathdata = pathdata
     
     gdat.evtt = [4, 8, 16, 32]
 
-    numbproc = len(gdat.timetype)
     indxproc = arange(numbproc)
     
     if numbproc == 1:
