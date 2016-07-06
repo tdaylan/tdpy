@@ -378,75 +378,69 @@ def prep_maps(recotype, enertype, regitype, pathdata, timetype):
     indxener = arange(numbener)
 
     numbside = 256
-    numbpixl = 12 * numbside**2
-    numbevtt = 4
     evtt = array([4, 8, 16, 32])
-    
+
+    numbpixl = 12 * numbside**2
+    numbevtt = evtt.size
     indxevtt = arange(numbevtt)
 
-    liststrgener = ['ENERGY1', 'ENERGY2', 'ENERGY3', 'ENERGY4', 'ENERGY5']
-    liststrgchan = ['CHANNEL1', 'CHANNEL2', 'CHANNEL3', 'CHANNEL4', 'CHANNEL5']
-    listdatatype = ['cmp0', 'cmp1', 'cmp2', 'cmp3', 'full']
-    
     cnts = zeros((numbener, numbpixl, numbevtt))
     expo = zeros((numbener, numbpixl, numbevtt))
     flux = zeros((numbener, numbpixl, numbevtt))
     
-    for k, datatype in enumerate(listdatatype):
-    
-        for m in indxevtt:
+    for m in indxevtt:
 
-            if recotype == 'rec7':
-                if m < 2:
-                    continue
-                elif m == 2:
-                    thisevtt = 2
-                elif m == 3:
-                    thisevtt = 1
-            else:
-                thisevtt = evtt[m]
+        if recotype == 'rec7':
+            if m < 2:
+                continue
+            elif m == 2:
+                thisevtt = 2
+            elif m == 3:
+                thisevtt = 1
+        else:
+            thisevtt = evtt[m]
 
-            path = pathdata + '/fermexpo_evtt%03d_%s_%s_%s.fits' % (thisevtt, recotype, enertype, timetype)
-            expoarry = pf.getdata(path, 1)
-            for i in indxener:
-                expo[i, :, m] = expoarry[liststrgener[i]]
+        path = pathdata + '/fermexpo_evtt%03d_%s_%s_%s.fits' % (thisevtt, recotype, enertype, timetype)
+        expoarry = pf.getdata(path, 1)
+        for i in indxener:
+            expo[i, :, m] = expoarry['ENERGY%d' % (i + 1)]
 
-            path = pathdata + '/fermcnts_evtt%03d_%s_%s_%s.fits' % (thisevtt, recotype, enertype, timetype)
-            cntsarry = pf.getdata(path)
-            for i in indxener:
-                cnts[i, :, m] = cntsarry[liststrgchan[i]]
+        path = pathdata + '/fermcnts_evtt%03d_%s_%s_%s.fits' % (thisevtt, recotype, enertype, timetype)
+        cntsarry = pf.getdata(path)
+        for i in indxener:
+            cnts[i, :, m] = cntsarry['CHANNEL%d' % (i + 1)]
 
-        indxexpo = where(expo > 0.) 
-        flux[indxexpo] = cnts[indxexpo] / expo[indxexpo] / apix
-        flux /= diffener[:, None, None]
+    indxexpo = where(expo > 0.) 
+    flux[indxexpo] = cnts[indxexpo] / expo[indxexpo] / apix
+    flux /= diffener[:, None, None]
 
-        if regitype == 'ngal':
-            for i in indxener:
-                for m in indxevtt:
-                    
-                    if recotype == 'rec7':
-                        if m < 2:
-                            continue
-                        elif m == 2:
-                            thisevtt = 2
-                        elif m == 3:
-                            thisevtt = 1
-                    else:
-                        thisevtt = evtt[m]
+    if regitype == 'ngal':
+        for i in indxener:
+            for m in indxevtt:
+                
+                if recotype == 'rec7':
+                    if m < 2:
+                        continue
+                    elif m == 2:
+                        thisevtt = 2
+                    elif m == 3:
+                        thisevtt = 1
+                else:
+                    thisevtt = evtt[m]
 
-                    almc = hp.map2alm(flux[i, :, m])
-                    hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
-                    flux[i, :, m] = hp.alm2map(almc, numbside)
+                almc = hp.map2alm(flux[i, :, m])
+                hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
+                flux[i, :, m] = hp.alm2map(almc, numbside)
 
-                    almc = hp.map2alm(expo[i, :, m])
-                    hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
-                    expo[i, :, m] = hp.alm2map(almc, numbside)
+                almc = hp.map2alm(expo[i, :, m])
+                hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
+                expo[i, :, m] = hp.alm2map(almc, numbside)
 
-        path = pathdata + '/fermexpo_%s_%s_%s_%s.fits' % (recotype, enertype, regitype, timetype)
-        pf.writeto(path, expo, clobber=True)
+    path = pathdata + '/fermexpo_%s_%s_%s_%s.fits' % (recotype, enertype, regitype, timetype)
+    pf.writeto(path, expo, clobber=True)
 
-        path = pathdata + '/fermflux_%s_%s_%s_%s.fits' % (recotype, enertype, regitype, timetype)
-        pf.writeto(path, flux, clobber=True)
+    path = pathdata + '/fermflux_%s_%s_%s_%s.fits' % (recotype, enertype, regitype, timetype)
+    pf.writeto(path, flux, clobber=True)
 
 
 def prep_fdfm(regitype, enertype, pathdata):
