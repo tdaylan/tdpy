@@ -365,7 +365,7 @@ class cntr():
         self.cntr = 0
 
 
-def prep_maps(recotype, enertype, regitype, pathdata, timetype):
+def prep_maps(recotype, enertype, regitype, pathdata, numbside, timetype):
     
     if enertype == 'back':
         numbener = 30
@@ -402,12 +402,12 @@ def prep_maps(recotype, enertype, regitype, pathdata, timetype):
         else:
             thisevtt = evtt[m]
 
-        path = pathdata + '/fermexpo_evtt%03d_%s_%s_%s.fits' % (thisevtt, recotype, enertype, timetype)
+        path = pathdata + '/fermexpo_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, recotype, enertype, numbside, timetype)
         expoarry = pf.getdata(path, 1)
         for i in indxener:
             expo[i, :, m] = expoarry['ENERGY%d' % (i + 1)]
 
-        path = pathdata + '/fermcnts_evtt%03d_%s_%s_%s.fits' % (thisevtt, recotype, enertype, timetype)
+        path = pathdata + '/fermcnts_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, recotype, enertype, numbside, timetype)
         cntsarry = pf.getdata(path)
         for i in indxener:
             cnts[i, :, m] = cntsarry['CHANNEL%d' % (i + 1)]
@@ -438,10 +438,10 @@ def prep_maps(recotype, enertype, regitype, pathdata, timetype):
                 hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
                 expo[i, :, m] = hp.alm2map(almc, numbside)
 
-    path = pathdata + '/fermexpo_%s_%s_%s_%s.fits' % (recotype, enertype, regitype, timetype)
+    path = pathdata + '/fermexpo_%s_%s_%s_%s_%s.fits' % (recotype, enertype, regitype, numbside, timetype)
     pf.writeto(path, expo, clobber=True)
 
-    path = pathdata + '/fermflux_%s_%s_%s_%s.fits' % (recotype, enertype, regitype, timetype)
+    path = pathdata + '/fermflux_%s_%s_%s_%s_%s.fits' % (recotype, enertype, regitype, numbside, timetype)
     pf.writeto(path, flux, clobber=True)
 
 
@@ -849,11 +849,16 @@ def make_maps_work(gdat, indxprocwork):
             thisevtt = gdat.evtt[m]
             strgpsfn = 'evtype=%d' % thisevtt
          
-        sele = gdat.pathdata + '/fermsele_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
-        filt = gdat.pathdata + '/fermfilt_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
-        live = gdat.pathdata + '/fermlive_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
-        cnts = gdat.pathdata + '/fermcnts_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
-        expo = gdat.pathdata + '/fermexpo_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+        sele = gdat.pathdata + '/fermsele_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], \
+                                                                                                                      gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
+        filt = gdat.pathdata + '/fermfilt_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], \
+                                                                                                                      gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
+        live = gdat.pathdata + '/fermlive_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], \
+                                                                                                                      gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
+        cnts = gdat.pathdata + '/fermcnts_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], \
+                                                                                                                      gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
+        expo = gdat.pathdata + '/fermexpo_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], \
+                                                                                                                      gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
 
         cmnd = 'gtselect infile=' + infl + ' outfile=' + sele + gdat.strgregi[indxprocwork] + \
             gdat.strgtime[indxprocwork] + ' emin=100 emax=100000 zmax=90 evclass=%d %s' % (gdat.evtc[indxprocwork], strgpsfn)
