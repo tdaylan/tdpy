@@ -819,7 +819,7 @@ def make_maps_main(gdat, pathdata):
 
 def make_maps_work(gdat, indxprocwork):
 
-    rtag = '%s_%s_%04d_%s.fits' % (gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
+    rtag = '%s_%s_%04d_%s' % (gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
     
     # make file lists
     infl = gdat.pathdata + '/phot_%s.txt' % rtag
@@ -827,9 +827,9 @@ def make_maps_work(gdat, indxprocwork):
         
     numbweek = (gdat.weekfinl[indxprocwork] - gdat.weekinit[indxprocwork]) * gdat.timefrac[indxprocwork]
     listweek = floor(linspace(gdat.weekinit[indxprocwork], gdat.weekfinl[indxprocwork] - 1, numbweek)).astype(int)
-    cmnd = 'rm ' + infl
+    cmnd = 'rm -f ' + infl
     os.system(cmnd)
-    cmnd = 'rm ' + spac
+    cmnd = 'rm -f ' + spac
     os.system(cmnd)
     for week in listweek:
         cmnd = 'ls -d -1 $FERMI_DATA/weekly/spacecraft/*_w%03d_* >> ' % week + spac
