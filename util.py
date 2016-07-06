@@ -402,12 +402,12 @@ def prep_maps(recotype, enertype, regitype, pathdata, numbside, timetype):
         else:
             thisevtt = evtt[m]
 
-        path = pathdata + '/fermexpo_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, recotype, enertype, numbside, timetype)
+        path = pathdata + '/fermexpo_%04d_%s_%s_%s_%s.fits' % (thisevtt, recotype, enertype, numbside, timetype)
         expoarry = pf.getdata(path, 1)
         for i in indxener:
             expo[i, :, m] = expoarry['ENERGY%d' % (i + 1)]
 
-        path = pathdata + '/fermcnts_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, recotype, enertype, numbside, timetype)
+        path = pathdata + '/fermcnts_%04d_%s_%s_%s_%s.fits' % (thisevtt, recotype, enertype, numbside, timetype)
         cntsarry = pf.getdata(path)
         for i in indxener:
             cnts[i, :, m] = cntsarry['CHANNEL%d' % (i + 1)]
@@ -795,7 +795,6 @@ def make_maps_main(gdat, pathdata):
             gdat.weekfinl.append(420)
     
     gdat.strgener = ['gtbndefn_%s.fits' % gdat.enertype[k] for k in range(numbproc)]
-    gdat.strgregi = [' ra=INDEF dec=INDEF rad=INDEF ' for k in range(numbproc)]
     
     gdat.indxevtt = arange(4)
 
@@ -820,9 +819,11 @@ def make_maps_main(gdat, pathdata):
 
 def make_maps_work(gdat, indxprocwork):
 
+    rtag = '%s_%s_%04d_%s.fits' % (gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
+    
     # make file lists
-    infl = gdat.pathdata + '/phot_%s_%s_%s.txt' % (gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
-    spac = gdat.pathdata + '/spac_%s_%s_%s.txt' % (gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+    infl = gdat.pathdata + '/phot_%s.txt' % rtag
+    spac = gdat.pathdata + '/spac_%s.txt' % rtag
         
     numbweek = (gdat.weekfinl[indxprocwork] - gdat.weekinit[indxprocwork]) * gdat.timefrac[indxprocwork]
     listweek = floor(linspace(gdat.weekinit[indxprocwork], gdat.weekfinl[indxprocwork] - 1, numbweek)).astype(int)
@@ -852,18 +853,13 @@ def make_maps_work(gdat, indxprocwork):
             thisevtt = gdat.evtt[m]
             strgpsfn = 'evtype=%d' % thisevtt
          
-        sele = gdat.pathdata + '/fermsele_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], \
-                                                                                                                      gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
-        filt = gdat.pathdata + '/fermfilt_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], \
-                                                                                                                      gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
-        live = gdat.pathdata + '/fermlive_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], \
-                                                                                                                      gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
-        cnts = gdat.pathdata + '/fermcnts_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], \
-                                                                                                                      gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
-        expo = gdat.pathdata + '/fermexpo_evtt%03d_%s_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], \
-                                                                                                                      gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
+        sele = gdat.pathdata + '/fermsele_%04d_%s.fits' % (thisevtt, rtag)
+        filt = gdat.pathdata + '/fermfilt_%04d_%s.fits' % (thisevtt, rtag)
+        live = gdat.pathdata + '/fermlive_%04d_%s.fits' % (thisevtt, rtag)
+        cnts = gdat.pathdata + '/fermcnts_%04d_%s.fits' % (thisevtt, rtag)
+        expo = gdat.pathdata + '/fermexpo_%04d_%s.fits' % (thisevtt, rtag)
 
-        cmnd = 'gtselect infile=' + infl + ' outfile=' + sele + gdat.strgregi[indxprocwork] + \
+        cmnd = 'gtselect infile=' + infl + ' outfile=' + sele + ' ra=INDEF dec=INDEF rad=INDEF ' + \
             gdat.strgtime[indxprocwork] + ' emin=100 emax=100000 zmax=90 evclass=%d %s' % (gdat.evtc[indxprocwork], strgpsfn)
         if gdat.test or os.path.isfile(sele):
             print cmnd
@@ -879,7 +875,7 @@ def make_maps_work(gdat, indxprocwork):
             os.system(cmnd)
 
         cmnd = 'gtbin evfile=' + filt + ' scfile=NONE outfile=' + cnts + \
-            ' ebinalg=FILE ebinfile=%s/%s ' % (gdat.pathdata, gdat.strgener[indxprocwork]) + \
+            ' ebinalg=FILE ebinfile=$TDPY_DATA_PATH/%s ' % gdat.strgener[indxprocwork] + \
             'algorithm=HEALPIX hpx_ordering_scheme=RING coordsys=GAL hpx_order=%d hpx_ebin=yes' % log2(gdat.numbside[indxprocwork])
         if gdat.test or os.path.isfile(cnts):
             print cmnd
