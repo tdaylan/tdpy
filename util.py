@@ -405,12 +405,12 @@ def prep_maps(recotype, enertype, regitype, pathdata):
             else:
                 thisevtt = evtt[m]
 
-            path = pathdata + '/expo_evtt%03d_%s_%s.fits' % (thisevtt, recotype, enertype)
+            path = pathdata + '/fermexpo_evtt%03d_%s_%s.fits' % (thisevtt, recotype, enertype)
             expoarry = pf.getdata(path, 1)
             for i in indxener:
                 expo[i, :, m] = expoarry[liststrgener[i]]
 
-            path = pathdata + '/cnts_evtt%03d_%s_%s.fits' % (thisevtt, recotype, enertype)
+            path = pathdata + '/fermcnts_evtt%03d_%s_%s.fits' % (thisevtt, recotype, enertype)
             cntsarry = pf.getdata(path)
             for i in indxener:
                 cnts[i, :, m] = cntsarry[liststrgchan[i]]
