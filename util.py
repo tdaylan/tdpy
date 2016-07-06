@@ -788,8 +788,8 @@ def make_maps_main(gdat, pathdata):
 def make_maps_work(gdat, indxprocwork):
 
     # make file lists
-    infl = gdat.pathdata + '/phot_%s_%s_%s.fits' % (gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
-    spac = gdat.pathdata + '/spac_%s_%s_%s.fits' % (gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+    infl = gdat.pathdata + '/phot_%s_%s_%s.txt' % (gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+    spac = gdat.pathdata + '/spac_%s_%s_%s.txt' % (gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
         
     numbweek = (gdat.weekfinl[indxprocwork] - gdat.weekinit[indxprocwork]) * gdat.timefrac[indxprocwork]
     listweek = floor(linspace(gdat.weekinit[indxprocwork], gdat.weekfinl[indxprocwork] - 1, numbweek)).astype(int)
@@ -819,11 +819,11 @@ def make_maps_work(gdat, indxprocwork):
             thisevtt = gdat.evtt[m]
             strgpsfn = 'evtype=%d' % thisevtt
          
-        sele = gdat.pathdata + '/sele_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
-        filt = gdat.pathdata + '/filt_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
-        live = gdat.pathdata + '/live_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
-        cnts = gdat.pathdata + '/cnts_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
-        expo = gdat.pathdata + '/expo_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+        sele = gdat.pathdata + '/fermsele_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+        filt = gdat.pathdata + '/fermfilt_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+        live = gdat.pathdata + '/fermlive_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+        cnts = gdat.pathdata + '/fermcnts_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
+        expo = gdat.pathdata + '/fermexpo_evtt%03d_%s_%s_%s.fits' % (thisevtt, gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.timetype[indxprocwork])
 
         cmnd = 'gtselect infile=' + infl + ' outfile=' + sele + gdat.strgregi[indxprocwork] + \
             gdat.strgtime[indxprocwork] + ' emin=100 emax=100000 zmax=90 evclass=%d %s' % (gdat.evtc[indxprocwork], strgpsfn)
@@ -862,6 +862,9 @@ def make_maps_work(gdat, indxprocwork):
             print ''
         else:
             os.system(cmnd)
+
+        cmnd = 'rm %s %s %s' % (infl, spac, sele, filt, live)
+        os.system(cmnd)
 
 
 def smth_ferm(mapsinpt, enerthis, indxevttthis, maxmmpol=None, makeplot=False, gaus=False):
