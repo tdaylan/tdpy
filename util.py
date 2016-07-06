@@ -897,7 +897,7 @@ def make_maps_work(gdat, indxprocwork):
         else:
             os.system(cmnd)
 
-        cmnd = 'rm %s %s %s' % (infl, spac, sele, filt, live)
+        cmnd = 'rm %s %s %s %s %s' % (infl, spac, sele, filt, live)
         os.system(cmnd)
 
 
