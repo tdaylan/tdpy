@@ -861,6 +861,9 @@ def make_maps_work(gdat, indxprocwork):
 
         cmnd = 'gtselect infile=' + infl + ' outfile=' + sele + ' ra=INDEF dec=INDEF rad=INDEF ' + \
             gdat.strgtime[indxprocwork] + ' emin=100 emax=100000 zmax=90 evclass=%d %s' % (gdat.evtc[indxprocwork], strgpsfn)
+        
+        print 'sele'
+        print sele
         if gdat.test or os.path.isfile(sele):
             print cmnd
             print ''
