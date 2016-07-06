@@ -371,7 +371,7 @@ def prep_maps(recotype, enertype, regitype, pathdata, timetype):
         numbener = 30
         minmener = 0.1
         maxmener = 100.
-        binsener = logspace(log10(minmener), log10(maxmener), numbener)
+        binsener = logspace(log10(minmener), log10(maxmener), numbener + 1)
     else:
         binsener = array([0.1, 0.3, 1., 3., 10., 100.])
         numbener = binsener.size - 1
