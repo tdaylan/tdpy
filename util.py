@@ -383,6 +383,7 @@ def prep_maps(recotype, enertype, regitype, pathdata, timetype):
     numbpixl = 12 * numbside**2
     numbevtt = evtt.size
     indxevtt = arange(numbevtt)
+    apix = 4. * pi / numbpixl
 
     cnts = zeros((numbener, numbpixl, numbevtt))
     expo = zeros((numbener, numbpixl, numbevtt))
