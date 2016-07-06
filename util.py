@@ -365,7 +365,7 @@ class cntr():
         self.cntr = 0
 
 
-def prep_maps(recotype, enertype, regitype, pathdata):
+def prep_maps(recotype, enertype, regitype, pathdata, timetype):
     
     if enertype == 'back':
         numbener = 30
@@ -405,12 +405,12 @@ def prep_maps(recotype, enertype, regitype, pathdata):
             else:
                 thisevtt = evtt[m]
 
-            path = pathdata + '/fermexpo_evtt%03d_%s_%s.fits' % (thisevtt, recotype, enertype)
+            path = pathdata + '/fermexpo_evtt%03d_%s_%s_%s.fits' % (thisevtt, recotype, enertype, timetype)
             expoarry = pf.getdata(path, 1)
             for i in indxener:
                 expo[i, :, m] = expoarry[liststrgener[i]]
 
-            path = pathdata + '/fermcnts_evtt%03d_%s_%s.fits' % (thisevtt, recotype, enertype)
+            path = pathdata + '/fermcnts_evtt%03d_%s_%s_%s.fits' % (thisevtt, recotype, enertype, timetype)
             cntsarry = pf.getdata(path)
             for i in indxener:
                 cnts[i, :, m] = cntsarry[liststrgchan[i]]
@@ -441,10 +441,10 @@ def prep_maps(recotype, enertype, regitype, pathdata):
                     hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
                     expo[i, :, m] = hp.alm2map(almc, numbside)
 
-        path = pathdata + '/fermexpo_%s_%s_%s.fits' % (recotype, enertype, regitype)
+        path = pathdata + '/fermexpo_%s_%s_%s_%s.fits' % (recotype, enertype, regitype, timetype)
         pf.writeto(path, expo, clobber=True)
 
-        path = pathdata + '/fermflux_%s_%s_%s.fits' % (recotype, enertype, regitype)
+        path = pathdata + '/fermflux_%s_%s_%s_%s.fits' % (recotype, enertype, regitype, timetype)
         pf.writeto(path, flux, clobber=True)
 
 
