@@ -777,6 +777,9 @@ def make_maps_main(gdat, pathdata):
 
     gdat.evtc = []
     gdat.photpath = []
+    gdat.strgtime = []
+    gdat.weekinit = []
+    gdat.weekfinl = []
     for n in range(numbproc):
         if gdat.recotype[n] == 'rec7':
             gdat.evtc.append(2)
