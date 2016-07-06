@@ -438,10 +438,10 @@ def prep_maps(recotype, enertype, regitype, pathdata, numbside, timetype):
                 hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
                 expo[i, :, m] = hp.alm2map(almc, numbside)
 
-    path = pathdata + '/fermexpo_%s_%s_%s_%s_%s.fits' % (recotype, enertype, regitype, numbside, timetype)
+    path = pathdata + '/fermexpo_%s_%s_%s_%04d_%s.fits' % (recotype, enertype, regitype, numbside, timetype)
     pf.writeto(path, expo, clobber=True)
 
-    path = pathdata + '/fermflux_%s_%s_%s_%s_%s.fits' % (recotype, enertype, regitype, numbside, timetype)
+    path = pathdata + '/fermflux_%s_%s_%s_%04d_%s.fits' % (recotype, enertype, regitype, numbside, timetype)
     pf.writeto(path, flux, clobber=True)
 
 
