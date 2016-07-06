@@ -375,6 +375,7 @@ def prep_maps(recotype, enertype, regitype, pathdata, timetype):
     else:
         binsener = array([0.1, 0.3, 1., 3., 10., 100.])
         numbener = binsener.size - 1
+    indxener = arange(numbener)
 
     numbside = 256
     numbpixl = 12 * numbside**2
