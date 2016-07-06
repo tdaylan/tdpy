@@ -827,14 +827,14 @@ def make_maps_work(gdat, indxprocwork):
 
         cmnd = 'gtselect infile=' + infl + ' outfile=' + sele + gdat.strgregi[indxprocwork] + \
             gdat.strgtime[indxprocwork] + ' emin=100 emax=100000 zmax=90 evclass=%d %s' % (gdat.evtc[indxprocwork], strgpsfn)
-        if gdat.test:
+        if gdat.test or os.path.isfile(sele):
             print cmnd
             print ''
         else:
             os.system(cmnd)
 
         cmnd = 'gtmktime evfile=' + sele + ' scfile=' + spac + ' filter="DATA_QUAL==1 && LAT_CONFIG==1"' + ' outfile=' + filt + ' roicut=no'
-        if gdat.test:
+        if gdat.test or os.path.isfile(filt):
             print cmnd
             print ''
         else:
@@ -843,21 +843,21 @@ def make_maps_work(gdat, indxprocwork):
         cmnd = 'gtbin evfile=' + filt + ' scfile=NONE outfile=' + cnts + \
             ' ebinalg=FILE ebinfile=%s/%s ' % (gdat.pathdata, gdat.strgener[indxprocwork]) + \
             'algorithm=HEALPIX hpx_ordering_scheme=RING coordsys=GAL hpx_order=%d hpx_ebin=yes' % log2(gdat.numbside[indxprocwork])
-        if gdat.test:
+        if gdat.test or os.path.isfile(cnts):
             print cmnd
             print ''
         else:
             os.system(cmnd)
 
         cmnd = 'gtltcube evfile=' + filt + ' scfile=' + spac + ' outfile=' + live + ' dcostheta=0.025 binsz=1'
-        if gdat.test:
+        if gdat.test or os.path.isfile(live):
             print cmnd
             print ''
         else:
             os.system(cmnd)
 
         cmnd = 'gtexpcube2 infile=' + live + ' cmap=' + cnts + ' outfile=' + expo + ' irfs=CALDB evtype=%03d bincalc=CENTER' % thisevtt
-        if gdat.test:
+        if gdat.test or os.path.isfile(expo):
             print cmnd
             print ''
         else:
