@@ -508,6 +508,7 @@ def plot_heal(path, heal, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-1
     plt.colorbar(imag, fraction=0.05)
     plt.title(titl)
 
+    plt.tight_layout()
     plt.savefig(path)
     plt.close(figr)
     
