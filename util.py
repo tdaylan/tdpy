@@ -902,8 +902,8 @@ def make_maps_work(gdat, indxprocwork):
         else:
             os.system(cmnd)
 
-        cmnd = 'rm %s %s %s %s %s' % (infl, spac, sele, filt, live)
-        os.system(cmnd)
+    cmnd = 'rm %s %s %s %s %s' % (infl, spac, sele, filt, live)
+    os.system(cmnd)
 
 
 def smth_ferm(mapsinpt, enerthis, indxevttthis, maxmmpol=None, makeplot=False, gaus=False):
