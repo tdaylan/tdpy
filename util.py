@@ -402,12 +402,12 @@ def prep_maps(recotype, enertype, regitype, pathdata, numbside, timetype):
         else:
             thisevtt = evtt[m]
 
-        path = pathdata + '/fermexpo_%04d_%s_%s_%s_%s.fits' % (thisevtt, recotype, enertype, numbside, timetype)
+        path = pathdata + '/fermexpo_%04d_%s_%s_%04d_%s.fits' % (thisevtt, recotype, enertype, numbside, timetype)
         expoarry = pf.getdata(path, 1)
         for i in indxener:
             expo[i, :, m] = expoarry['ENERGY%d' % (i + 1)]
 
-        path = pathdata + '/fermcnts_%04d_%s_%s_%s_%s.fits' % (thisevtt, recotype, enertype, numbside, timetype)
+        path = pathdata + '/fermcnts_%04d_%s_%s_%04d_%s.fits' % (thisevtt, recotype, enertype, numbside, timetype)
         cntsarry = pf.getdata(path)
         for i in indxener:
             cnts[i, :, m] = cntsarry['CHANNEL%d' % (i + 1)]
