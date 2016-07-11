@@ -1,28 +1,5 @@
-# math
-from numpy import *
-from numpy.random import *
-from numpy.random import choice
-from scipy.integrate import *
-from scipy.interpolate import *
-import scipy as sp
-import pyfits as pf
-import time, os
-import copy as copytemp
-
-import multiprocessing as mp, functools
-
+from __init__ import *
 import util
-
-
-import warnings
-warnings.simplefilter(action="ignore", category=FutureWarning)
-
-# plotting
-import matplotlib.pyplot as plt
-
-import seaborn as sns
-sns.set(context='poster', style='ticks', color_codes=True)
-
 
 def icdf_self(paraunit, minmpara, maxmpara):
     para = (maxmpara - minmpara) * paraunit + minmpara
@@ -111,7 +88,7 @@ def gmrb_test(griddata):
 
 
 def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=True, gdatextr=None, pathbase='./', rtag='', numbburn=None, truepara=None, \
-    numbplotside=None, factthin=None, verbtype=0, factpropeffi=2.):
+                                                                                      savevaripara=False, numbplotside=None, factthin=None, verbtype=0, factpropeffi=2.):
    
     # construct the global object
     gdat = util.gdatstrt()
@@ -124,6 +101,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     gdat.pathbase = pathbase
     gdat.rtag = rtag
     gdat.numbburn = numbburn
+    gdat.savevaripara = savevaripara
     gdat.numbplotside = numbplotside
     gdat.factthin = factthin
     gdat.verbtype = verbtype
@@ -450,7 +428,9 @@ def work(gdat, indxprocwork):
                     print varipara
                     print 'Writing the optimized variance to %s...' % pathvaripara
                     gdat.optipropdone = True
-                    pf.writeto(pathvaripara, varipara, clobber=True)
+                    
+                    if gdat.savevaripara:
+                        pf.writeto(pathvaripara, varipara, clobber=True)
                 else:
                     factcorr = 2**(thispropeffi / targpropeffi - 1.)
                     varipara *= factcorr
