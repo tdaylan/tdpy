@@ -98,13 +98,17 @@ def retr_llik_gaus(sampvarb, gdat):
 
     print 'hey'
 
+    print sampvarb
+    print
     llik = 0.
     for n in range(gdat.numbgaus):
-        print gdat.stdvgaus[n]
-        llik -= 0.5 * (xpos - gdat.xposgaus[n] + ypos - gdat.yposgaus[n]) / gdat.stdvgaus[n]
-
-    print 'llik'
-    print llik
+        print llik
+        print gdat.stdvgaus[n]**2
+        print 0.5 * ((xpos - gdat.xposgaus[n])**2 + (ypos - gdat.yposgaus[n])**2)
+        print
+        llik -= 0.5 * ((xpos - gdat.xposgaus[n])**2 + (ypos - gdat.yposgaus[n])**2) / gdat.stdvgaus[n]**2
+        
+    print
 
     return llik, []
 
