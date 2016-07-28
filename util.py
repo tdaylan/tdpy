@@ -467,10 +467,19 @@ def prep_fdfm(regitype, enertype, pathdata):
     pf.writeto(path, fdfmfluxigal, clobber=True)
 
 
-def plot_heal(path, heal, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., resi=False, satu=False):
+def plot_heal(path, heal, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., resi=False, satu=False):
     
     if indxpixlrofi != None:
         healtemp = zeros(numbpixl)
+        print 'hey'
+        print 'heal'
+        print heal.shape
+        print 'healtemp'
+        print healtemp.shape
+        print 'indxpixlrofi'
+        print indxpixlrofi.shape
+        print
+
         healtemp[indxpixlrofi] = heal
         heal = healtemp
 
@@ -487,9 +496,13 @@ def plot_heal(path, heal, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-1
 
     exttrofi = [minmlgal, maxmlgal, minmbgal, maxmbgal]
 
-    cart = retr_cart(heal, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
-    
-    figr, axis = plt.subplots(figsize=(8, 8))
+    if pixltype == 'heal':
+        cart = retr_cart(heal, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
+    else:
+        numbsidetemp = sqrt(heal.size)
+        cart = heal.reshape((numbsidetemp, numbsidetemp))
+
+    figr, axis = plt.subplots(figsize=(6, 6))
     if resi:
         cmap = 'RdBu'
     else:
