@@ -499,7 +499,7 @@ def plot_heal(path, heal, pixltype='heal', indxpixlrofi=None, numbpixl=None, tit
     if pixltype == 'heal':
         cart = retr_cart(heal, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
     else:
-        numbsidetemp = sqrt(heal.size)
+        numbsidetemp = int(sqrt(heal.size))
         cart = heal.reshape((numbsidetemp, numbsidetemp))
 
     figr, axis = plt.subplots(figsize=(6, 6))
@@ -507,7 +507,7 @@ def plot_heal(path, heal, pixltype='heal', indxpixlrofi=None, numbpixl=None, tit
         cmap = 'RdBu'
     else:
         cmap = 'Reds'
-    imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi)
+    imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none')
     plt.colorbar(imag, fraction=0.05)
     plt.title(titl)
 
@@ -515,6 +515,18 @@ def plot_heal(path, heal, pixltype='heal', indxpixlrofi=None, numbpixl=None, tit
     plt.savefig(path)
     plt.close(figr)
     
+
+def rebn(arry, shapoutp, totl=False):
+    
+    shaptemp = shapoutp[0], arry.shape[0] // shapoutp[0], shapoutp[1], arry.shape[1] // shapoutp[1]
+    
+    if totl:
+        arryoutp = arry.reshape(shaptemp).sum(-1).sum(1)
+    else:
+        arryoutp = arry.reshape(shaptemp).mean(-1).mean(1)
+
+    return arryoutp
+
 
 def cart_heal_depr(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
     
