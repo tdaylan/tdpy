@@ -119,12 +119,21 @@ def mexp(numb):
     return strg
 
 
-def show(*listargs):
+def show(varb):
 
-    print 'hey'
-    for args in listargs:
-        print args
-    print 
+    print varb
+    print
+
+
+def summ(strg):
+    varb = eval(strg)
+    print strg
+    print varb
+    print amin(varb)
+    print amax(varb)
+    print mean(varb)
+    print varb.shape
+    print
 
 
 def retr_p4dm_spec(anch, part='el'):
@@ -467,40 +476,34 @@ def prep_fdfm(regitype, enertype, pathdata):
     pf.writeto(path, fdfmfluxigal, clobber=True)
 
 
-def plot_heal(path, heal, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., resi=False, satu=False):
+def plot_heal(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., resi=False, satu=False):
     
-    if indxpixlrofi != None:
-        healtemp = zeros(numbpixl)
-        print 'hey'
-        print 'heal'
-        print heal.shape
-        print 'healtemp'
-        print healtemp.shape
-        print 'indxpixlrofi'
-        print indxpixlrofi.shape
-        print
-
-        healtemp[indxpixlrofi] = heal
-        heal = healtemp
+    if pixltype == 'heal' and indxpixlrofi != None:
+        mapstemp = zeros(numbpixl)
+        mapstemp[indxpixlrofi] = maps
+        maps = mapstemp
 
     # saturate the map
     if satu:
-        healtemp = copy(heal)
-        heal = healtemp
+        mapstemp = copy(maps)
+        maps = mapstemp
         if not resi:
-            satu = 0.1 * amax(heal)
+            satu = 0.1 * amax(maps)
         else:
-            satu = 0.1 * min(fabs(amin(heal)), amax(heal))
-            heal[where(heal < -satu)] = -satu
-        heal[where(heal > satu)] = satu
+            satu = 0.1 * min(fabs(amin(maps)), amax(maps))
+            maps[where(maps < -satu)] = -satu
+        maps[where(maps > satu)] = satu
 
     exttrofi = [minmlgal, maxmlgal, minmbgal, maxmbgal]
 
     if pixltype == 'heal':
-        cart = retr_cart(heal, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
+        cart = retr_cart(maps, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
     else:
-        numbsidetemp = int(sqrt(heal.size))
-        cart = heal.reshape((numbsidetemp, numbsidetemp))
+        numbsidetemp = int(sqrt(maps.size))
+        print 'hey'
+        print 'maps'
+        print maps.size
+        cart = maps.reshape((numbsidetemp, numbsidetemp))
 
     figr, axis = plt.subplots(figsize=(6, 6))
     if resi:
@@ -581,7 +584,8 @@ def retr_isot(binsener, numbside=256):
     return isotflux
 
 
-def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, reso=0.1):
+def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, \
+                                                                                                            numbsidelgal=100, numbsidebgal=100):
     
     if indxpixlrofi == None:
         numbpixlinpt = hmap.size
@@ -589,34 +593,28 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
     else:
         numbpixlinpt = numbsideinpt**2 * 12
     
-    deltlgcr = maxmlgal - minmlgal
-    numbbinslgcr = int(deltlgcr / reso)
+    lgcr = linspace(minmlgal, maxmlgal, numbsidelgal)
+    indxlgcr = arange(numbsidelgal)
     
-    deltbgcr = maxmbgal - minmbgal
-    numbbinsbgcr = int(deltbgcr / reso)
-    
-    lgcr = linspace(minmlgal, maxmlgal, numbbinslgcr)
-    ilgcr = arange(numbbinslgcr)
-    
-    bgcr = linspace(minmbgal, maxmbgal, numbbinsbgcr)
-    ibgcr = arange(numbbinsbgcr)
+    bgcr = linspace(minmbgal, maxmbgal, numbsidebgal)
+    indxbgcr = arange(numbsidebgal)
     
     lghp, bghp, numbpixl, apix = retr_healgrid(numbsideinpt)
 
     bgcrmesh, lgcrmesh = meshgrid(bgcr, lgcr)
     
-    jpixl = hp.ang2pix(numbsideinpt, pi / 2. - deg2rad(bgcrmesh), deg2rad(lgcrmesh))
+    indxpixlmesh = hp.ang2pix(numbsideinpt, pi / 2. - deg2rad(bgcrmesh), deg2rad(lgcrmesh))
     
     if indxpixlrofi == None:
-        kpixl = jpixl
+        indxpixltemp = indxpixlmesh
     else:
         pixlcnvt = zeros(numbpixlinpt, dtype=int)
         for k in range(indxpixlrofi.size):
             pixlcnvt[indxpixlrofi[k]] = k
-        kpixl = pixlcnvt[jpixl]
+        indxpixltemp = pixlcnvt[indxpixlmesh]
 
-    hmapcart = zeros((numbbinsbgcr, numbbinslgcr))
-    hmapcart[meshgrid(ibgcr, ilgcr)] = hmap[kpixl]
+    hmapcart = zeros((numbsidelgal, numbsidebgal))
+    hmapcart[meshgrid(indxbgcr, indxlgcr)] = hmap[indxpixltemp]
 
     return hmapcart
 
@@ -659,8 +657,8 @@ def retr_fdfm(binsener, numbside=256, vfdm=7):
     return fdfm
 
 
-def plot_braz(ax, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mcol='black', labl=None, alpha=None):
-
+def plot_braz(axis, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mcol='black', labl=None, alpha=None):
+    
     if numbsampdraw > 0:
         jsampdraw = choice(arange(ydat.shape[0]), size=numbsampdraw)
         axis.plot(xdat, ydat[jsampdraw[0], :], alpha=0.1, color='b', label='Samples')

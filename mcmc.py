@@ -172,7 +172,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
 
     if gdat.verbtype > 0:
         print 'Accumulating samples from all processes...'
-        tim0 = time.time()
+        timeinit = time.time()
 
     # parse the sample chain
     listsampvarb = zeros((gdat.numbsamp, gdat.numbproc, gdat.numbpara))
@@ -183,6 +183,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
         listsampcalc.append(empty((gdat.numbsamp, gdat.numbproc, size)))
     listllik = zeros((gdat.numbsamp, gdat.numbproc))
     listaccp = zeros((gdat.numbswep, gdat.numbproc))
+    listchro = zeros((gdat.numbswep, gdat.numbproc))
     listindxparamodi = zeros((gdat.numbswep, gdat.numbproc))
 
     for k in gdat.indxproc:
@@ -193,7 +194,8 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
                 listsampcalc[n][j, k, :] = listchan[k][2][j][n]
         listllik[:, k] = listchan[k][3]
         listaccp[:, k] = listchan[k][4]
-        listindxparamodi[:, k] = listchan[k][5]
+        listchro[:, k] = listchan[k][5]
+        listindxparamodi[:, k] = listchan[k][6]
 
     indxlistaccp = where(listaccp == True)[0]
     propeffi = zeros(gdat.numbpara)
@@ -215,7 +217,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     
         if gdat.verbtype > 1:
             print 'Calculating autocorrelation...'
-            tim0 = time.time()
+            timeinit = time.time()
         atcr, timeatcr = retr_atcr(listsamp)
         if gdat.verbtype > 1:
             timefinl = time.time()
@@ -226,7 +228,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
         if gdat.numbproc > 1:
             if gdat.verbtype > 1:
                 print 'Performing Gelman-Rubin convergence test...'
-                tim0 = time.time()
+                timeinit = time.time()
             for k in gdat.indxpara:
                 gmrbstat[k] = gmrb_test(listsampvarb[:, :, k])
             if gdat.verbtype > 1:
@@ -241,15 +243,33 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
         listsampcalc[n] = listsampcalc[n].reshape((gdat.numbsamptotl, -1))
     listllik = listllik.flatten()
     listaccp = listaccp.flatten()
+    listchro = listchro.flatten()
     listindxparamodi = listindxparamodi.flatten()
 
     if gdat.verbtype > 1:
         print 'Making plots...'
         timeinit = time.time()
     
+    # make plots
+    ## proposal efficiency
     path = gdat.pathplot
     plot_propeffi(path, gdat.numbswep, gdat.numbpara, listaccp, listindxparamodi, gdat.datapara.strg)
 
+    ## processing time per sample
+    figr, axis = plt.subplots()
+    binstime = logspace(log10(amin(listchro * 1e3)), log10(amax(listchro * 1e3)), 50)
+    axis.hist(listchro * 1e3, binstime, log=True)
+    axis.set_ylabel('$N_{samp}$')
+    axis.set_xlabel('$t$ [ms]')
+    axis.set_xscale('log')
+    axis.set_xlim([amin(binstime), amax(binstime)])
+    axis.set_ylim([0.5, None])
+    plt.tight_layout()
+    path = gdat.pathplot + 'chro.pdf'
+    figr.savefig(gdat.pathplot + 'chro.pdf')
+    plt.close(figr)
+
+    ## likelihood
     path = gdat.pathplot + 'llik'
     plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
     
@@ -265,7 +285,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
         timefinl = time.time()
         print 'Done in %.3g seconds' % (timefinl - timeinit)
 
-    chan = [listsampvarb, listsamp, listsampcalc, listllik, listaccp, listindxparamodi, propeffi, levi, info, gmrbstat]
+    chan = [listsampvarb, listsamp, listsampcalc, listllik, listaccp, listchro, listindxparamodi, propeffi, levi, info, gmrbstat]
     
     return chan
 
@@ -280,6 +300,7 @@ def work(gdat, indxprocwork):
     listsampcalc = []
     listllik = zeros(gdat.numbsamp)
     listaccp = empty(gdat.numbswep, dtype=bool)
+    listchro = empty(gdat.numbswep)
     listindxparamodi = empty(gdat.numbswep, dtype=int)
     
     if gdat.initsamp == None:
@@ -330,6 +351,8 @@ def work(gdat, indxprocwork):
     cntrswep = 0
     while cntrswep < gdat.numbswep:
         
+        timeinit = time.time()
+
         if gdat.verbtype > 0:
             cntrprog = util.show_prog(cntrswep, gdat.numbswep, cntrprog, indxprocwork=indxprocwork) 
 
@@ -406,6 +429,10 @@ def work(gdat, indxprocwork):
             listsampvarb[gdat.indxsampsave[cntrswep], :] = copy(thissampvarb)
             listsampcalc.append(copy(thissampcalc))
         
+        timefinl = time.time()
+
+        listchro[cntrswep] = timefinl - timeinit
+        
         if gdat.optipropdone:
             cntrswep += 1
         else:
@@ -445,8 +472,8 @@ def work(gdat, indxprocwork):
                     print
                 cntroptimean += 1
             cntroptisamp += 1
-    
-    chan = [listsampvarb, listsamp, listsampcalc, listllik, listaccp, listindxparamodi]
+            
+    chan = [listsampvarb, listsamp, listsampcalc, listllik, listaccp, listchro, listindxparamodi]
 
     return chan
 
