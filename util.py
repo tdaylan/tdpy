@@ -476,13 +476,13 @@ def prep_fdfm(regitype, enertype, pathdata):
     pf.writeto(path, fdfmfluxigal, clobber=True)
 
 
-def plot_heal(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., resi=False, satu=False):
+def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., resi=False, satu=False):
     
-    if pixltype == 'heal' and indxpixlrofi != None:
+    if indxpixlrofi != None:
         mapstemp = zeros(numbpixl)
         mapstemp[indxpixlrofi] = maps
         maps = mapstemp
-
+    
     # saturate the map
     if satu:
         mapstemp = copy(maps)
@@ -500,9 +500,6 @@ def plot_heal(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, tit
         cart = retr_cart(maps, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
     else:
         numbsidetemp = int(sqrt(maps.size))
-        print 'hey'
-        print 'maps'
-        print maps.size
         cart = maps.reshape((numbsidetemp, numbsidetemp))
 
     figr, axis = plt.subplots(figsize=(6, 6))
@@ -655,6 +652,26 @@ def retr_fdfm(binsener, numbside=256, vfdm=7):
         fdfm[i, :] = trapz(fdfmheal[i*numbsampbins:(i+1)*numbsampbins, :], enersamp[i*numbsampbins:(i+1)*numbsampbins], axis=0) / diffener[i]
 
     return fdfm
+
+
+def plot_matr(axis, xdat, ydat, labl, loc=1):
+    
+    listlinestyl = [':', '--', '-']
+    listcolr = ['b', 'r', 'g']
+    
+    for i in range(3):
+        for  j in range(3):
+            if len(xdat.shape) == 3:
+                axis.plot(xdat[i, j, :], ydat[i, j, :], color=listcolr[j], ls=listlinestyl[i])
+            else:
+                axis.plot(xdat, ydat[i, j, :], color=c[j], ls=ls[i])
+
+    line = []
+    for k in arange(3):
+        line.append(plt.Line2D((0,1),(0,0), color='k', ls=listlinestyl[k]))
+    for l in range(3):
+        line.append(plt.Line2D((0,1),(0,0), color=listcolr[l]))
+    axis.legend(line, labl, loc=loc, ncol=2) 
 
 
 def plot_braz(axis, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mcol='black', labl=None, alpha=None):
@@ -1017,15 +1034,15 @@ def plot_fermsmth():
 
     # plot the maps
     path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/maps.pdf'
-    plot_heal(path, mapstemp, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
+    plot_maps(path, mapstemp, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
 
     for i in arange(meanenerplot.size):
         for m in arange(indxevttplot.size):
             path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/mapssmthferm%d%d.pdf' % (i, m)
-            plot_heal(path, mapssmthferm[i, :, m], minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
+            plot_maps(path, mapssmthferm[i, :, m], minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
             
     path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/mapssmthgaus.pdf'
-    plot_heal(path, mapssmthgaus, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
+    plot_maps(path, mapssmthgaus, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
 
 
 def prca(matr):

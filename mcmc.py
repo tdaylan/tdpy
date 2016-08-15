@@ -154,12 +154,6 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
         print datapara.unit
         print datapara.vari
 
-    # get the number of auxiliary variables to be saved for each sample
-    tempsamp = rand(gdat.numbpara)
-    templlik, tempsampcalc = gdat.llikfunc(icdf_samp(tempsamp, gdat.datapara), gdat.gdatextr)
-    gdat.numbsampcalc = len(tempsampcalc)
-    gdat.indxsampcalc = arange(gdat.numbsampcalc)
-
     if numbproc == 1:
         listchan = [work(gdat, 0)]
     else:
@@ -178,6 +172,8 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     listsampvarb = zeros((gdat.numbsamp, gdat.numbproc, gdat.numbpara))
     listsamp = zeros((gdat.numbsamp, gdat.numbproc, gdat.numbpara))
     listsampcalc = []
+    gdat.numbsampcalc = len(listchan[0][2][0])
+    gdat.indxsampcalc = arange(gdat.numbsampcalc)
     for n in gdat.indxsampcalc:
         size = listchan[0][2][0][n].size
         listsampcalc.append(empty((gdat.numbsamp, gdat.numbproc, size)))
@@ -303,13 +299,15 @@ def work(gdat, indxprocwork):
     listchro = empty(gdat.numbswep)
     listindxparamodi = empty(gdat.numbswep, dtype=int)
     
+    gdat.cntrswep = 0
+    
     if gdat.initsamp == None:
         thissamp = rand(gdat.numbpara)
     else:
         thissamp = copy(gdat.initsamp[indxprocwork, :])
 
     thissampvarb = icdf_samp(thissamp, gdat.datapara)
-    thisllik, thissampcalc = gdat.llikfunc(thissampvarb, gdat.gdatextr)
+    thisllik, thissampcalc = gdat.llikfunc(thissampvarb, gdat.gdatextr, gdat)
     
     if gdat.verbtype > 1:
         print 'Process %d' % indxprocwork
@@ -348,18 +346,17 @@ def work(gdat, indxprocwork):
         gdat.optipropdone = True
 
     cntrprog = -1
-    cntrswep = 0
-    while cntrswep < gdat.numbswep:
+    while gdat.cntrswep < gdat.numbswep:
         
         timeinit = time.time()
 
         if gdat.verbtype > 0:
-            cntrprog = util.show_prog(cntrswep, gdat.numbswep, cntrprog, indxprocwork=indxprocwork) 
+            cntrprog = util.show_prog(gdat.cntrswep, gdat.numbswep, cntrprog, indxprocwork=indxprocwork) 
 
         if gdat.verbtype > 1:
             print
             print '-' * 10
-            print 'Sweep %d' % cntrswep
+            print 'Sweep %d' % gdat.cntrswep
             print 'thissamp: '
             print thissamp
             print 'thissampvarb: '
@@ -387,7 +384,7 @@ def work(gdat, indxprocwork):
                 print nextsampvarb
 
             # evaluate the log-likelihood
-            nextllik, nextsampcalc = gdat.llikfunc(nextsampvarb, gdat.gdatextr)
+            nextllik, nextsampcalc = gdat.llikfunc(nextsampvarb, gdat.gdatextr, gdat)
             accpprob = exp(nextllik - thisllik)
 
             if gdat.verbtype > 1:
@@ -405,7 +402,7 @@ def work(gdat, indxprocwork):
                 print 'Accepted.'
 
             # store utility variables
-            listaccp[cntrswep] = True
+            listaccp[gdat.cntrswep] = True
             
             # update the sampler state
             thisllik = nextllik
@@ -419,26 +416,35 @@ def work(gdat, indxprocwork):
                 print 'Rejected.'
 
             # store the utility variables
-            listaccp[cntrswep] = False
+            listaccp[gdat.cntrswep] = False
          
-        listindxparamodi[cntrswep] = indxparamodi
+        listindxparamodi[gdat.cntrswep] = indxparamodi
         
-        if gdat.boolsave[cntrswep]:
-            listllik[gdat.indxsampsave[cntrswep]] = copy(thisllik)
-            listsamp[gdat.indxsampsave[cntrswep], :] = copy(thissamp)
-            listsampvarb[gdat.indxsampsave[cntrswep], :] = copy(thissampvarb)
+        if gdat.boolsave[gdat.cntrswep]:
+            listllik[gdat.indxsampsave[gdat.cntrswep]] = copy(thisllik)
+            listsamp[gdat.indxsampsave[gdat.cntrswep], :] = copy(thissamp)
+            listsampvarb[gdat.indxsampsave[gdat.cntrswep], :] = copy(thissampvarb)
             listsampcalc.append(copy(thissampcalc))
         
         timefinl = time.time()
 
-        listchro[cntrswep] = timefinl - timeinit
+        listchro[gdat.cntrswep] = timefinl - timeinit
         
         if gdat.optipropdone:
-            cntrswep += 1
+            gdat.cntrswep += 1
         else:
             cntrproptotl[indxparamodi] += 1.
-            if listaccp[cntrswep]:
+            if listaccp[gdat.cntrswep]:
                 cntrprop[indxparamodi] += 1.
+
+            print 'hey'
+            print 'cntroptisamp'
+            print cntroptisamp
+            print 'perdpropeffi'
+            print perdpropeffi
+            print 'cntrproptotl'
+            print cntrproptotl
+            print 
 
             if cntroptisamp % perdpropeffi == 0 and (cntrproptotl > 0).all():
                 
