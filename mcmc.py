@@ -437,15 +437,6 @@ def work(gdat, indxprocwork):
             if listaccp[gdat.cntrswep]:
                 cntrprop[indxparamodi] += 1.
 
-            print 'hey'
-            print 'cntroptisamp'
-            print cntroptisamp
-            print 'perdpropeffi'
-            print perdpropeffi
-            print 'cntrproptotl'
-            print cntrproptotl
-            print 
-
             if cntroptisamp % perdpropeffi == 0 and (cntrproptotl > 0).all():
                 
                 thispropeffi = cntrprop / cntrproptotl
@@ -723,7 +714,7 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
                 if k == l:
                     axis.hist(thislistsamp[:, k], bins=thisbins[:, k])
                     if thistruepara[k] != None:
-                        axis.axvline(thistruepara[k], color='r')
+                        axis.axvline(thistruepara[k], color='g')
                     if quan:
                         thisquan = sp.stats.mstats.mquantiles(thislistsamp[:, k], prob=[0.025, 0.16, 0.84, 0.975])
                         axis.axvline(thisquan[0], color='b', ls='--')
@@ -739,7 +730,7 @@ def plot_grid(path, listsamp, strgpara, lims=None, scalpara=None, plotsize=6, nu
                     axis.set_xlim([amin(thisbins[:, l]), amax(thisbins[:, l])])
                     axis.set_ylim([amin(thisbins[:, k]), amax(thisbins[:, k])])
                     if thistruepara[l] != None and thistruepara[k] != None:
-                        axis.scatter(thistruepara[l], thistruepara[k], color='r', marker='o')
+                        axis.scatter(thistruepara[l], thistruepara[k], color='g', marker='o')
                     if thisscalpara[k] == 'logt':
                         axis.set_yscale('log', basey=10)
                         arry = logspace(log10(thislims[0, k]), log10(thislims[1, k]), numbtickbins)
