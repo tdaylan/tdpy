@@ -582,7 +582,7 @@ def retr_isot(binsener, numbside=256):
 
 
 def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, \
-                                                                                                            numbsidelgal=100, numbsidebgal=100):
+                                                                                                            numbsidelgal=200, numbsidebgal=200):
     
     if indxpixlrofi == None:
         numbpixlinpt = hmap.size
