@@ -508,7 +508,11 @@ def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, tit
     else:
         cmap = 'Reds'
     imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none')
-    plt.colorbar(imag, fraction=0.05)
+
+    axistemp = figr.add_axes([0.8, 0.1, 0.03, 0.8]) 
+    plt.colorbar(imag, cax=axistemp) 
+    #plt.colorbar(imag, fraction=0.05)
+    
     plt.title(titl)
 
     plt.tight_layout()
