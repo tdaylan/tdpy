@@ -478,6 +478,8 @@ def prep_fdfm(regitype, enertype, pathdata):
 
 def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., resi=False, satu=False):
     
+    asperati = (maxmbgal - minmbgal) / (maxmlgal - minmlgal)
+    
     if indxpixlrofi != None:
         mapstemp = zeros(numbpixl)
         mapstemp[indxpixlrofi] = maps
@@ -502,16 +504,22 @@ def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, tit
         numbsidetemp = int(sqrt(maps.size))
         cart = maps.reshape((numbsidetemp, numbsidetemp))
 
-    figr, axis = plt.subplots(figsize=(6, 6))
+    sizefigr = 6
+    figr, axis = plt.subplots(figsize=(sizefigr, asperati * sizefigr))
     if resi:
         cmap = 'RdBu'
     else:
         cmap = 'Reds'
     imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none')
 
-    axistemp = figr.add_axes([0.8, 0.1, 0.03, 0.8]) 
-    plt.colorbar(imag, cax=axistemp) 
-    #plt.colorbar(imag, fraction=0.05)
+    if asperati < 1:
+        orie = 'horizontal'
+    else:
+        orie = 'vertical'
+
+    #axistemp = figr.add_axes([0.8, 0.1, 0.03, 0.8]) 
+    #plt.colorbar(imag, cax=axistemp, orientation=orie) 
+    plt.colorbar(imag, fraction=0.05, orientation=orie)
     
     plt.title(titl)
 
