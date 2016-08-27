@@ -476,7 +476,8 @@ def prep_fdfm(regitype, enertype, pathdata):
     pf.writeto(path, fdfmfluxigal, clobber=True)
 
 
-def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., resi=False, satu=False):
+def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., \
+            resi=False, satu=False, numbsidelgal=200, numbsidebgal=200):
     
     asperati = (maxmbgal - minmbgal) / (maxmlgal - minmlgal)
     
@@ -499,31 +500,28 @@ def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, tit
     exttrofi = [minmlgal, maxmlgal, minmbgal, maxmbgal]
 
     if pixltype == 'heal':
-        cart = retr_cart(maps, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
+        cart = retr_cart(maps, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal, numbsidelgal=numbsidelgal, numbsidebgal=numbsidebgal)
     else:
         numbsidetemp = int(sqrt(maps.size))
         cart = maps.reshape((numbsidetemp, numbsidetemp))
 
-    sizefigr = 6
-    figr, axis = plt.subplots(figsize=(sizefigr, asperati * sizefigr))
+    sizefigr = 8
     if resi:
         cmap = 'RdBu'
     else:
         cmap = 'Reds'
+
+    if asperati < 1.:   
+        factsrnk = 1.5 * asperati
+    else:
+        factsrnk = 0.8
+    figr, axis = plt.subplots(figsize=(sizefigr, asperati * sizefigr))
     imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none')
 
-    if asperati < 1:
-        orie = 'horizontal'
-    else:
-        orie = 'vertical'
-
-    #axistemp = figr.add_axes([0.8, 0.1, 0.03, 0.8]) 
-    #plt.colorbar(imag, cax=axistemp, orientation=orie) 
-    plt.colorbar(imag, fraction=0.05, orientation=orie)
+    cbar = plt.colorbar(imag, shrink=factsrnk) 
     
     plt.title(titl)
 
-    plt.tight_layout()
     plt.savefig(path)
     plt.close(figr)
     
