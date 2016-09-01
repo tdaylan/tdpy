@@ -477,7 +477,7 @@ def prep_fdfm(regitype, enertype, pathdata):
 
 
 def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., \
-            resi=False, satu=False, numbsidelgal=200, numbsidebgal=200):
+            resi=False, satu=False, numbsidelgal=None, numbsidebgal=None):
     
     asperati = (maxmbgal - minmbgal) / (maxmlgal - minmlgal)
     
@@ -485,6 +485,13 @@ def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, tit
         mapstemp = zeros(numbpixl)
         mapstemp[indxpixlrofi] = maps
         maps = mapstemp
+    else:
+        numbpixl = maps.size
+    
+    if numbsidelgal == None:
+        numbsidelgal = 4 * int((maxmlgal - minmlgal) / rad2deg(sqrt(4. * pi / numbpixl)))
+    if numbsidebgal == None:
+        numbsidebgal = 4 * int((maxmbgal - minmbgal) / rad2deg(sqrt(4. * pi / numbpixl)))
     
     # saturate the map
     if satu:
@@ -592,13 +599,18 @@ def retr_isot(binsener, numbside=256):
 
 
 def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, \
-                                                                                                            numbsidelgal=200, numbsidebgal=200):
+                                                                                                            numbsidelgal=None, numbsidebgal=None):
     
     if indxpixlrofi == None:
         numbpixlinpt = hmap.size
         numbsideinpt = int(sqrt(numbpixlinpt / 12.))
     else:
         numbpixlinpt = numbsideinpt**2 * 12
+    
+    if numbsidelgal == None:
+        numbsidelgal = 4 * int((maxmlgal - minmlgal) / rad2deg(sqrt(4. * pi / numbpixlinpt)))
+    if numbsidebgal == None:
+        numbsidebgal = 4 * int((maxmbgal - minmbgal) / rad2deg(sqrt(4. * pi / numbpixlinpt)))
     
     lgcr = linspace(minmlgal, maxmlgal, numbsidelgal)
     indxlgcr = arange(numbsidelgal)
@@ -620,7 +632,7 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
             pixlcnvt[indxpixlrofi[k]] = k
         indxpixltemp = pixlcnvt[indxpixlmesh]
 
-    hmapcart = zeros((numbsidelgal, numbsidebgal))
+    hmapcart = zeros((numbsidebgal, numbsidelgal))
     hmapcart[meshgrid(indxbgcr, indxlgcr)] = hmap[indxpixltemp]
 
     return hmapcart
