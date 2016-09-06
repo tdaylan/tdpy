@@ -190,6 +190,44 @@ def show_memo():
     print '%.3g MB is being used.' % memo
     
 
+def retr_psfngausnorm(angl):
+
+    norm = sqrt(2. / pi**3) / angl / exp(-0.5 * angl**2) / \
+                        real(-erfi((angl**2 - pi * 1j) / sqrt(2) / angl) - erfi((angl**2 + pi * 1j) / sqrt(2) / angl) + 2. * erfi(angl / sqrt(2.)))
+
+    return norm
+
+
+def retr_mapspnts(lgal, bgal, stdv, flux, numbside=256, verbtype=0):
+
+    # lgal, bgal and stdv are in degrees
+
+    numbpnts = lgal.size
+    lgalheal, bgalheal, numbpixl, apix = retr_healgrid(numbside)
+    gridheal = array([lgalheal, bgalheal])
+    stdvradi = deg2rad(stdv)
+    mapspnts = zeros(numbpixl)
+    for n in range(numbpnts):
+        gridpnts = array([lgal[n], bgal[n]])
+        angl = angdist(gridheal, gridpnts, lonlat=True)
+        norm = retr_psfngausnorm(stdvradi[n])
+        print 'norm'
+        print norm
+        print 'angl'
+        print angl.shape
+        print 'flux'
+        print flux.shape
+        print 'stdvradi'
+        print stdvradi.shape
+        print
+
+        mapspnts += apix * norm * flux[n] * exp(-0.5 * angl**2 / stdvradi[n]**2)
+        if verbtype > 0:
+            print '%d out of %d' % (n, numbpnts)
+
+    return mapspnts
+
+
 def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=10., maxmswep=None, limtpara=None, tolrfunc=1e-6, optiprop=True, pathbase='./', rtag=''):
 
     print 'TDMN launched...'
@@ -476,8 +514,51 @@ def prep_fdfm(regitype, enertype, pathdata):
     pf.writeto(path, fdfmfluxigal, clobber=True)
 
 
+def read_fits(path, pathimag=None):
+    
+    print 'Reading the header of %s...' % path
+        
+    if pathimag != None:
+        os.system('mkdir -p ' + pathimag)
+    
+    hdun = pf.open(path)
+    numbhead = len(hdun)
+    for k in range(numbhead):
+        print 'Extension %d' % k
+        head = hdun[k].header
+        data = hdun[k].data
+        arry = array(stack((head.keys(), head.values()), 1))
+        listtype = []
+        listform = []
+        listunit = []
+        for n in range(arry.shape[0]):
+            if arry[n, 0] == 'EXTNAME':
+                print 'Extension name: ', arry[n, 1]
+        for n in range(arry.shape[0]):
+            if arry[n, 0].startswith('TTYPE') or arry[n, 0].startswith('TFORM') or arry[n, 0].startswith('TUNIT'):
+                print arry[n, 0], ': ', arry[n, 1]
+            if arry[n, 0].startswith('TTYPE'):
+                listtype.append(arry[n, 1])
+            if arry[n, 0].startswith('TFORM'):
+                listform.append(arry[n, 1])
+            if arry[n, 0].startswith('TUNIT'):
+                listunit.append(arry[n, 1])
+                print
+
+        if pathimag != None:
+            for n in range(len(listtype)):
+                if not listform[n].endswith('A') and isfinite(data[listtype[n]]).all():
+                    figr, axis = plt.subplots()
+                    axis.hist(data[listtype[n]])
+                    axis.set_xlabel('%s [%s]' % (listtype[n], listunit[n]))
+                    plt.tight_layout()
+                    path = pathimag + 'readfits_%s.pdf' % listtype[n]
+                    plt.savefig(path)
+                    plt.close(figr)
+
+
 def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., \
-            resi=False, satu=False, numbsidelgal=None, numbsidebgal=None):
+                                                                                                resi=False, satu=False, numbsidelgal=None, numbsidebgal=None):
     
     asperati = (maxmbgal - minmbgal) / (maxmlgal - minmlgal)
     

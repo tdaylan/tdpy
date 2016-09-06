@@ -5,6 +5,7 @@ from numpy.random import choice
 from scipy.integrate import *
 from scipy.interpolate import *
 import scipy as sp
+from scipy.special import erfi
 
 # plotting
 import matplotlib as mpl
@@ -21,6 +22,7 @@ import pyfits as pf
 
 # pixelization
 import healpy as hp
+from healpy.rotator import angdist
 
 # utilities
 import sh, os, functools, time
