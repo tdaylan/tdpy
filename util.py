@@ -570,9 +570,9 @@ def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, tit
         numbpixl = maps.size
     
     if numbsidelgal == None:
-        numbsidelgal = 4 * int((maxmlgal - minmlgal) / rad2deg(sqrt(4. * pi / numbpixl)))
+        numbsidelgal = min(4 * int((maxmlgal - minmlgal) / rad2deg(sqrt(4. * pi / numbpixl))), 2000)
     if numbsidebgal == None:
-        numbsidebgal = 4 * int((maxmbgal - minmbgal) / rad2deg(sqrt(4. * pi / numbpixl)))
+        numbsidebgal = min(4 * int((maxmbgal - minmbgal) / rad2deg(sqrt(4. * pi / numbpixl))), 2000)
     
     # saturate the map
     if satu:

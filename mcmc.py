@@ -510,7 +510,8 @@ def retr_atcr(listsampinpt, numbtimeatcr=5):
             print 'Autocorrelation time calculation, iteration number %d' % n
         n += 1
 
-    numbtime = numbtimeatcr * timeatcr
+    numbtime = len(atcr)
+    #numbtime = numbtimeatcr * timeatcr
     atcroutp = empty((numbtime, numbproc, numbpara))
     for n in range(numbtime):
         atcroutp[n, :, :] = atcr[n]
