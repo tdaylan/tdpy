@@ -514,6 +514,13 @@ def prep_fdfm(regitype, enertype, pathdata):
     pf.writeto(path, fdfmfluxigal, clobber=True)
 
 
+def retr_strgtimestmp():
+
+    strgtimestmp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+
+    return strgtimestmp
+
+
 def read_fits(path, pathimag=None):
     
     print 'Reading the header of %s...' % path
