@@ -556,12 +556,19 @@ def read_fits(path, pathimag=None):
             for n in range(len(listtype)):
                 if not listform[n].endswith('A') and isfinite(data[listtype[n]]).all():
                     figr, axis = plt.subplots()
-                    axis.hist(data[listtype[n]])
-                    axis.set_xlabel('%s [%s]' % (listtype[n], listunit[n]))
-                    plt.tight_layout()
-                    path = pathimag + 'readfits_%s.pdf' % listtype[n]
-                    plt.savefig(path)
-                    plt.close(figr)
+                    try:
+                        bins = linspace(amin(data[listtype[n]]), amax(data[listtype[n]]), 100)
+                        axis.hist(data[listtype[n]], bins=bins)
+                        #axis.set_xlabel('%s [%s]' % (listtype[n], listunit[n]))
+                        axis.set_yscale('log')
+                        axis.set_xlabel('%s' % (listtype[n]))
+                        plt.tight_layout()
+                        path = pathimag + 'readfits_%s.pdf' % listtype[n]
+                        plt.savefig(path)
+                        plt.close(figr)
+                    except:
+                        print 'Failed on %s' % listtype[n]
+                        print
 
 
 def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., \
