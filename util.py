@@ -183,12 +183,39 @@ def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None):
     return thiscntr            
 
 
-def show_memo():
+def show_memo_simp():
     
     memo = float(sh.awk(sh.ps('u', '-p', os.getpid()),'{sum=sum+$6}; END {print sum/1024}'))
     
     print '%.3g MB is being used.' % memo
     
+
+def show_memo(objt, name):
+
+    if isinstance(objt, list):
+        for k in len(objt):
+            size = sys.getsizeof(objt[k]) / 2.**20
+    else:
+        listsize = []
+        listattr = []
+        for attr, valu in objt.__dict__.iteritems():
+            listsize.append(sys.getsizeof(valu) / 2.**20)
+            listattr.append(attr)
+        size = array(listsize)
+        attr = array(listattr)
+        sizetotl = sum(size) 
+        print 'Memory budget: %s' % name
+        print 'Total size: %.4g MB' % sizetotl
+        
+        # sort the sizes to get the largest tail
+        indxsizetemp = argsort(size)[::-1]
+        size = size[indxsizetemp]
+        attr = attr[indxsizetemp]
+        print 'Largest 5:'
+        for k in range(5):
+            print '%s: %.4g MB' % (attr[k], size[k])
+        print 
+
 
 def retr_psfngausnorm(angl):
 
