@@ -183,6 +183,69 @@ def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None):
     return thiscntr            
 
 
+def retr_galcfromequc(rasc, decl):
+
+    icrs = astropy.coordinates.SkyCoord(ra=rasc*astropy.units.degree, dec=decl*astropy.units.degree)
+
+    lgal = icrs.galactic.l.degree
+    bgal = icrs.galactic.b.degree
+    
+    return lgal, bgal
+
+
+def regr(xaxi, yaxi, ordr):
+    
+    coef = polyfit(xaxi, yaxi, ordr)
+    func = poly1d(coef)
+    strg = '$y = '
+    if ordr == 0:
+        strg += '%.5g$'
+    if ordr == 1:
+        strg += '%.5g x + %.5g$' % (coef[0], coef[1])
+    if ordr == 2:
+        strg += '%.5g x^2 + %.5g x + %.5g$' % (coef[0], coef[1], coef[2])
+
+    return coef, func, strg
+
+
+def corr_catl(lgalseco, bgalseco, fluxseco, lgalfrst, bgalfrst, fluxfrst, anglassc=deg2rad(1.), verbtype=1):
+
+    numbfrst = lgalfrst.size
+
+    indxsecoassc = zeros(numbfrst, dtype=int) - 1
+    fluxassc = zeros(numbfrst)
+    numbassc = zeros(numbfrst, dtype=int)
+    distassc = zeros(numbfrst) + 1000.
+    lgalbgalfrst = array([lgalfrst, bgalfrst])
+    thisfraccomp = -1
+    numbseco = lgalseco.size
+    for k in range(numbseco):
+        lgalbgalseco = array([lgalseco[k], bgalseco[k]])
+        dist = angdist(lgalbgalfrst, lgalbgalseco, lonlat=True)
+        thisindxfrst = where(dist < anglassc)[0]
+        
+        if thisindxfrst.size > 0:
+            
+            # if there are multiple associated true PS, sort them
+            indx = argsort(dist[thisindxfrst])
+            dist = dist[thisindxfrst][indx]
+            thisindxfrst = thisindxfrst[indx]
+                
+            # store the index of the model PS
+            numbassc[thisindxfrst[0]] += 1
+            if dist[0] < distassc[thisindxfrst[0]]:
+                fluxassc[thisindxfrst[0]] = fluxseco[k]
+                distassc[thisindxfrst[0]] = dist[0]
+                indxsecoassc[thisindxfrst[0]] = k
+
+        nextfraccomp = int(100 * float(k) / numbseco)
+        if verbtype > 1 and nextfraccomp > thisfraccomp:
+            thisfraccomp = nextfraccomp
+            print '%02d%% completed.' % thisfraccomp
+
+    return indxsecoassc
+
+
 def show_memo_simp():
     
     memo = float(sh.awk(sh.ps('u', '-p', os.getpid()),'{sum=sum+$6}; END {print sum/1024}'))

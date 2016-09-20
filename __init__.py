@@ -34,5 +34,6 @@ import multiprocessing as mp
 import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
-
+# astropy
+import astropy.coordinates, astropy.units
 
