@@ -320,7 +320,7 @@ def work(gdat, indxprocwork):
     varipara = copy(gdat.datapara.vari)
     
     # proposal scale optimization
-    pathvaripara = gdat.pathbase + '/varipara_' + gdat.rtag + '.fits'
+    pathvaripara = gdat.pathbase + 'varipara_' + gdat.rtag + '.fits'
     if gdat.optiprop:
         # temp
         if True or not os.path.isfile(pathvaripara): 

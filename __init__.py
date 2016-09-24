@@ -25,7 +25,7 @@ import healpy as hp
 from healpy.rotator import angdist
 
 # utilities
-import sh, os, functools, time, datetime
+import psutil, sys, sh, os, functools, time, datetime
 
 # multiprocessing
 import multiprocessing as mp

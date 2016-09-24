@@ -138,12 +138,12 @@ def summ(strg):
 
 def retr_p4dm_spec(anch, part='el'):
     
+    pathimag, pathdata = retr_path('tdpy')
     if part == 'el':
         strg = 'AtProduction_positrons'
     if part == 'ph':
         strg = 'AtProduction_gammas'
-
-    name = os.environ["TDPY_DATA_PATH"] + '/p4dm/' + strg + '.dat'
+    name = pathdata + 'p4dm/' + strg + '.dat'
     p4dm = loadtxt(name)
     
     p4dm[:, 0] *= 1e3 # [MeV]
@@ -248,10 +248,35 @@ def corr_catl(lgalseco, bgalseco, fluxseco, lgalfrst, bgalfrst, fluxfrst, anglas
 
 def show_memo_simp():
     
-    memo = float(sh.awk(sh.ps('u', '-p', os.getpid()),'{sum=sum+$6}; END {print sum/1024}'))
+    proc = psutil.Process(os.getpid())
+    fact = float(2**20)
+    memoinfo = proc.memory_info()
+    memoresi = memoinfo.rss / fact
+    print 'Checking resources...'
+    print 'Resident memory: %.3g MB' % memoresi
+    print
+
+
+def retr_axis(minm=None, maxm=None, numb=None, bins=None, scal='self'):
     
-    print '%.3g MB is being used.' % memo
-    
+    if bins == None:
+        if scal == 'self':
+            bins = linspace(minm, maxm, numb + 1)
+            mean = (bins[1:] + bins[:-1]) / 2.
+        else:
+            bins = logspace(log10(minm), log10(maxm), numb + 1)
+            mean = sqrt(bins[1:] * bins[:-1])
+    else:
+        if scal == 'self':
+            mean = (bins[1:] + bins[:-1]) / 2.
+        else:
+            mean = sqrt(bins[1:] * bins[:-1])
+        numb = mean.size
+        
+    indx = arange(numb)
+   
+    return bins, mean, numb, indx
+
 
 def show_memo(objt, name):
 
@@ -823,6 +848,44 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
     return hmapcart
 
 
+def smth(maps, scalsmth, mpol=False, retrfull=False, numbsideoutp=None, indxpixlmask=None):
+
+    if mpol:
+        mpolsmth = scalsmth
+    else:
+        mpolsmth = 180. / scalsmth
+
+    numbpixl = maps.size
+    numbside = int(sqrt(numbpixl / 12))
+    numbmpol = 3 * numbside
+    maxmmpol = 3. * numbside - 1.
+    mpolgrid, temp = hp.Alm.getlm(lmax=maxmmpol)
+    mpol = arange(maxmmpol + 1.)
+    
+    if numbsideoutp == None:
+        numbsideoutp = numbside
+    
+    if indxpixlmask != None:
+        mapsoutp = copy(maps)
+        mapsoutp[indxpixlmask] = hp.UNSEEN
+        mapsoutp = hp.ma(mapsoutp)
+        almctemp = hp.map2alm(maps)
+    else:
+        mapsoutp = maps
+    
+    almc = hp.map2alm(mapsoutp)
+
+    wght = exp(-0.5 * (mpolgrid / mpolsmth)**2)
+    almc *= wght
+    
+    mapsoutp = hp.alm2map(almc[where(mpolgrid < 3 * numbsideoutp)], numbsideoutp, verbose=False)
+
+    if retrfull:
+        return mapsoutp, almc, mpol, exp(-0.5 * (mpol / mpolsmth)**2)
+    else:
+        return mapsoutp
+
+
 def retr_fdfm(binsener, numbside=256, vfdm=7):                    
     
     diffener = binsener[1:] - binsener[0:-1]
@@ -830,7 +893,7 @@ def retr_fdfm(binsener, numbside=256, vfdm=7):
 
     numbpixl = numbside**2 * 12
     
-    path = os.environ["TDPY_DATA_PATH"] + '/'
+    path = os.environ["TDPY_DATA_PATH"] + '/data/'
     if vfdm == 2:
         path += 'gll_iem_v02.fit'
     if vfdm == 3:
@@ -1053,6 +1116,19 @@ def make_maps_main(gdat, pathdata):
         pool.map(make_maps_part, indxproc)
         pool.close()
         pool.join()
+
+
+def retr_path(strg):
+    
+    pathbase = os.environ[strg.upper() + '_DATA_PATH']
+
+    pathimag = pathbase + '/imag/'
+    os.system('mkdir -p %s' % pathimag)
+
+    pathdata = pathbase + '/data/'
+    os.system('mkdir -p %s' % pathdata)
+
+    return pathimag, pathdata
 
 
 def make_maps_work(gdat, indxprocwork):
