@@ -87,7 +87,7 @@ def gmrb_test(griddata):
     return psrf
 
 
-def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=True, gdatextr=None, pathbase='./', rtag='', numbburn=None, truepara=None, \
+def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=True, gdatextr=None, pathdata='./', pathimag='./', rtag='', numbburn=None, truepara=None, \
                                                                                       savevaripara=False, numbplotside=None, factthin=None, verbtype=0, factpropeffi=2.):
    
     # construct the global object
@@ -98,7 +98,8 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     gdat.datapara = datapara
     gdat.initsamp = initsamp
     gdat.optiprop = optiprop
-    gdat.pathbase = pathbase
+    gdat.pathimag = pathimag
+    gdat.pathdata = pathdata
     gdat.rtag = rtag
     gdat.numbburn = numbburn
     gdat.savevaripara = savevaripara
@@ -205,8 +206,8 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     levi = -log(mean(1. / exp(listllik - minmlistllik))) + minmlistllik
     info = mean(listllik) - levi
     
-    gdat.pathplot = gdat.pathbase + '/imag/%s/' % gdat.rtag
-    os.system('mkdir -p %s' % gdat.pathplot)
+    gdat.pathimag += 'tdmc_%s/' % gdat.rtag
+    os.system('mkdir -p %s' % gdat.pathimag)
 
     gmrbstat = zeros(gdat.numbpara)
     if gdat.numbsamp > 1:
@@ -218,7 +219,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
         if gdat.verbtype > 1:
             timefinl = time.time()
             print 'Done in %.3g seconds' % (timefinl - timeinit)
-        path = gdat.pathplot
+        path = gdat.pathimag
         plot_atcr(path, atcr)
     
         if gdat.numbproc > 1:
@@ -230,7 +231,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
             if gdat.verbtype > 1:
                 timefinl = time.time()
                 print 'Done in %.3g seconds' % (timefinl - timeinit)
-            path = gdat.pathplot
+            path = gdat.pathimag
             plot_gmrb(path, gmrbstat)
 
     listsampvarb = listsampvarb.reshape((gdat.numbsamptotl, gdat.numbpara))
@@ -248,7 +249,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     
     # make plots
     ## proposal efficiency
-    path = gdat.pathplot
+    path = gdat.pathimag
     plot_propeffi(path, gdat.numbswep, gdat.numbpara, listaccp, listindxparamodi, gdat.datapara.strg)
 
     ## processing time per sample
@@ -261,20 +262,20 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     axis.set_xlim([amin(binstime), amax(binstime)])
     axis.set_ylim([0.5, None])
     plt.tight_layout()
-    path = gdat.pathplot + 'chro.pdf'
-    figr.savefig(gdat.pathplot + 'chro.pdf')
+    path = gdat.pathimag + 'chro.pdf'
+    figr.savefig(gdat.pathimag + 'chro.pdf')
     plt.close(figr)
 
     ## likelihood
-    path = gdat.pathplot + 'llik'
+    path = gdat.pathimag + 'llik'
     plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
     
     if numbplotside != 0:
-        path = gdat.pathplot
+        path = gdat.pathimag
         plot_grid(path, listsampvarb, gdat.datapara.strg, truepara=gdat.datapara.true, scalpara=gdat.datapara.scal, numbplotside=numbplotside)
         
     for k in gdat.indxpara:
-        path = gdat.pathplot + gdat.datapara.name[k]
+        path = gdat.pathimag + gdat.datapara.name[k]
         plot_trac(path, listsampvarb[:, k], gdat.datapara.strg[k], scalpara=gdat.datapara.scal[k], truepara=gdat.datapara.true[k])
         
     if gdat.verbtype > 1:
@@ -320,10 +321,16 @@ def work(gdat, indxprocwork):
     varipara = copy(gdat.datapara.vari)
     
     # proposal scale optimization
-    pathvaripara = gdat.pathbase + 'varipara_' + gdat.rtag + '.fits'
+    pathvaripara = gdat.pathdata + 'varipara_' + gdat.rtag + '.fits'
     if gdat.optiprop:
         # temp
-        if True or not os.path.isfile(pathvaripara): 
+        if False and os.path.isfile(pathvaripara): 
+            print 'Reading %s...' % pathvaripara
+            if gdat.verbtype > 0 and indxprocwork == 0:
+                print 'Retrieving the optimal proposal scale from %s...' % pathvaripara
+            gdat.optipropdone = True
+            varipara = pf.getdata(pathvaripara)
+        else:
             if gdat.verbtype > 0 and indxprocwork == 0:
                 print 'Optimizing proposal scale...'
             targpropeffi = 0.25
@@ -335,11 +342,6 @@ def work(gdat, indxprocwork):
             gdat.optipropdone = False
             cntroptisamp = 0
             cntroptimean = 0
-        else:
-            if gdat.verbtype > 0 and indxprocwork == 0:
-                print 'Retrieving the optimal proposal scale from %s...' % pathvaripara
-            gdat.optipropdone = True
-            varipara = pf.getdata(pathvaripara)
     else:
         if gdat.verbtype > 0 and indxprocwork == 0:
             print 'Skipping proposal scale optimization...'

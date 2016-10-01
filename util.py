@@ -78,7 +78,6 @@ def retr_nfwp(nfwg, numbside, norm=None):
     maxmsadi = 2. * radilocl
     sadi = linspace(minmsadi, maxmsadi, nsadi)
     
-
     lghp, bghp, numbpixl, apix = retr_healgrid(numbside)
     
     cosigahp = cos(deg2rad(lghp)) * cos(deg2rad(bghp))
@@ -92,13 +91,11 @@ def retr_nfwp(nfwg, numbside, norm=None):
         radigrid = sqrt(radilocl**2 + sadi[i]**2 - 2 * radilocl * sadi[i] * cosigahp)
         edengrid[i, :] = interp1d(radi, eden)(radigrid)
 
-
     edengridtotl = sum(edengrid**2, axis=0)
 
     if norm != None:
         jgahp = argsort(gahp)
         edengridtotl /= interp1d(gahp[jgahp], edengridtotl[jgahp])(5.)
-        
         
     return edengridtotl
 
@@ -275,7 +272,7 @@ def retr_axis(minm=None, maxm=None, numb=None, bins=None, scal='self'):
         
     indx = arange(numb)
    
-    return bins, mean, numb, indx
+    return bins, mean, diff(bins), numb, indx
 
 
 def show_memo(objt, name):
@@ -789,7 +786,9 @@ def retr_isot(binsener, numbside=256):
     numbsamp = 10
 
     # get the best-fit isotropic flux given by the Fermi-LAT collaboration
-    path = os.environ["TDPY_DATA_PATH"] + '/iso_P8R2_ULTRACLEAN_V6_v06.txt'
+
+    temp, pathdata = retr_path('tdpy')
+    path = pathdata + 'iso_P8R2_ULTRACLEAN_V6_v06.txt'
     isotdata = loadtxt(path)
     enerisot = isotdata[:, 0] * 1e-3 # [GeV]
     isotfluxtemp = isotdata[:, 1] * 1e3 # [1/cm^2/s/sr/GeV]
@@ -837,11 +836,10 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
     if indxpixlrofi == None:
         indxpixltemp = indxpixlmesh
     else:
-        pixlcnvt = zeros(numbpixlinpt, dtype=int)
+        pixlcnvt = zeros(numbpixlinpt, dtype=int) - 1
         for k in range(indxpixlrofi.size):
             pixlcnvt[indxpixlrofi[k]] = k
         indxpixltemp = pixlcnvt[indxpixlmesh]
-
     hmapcart = zeros((numbsidebgal, numbsidelgal))
     hmapcart[meshgrid(indxbgcr, indxlgcr)] = hmap[indxpixltemp]
 
@@ -1118,17 +1116,45 @@ def make_maps_main(gdat, pathdata):
         pool.join()
 
 
-def retr_path(strg):
+def move_imag():
+    pass
+    #if os.uname()[1] == 'fink1.rc.fas.harvard.edu' and getpass.getuser() == 'tansu':
+    #    cmnd = 'mv ' + gdat.pathplot + '/* /n/pan/www/tansu/imag/ferm_line/'
+    #    os.system(cmnd)
+
+
+def retr_path(strg, pathextndata=None, pathextnimag=None, rtag=None, onlyimag=False, onlydata=False):
     
-    pathbase = os.environ[strg.upper() + '_DATA_PATH']
+    pathbase = os.environ[strg.upper() + '_DATA_PATH'] + '/'
 
-    pathimag = pathbase + '/imag/'
-    os.system('mkdir -p %s' % pathimag)
+    if not onlyimag:
+        pathdata = pathbase
+        if pathextndata != None:
+            pathdata += pathextndata
+        pathdata += 'data/'
+        os.system('mkdir -p %s' % pathdata)
+    if not onlydata:        
+        pathimag = pathbase
+        if pathextnimag != None:
+            pathimag += pathextnimag
+        pathimag += 'imag/'
+        if rtag != None:
+            pathimag += rtag + '/'
+        os.system('mkdir -p %s' % pathimag)
 
-    pathdata = pathbase + '/data/'
-    os.system('mkdir -p %s' % pathdata)
+    if not onlyimag and not onlydata:
+        return pathimag, pathdata
+    elif onlyimag:
+        return pathimag
+    else:
+        return pathdata
 
-    return pathimag, pathdata
+def conv_rascdecl(args):
+
+    rasc = args[0] * 8 + args[1] / 60. + args[2] / 3600.
+    decl = args[3] + args[4] / 60. + args[5] / 3600.
+
+    return rasc, decl
 
 
 def make_maps_work(gdat, indxprocwork):
@@ -1153,6 +1179,11 @@ def make_maps_work(gdat, indxprocwork):
     for m in gdat.indxevtt:
 
         if gdat.recotype[indxprocwork] == 'rec7':
+            strgirfn = 'P7REP_SOURCE_V15'
+        if gdat.recotype[indxprocwork] == 'rec8':
+            strgirfn = 'P8R2_SOURCE_V6'
+
+        if gdat.recotype[indxprocwork] == 'rec7':
             if m == 3:
                 thisevtt = 1
                 thisevttdepr = 0
@@ -1172,6 +1203,7 @@ def make_maps_work(gdat, indxprocwork):
         live = gdat.pathdata + '/fermlive_%04d_%s.fits' % (thisevtt, rtag)
         cnts = gdat.pathdata + '/fermcnts_%04d_%s.fits' % (thisevtt, rtag)
         expo = gdat.pathdata + '/fermexpo_%04d_%s.fits' % (thisevtt, rtag)
+        psfn = gdat.pathdata + '/fermpsfn_%04d_%s.fits' % (thisevtt, rtag)
 
         cmnd = 'gtselect infile=' + infl + ' outfile=' + sele + ' ra=INDEF dec=INDEF rad=INDEF ' + \
             gdat.strgtime[indxprocwork] + ' emin=100 emax=100000 zmax=90 evclass=%d %s' % (gdat.evtc[indxprocwork], strgpsfn)
@@ -1209,6 +1241,15 @@ def make_maps_work(gdat, indxprocwork):
             os.system(cmnd)
 
         cmnd = 'gtexpcube2 infile=' + live + ' cmap=' + cnts + ' outfile=' + expo + ' irfs=CALDB evtype=%03d bincalc=CENTER' % thisevtt
+        if gdat.test:
+            print cmnd
+            print ''
+        else:
+            os.system(cmnd)
+
+        psfno = gdat.pathdata + '/fermpsfn_%04d_%s.fits' % (thisevtt, rtag)
+        cmnd = 'gtpsf %s %s %s %.4g %.4g ebinalg=FILE ebinfile=$TDPY_DATA_PATH/%s 10. 50' % (live, psfn, strgpsfn, rasc, decl) + \
+            ' ebinalg=FILE ebinfile=$TDPY_DATA_PATH/%s ' % gdat.strgener[indxprocwork]
         if gdat.test:
             print cmnd
             print ''
@@ -1329,9 +1370,11 @@ def plot_fermsmth():
 
 
 def prca(matr):
+    
     M = (matr - mean(matr.T, 1)).T
     eigl, eigt = linalg.eig(cov(M))
     tranmatr = dot(eigt.T, M).T
+    
     return eigl, tranmatr, eigt
 
 
