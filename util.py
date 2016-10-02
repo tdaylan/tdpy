@@ -788,7 +788,7 @@ def retr_isot(binsener, numbside=256):
     # get the best-fit isotropic flux given by the Fermi-LAT collaboration
 
     temp, pathdata = retr_path('tdpy')
-    path = pathdata + 'iso_P8R2_ULTRACLEAN_V6_v06.txt'
+    path = pathdata + 'iso_P8R2_SOURCE_V6_v06.txt'
     isotdata = loadtxt(path)
     enerisot = isotdata[:, 0] * 1e-3 # [GeV]
     isotfluxtemp = isotdata[:, 1] * 1e3 # [1/cm^2/s/sr/GeV]
