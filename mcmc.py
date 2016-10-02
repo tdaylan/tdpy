@@ -477,7 +477,7 @@ def work(gdat, indxprocwork):
     return chan
 
 
-def retr_atcr(listsampinpt, numbtimeatcr=5):
+def retr_atcr(listsampinpt, numbtimeatcr=5, verbtype=1):
    
     numbsamp = listsampinpt.shape[0]
     numbproc = listsampinpt.shape[1]
@@ -495,29 +495,30 @@ def retr_atcr(listsampinpt, numbtimeatcr=5):
     atcr = []
     timeatcr = 0
     boolcomp = False
-    n = 0
+    cntrsamp = 0
     while True:
-        atcrtemp = mean(roll(listsamp, n, axis=0) * listsamp, axis=0)
+        # calculate autocorrelation
+        atcrtemp = mean(roll(listsamp, cntrsamp, axis=0) * listsamp, axis=0)
         atcr.append(atcrtemp)
-        if mean(atcr[n]) < 0.37:
+        if mean(atcr[cntrsamp]) < 0.37:
             if not boolcomp:
-                timeatcr = n
+                timeatcr = cntrsamp
             boolcomp = True
-        if n == numbtimeatcr * timeatcr and boolcomp or n == numbsamp:
-            if not (n == numbtimeatcr * timeatcr and boolcomp):
+        if cntrsamp == numbtimeatcr * timeatcr and boolcomp or cntrsamp == numbsamp:
+            if not (cntrsamp == numbtimeatcr * timeatcr and boolcomp) and verbtype > 0:
                 print 'Autocorrelation calculation failed.'
             break
+        if cntrsamp % 100 == 0 and verbtype > 0:
+            print 'Autocorrelation time calculation, iteration number %d' % cntrsamp
+        cntrsamp += 1
 
-        if n % 1 == 100:
-            print 'Autocorrelation time calculation, iteration number %d' % n
-        n += 1
-
+    # write the accumulated list of autocorrelation values to an array
     numbtime = len(atcr)
-    #numbtime = numbtimeatcr * timeatcr
     atcroutp = empty((numbtime, numbproc, numbpara))
     for n in range(numbtime):
         atcroutp[n, :, :] = atcr[n]
-    
+   
+    # mean autocorrelation
     atcrmean = mean(mean(atcroutp, axis=1), axis=1)
 
     return atcrmean, timeatcr
