@@ -246,7 +246,9 @@ def corr_catl(lgalseco, bgalseco, fluxseco, lgalfrst, bgalfrst, fluxfrst, anglas
 
 
 def retr_memoresi():
-    
+   
+    print 'psutil'
+    print psutil.__version__
     proc = psutil.Process(os.getpid())
     memoinfo = proc.memory_info()
     memoresi = memoinfo.rss
@@ -348,7 +350,7 @@ def retr_mapspnts(lgal, bgal, stdv, flux, numbside=256, verbtype=0):
         print 'flux'
         print flux.shape
         print 'stdvradi'
-        print stdvradi.shape
+        print stdvradi
         print
 
         mapspnts += apix * norm * flux[n] * exp(-0.5 * angl**2 / stdvradi[n]**2)
