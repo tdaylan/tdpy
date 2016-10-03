@@ -705,9 +705,21 @@ def read_fits(path, pathimag=None):
                         print
 
 
-def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., \
-                                                                                                resi=False, satu=False, numbsidelgal=None, numbsidebgal=None):
-    
+def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=None, maxmlgal=None, minmbgal=None, maxmbgal=None, \
+                                                                                                resi=False, satu=False, numbsidelgal=None, numbsidebgal=None, igal=False):
+   
+    if minmlgal == None:
+        if not igal:
+            minmlgal = -180.
+            minmbgal = -90.
+            maxmlgal = 180.
+            maxmbgal = 90.
+        else:
+            minmlgal = -20.
+            minmbgal = -20.
+            maxmlgal = 20.
+            maxmbgal = 20.
+            
     asperati = (maxmbgal - minmbgal) / (maxmlgal - minmlgal)
     
     if indxpixlrofi != None:
