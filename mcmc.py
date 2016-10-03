@@ -524,6 +524,57 @@ def retr_atcr(listsampinpt, numbtimeatcr=5, verbtype=1):
     return atcrmean, timeatcr
 
 
+def retr_atcr_neww(listsamp):
+    numbsamp = x.shape[0]
+    four = fft.fft(listsamp - mean(listsamp, axis=0), axis=0)
+    atcr = fft.ifft(four * conjugate(four), axis=0).real
+    atcr /= amax(atcr, 0)
+    return atcr[:numbsamp/2, ...]
+
+
+def retr_atcrtime_neww(x, low=10, high=None, step=1, c=10):
+    size = 0.5 * x.shape[0]
+
+    # Compute the autocorrelation function.
+    f = retr_atcr_neww(x)
+
+    # Check the dimensions of the array.
+    oned = len(f.shape) == 1
+    m = [slice(None), ] * len(f.shape)
+
+    # Loop over proposed window sizes until convergence is reached.
+    if high is None:
+        high = int(size / c)
+    for M in arange(low, high, step).astype(int):
+        # Compute the autocorrelation time with the given window.
+        if oned:
+            # Special case 1D for simplicity.
+            tau = 1 + 2 * sum(f[1:M])
+        else:
+            # N-dimensional case.
+            m[0] = slice(1, M)
+            tau = 1 + 2 * sum(f[m], axis=0)
+
+        # Accept the window size if it satisfies the convergence criterion.
+        if all(tau > 1.0) and M > c * tau.max():
+            return tau
+
+        # If the autocorrelation time is too long to be estimated reliably
+        # from the chain, it should fail.
+        if c * tau.max() >= size:
+            break
+    raise Exception("The chain is too short to reliably estimate the autocorrelation time")
+
+
+x = exp(arange(10000)) + 1e-3 * rand(10000)
+print retr_atcrtime_neww(x)
+
+x = exp(arange(10000)) + rand(10000)
+print retr_atcrtime_neww(x)
+
+x = exp(arange(10000)) + 1e3 * rand(10000)
+print retr_atcrtime_neww(x)
+
 def retr_numbsamp(numbswep, numbburn, factthin):
     
     numbsamp = int((numbswep - numbburn) / factthin)

@@ -167,7 +167,7 @@ def retr_p4dm_spec(anch, part='el'):
     return mult, enerscal, mass
 
 
-def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None):
+def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None, showmemo=False):
 
     nextcntr = int(nprog * float(cntr + 1) / maxmcntr) * 100 / nprog
     if nextcntr > thiscntr:
@@ -176,6 +176,8 @@ def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None):
         else:
             print '%3d%% completed.' % nextcntr
         thiscntr = nextcntr
+        if showmemo:
+            show_memo_simp()
         
     return thiscntr            
 
@@ -246,12 +248,21 @@ def corr_catl(lgalseco, bgalseco, fluxseco, lgalfrst, bgalfrst, fluxfrst, anglas
 def show_memo_simp():
     
     proc = psutil.Process(os.getpid())
-    fact = float(2**20)
     memoinfo = proc.memory_info()
-    memoresi = memoinfo.rss / fact
-    print 'Checking resources...'
-    print 'Resident memory: %.3g MB' % memoresi
-    print
+    memoresi = memoinfo.rss
+    if memoresi > float(2**30):
+        memoresi /= float(2**30)
+        strg = 'GB'
+    elif memoresi > float(2**20):
+        memoresi /= float(2**20)
+        strg = 'MB'
+    elif memoresi > float(2**10):
+        memoresi /= float(2**10)
+        strg = 'KB'
+    else:
+        strg = 'B'
+        
+    print 'Resident memory: %.3g %s' % (memoresi, strg)
 
 
 def retr_axis(minm=None, maxm=None, numb=None, bins=None, scal='self'):
