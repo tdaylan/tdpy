@@ -247,8 +247,6 @@ def corr_catl(lgalseco, bgalseco, fluxseco, lgalfrst, bgalfrst, fluxfrst, anglas
 
 def retr_memoresi():
    
-    print 'psutil'
-    print psutil.__version__
     proc = psutil.Process(os.getpid())
     memoinfo = proc.memory_info()
     memoresi = memoinfo.rss
