@@ -246,8 +246,12 @@ def corr_catl(lgalseco, bgalseco, fluxseco, lgalfrst, bgalfrst, fluxfrst, anglas
 
 
 def retr_memoresi():
-   
-    proc = psutil.Process(os.getpid())
+    
+    # temp
+    if os.uname()[1] == 'fink1.rc.fas.harvard.edu' or os.uname()[1] == 'fink2.rc.fas.harvard.edu': 
+        proc = 0.
+    else:
+        proc = psutil.Process(os.getpid())
     memoinfo = proc.memory_info()
     memoresi = memoinfo.rss
 
@@ -1132,13 +1136,6 @@ def make_maps_main(gdat, pathdata):
         pool.map(make_maps_part, indxproc)
         pool.close()
         pool.join()
-
-
-def move_imag():
-    pass
-    #if os.uname()[1] == 'fink1.rc.fas.harvard.edu' and getpass.getuser() == 'tansu':
-    #    cmnd = 'mv ' + gdat.pathplot + '/* /n/pan/www/tansu/imag/ferm_line/'
-    #    os.system(cmnd)
 
 
 def retr_path(strg, pathextndata=None, pathextnimag=None, rtag=None, onlyimag=False, onlydata=False):
