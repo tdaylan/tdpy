@@ -477,7 +477,7 @@ def work(gdat, indxprocwork):
     return chan
 
 
-def retr_atcr(listsampinpt, numbtimeatcr=5, verbtype=1):
+def retr_atcr(listsampinpt, numbtimeatcr=5, verbtype=1, neww=True):
    
     numbsamp = listsampinpt.shape[0]
     numbproc = listsampinpt.shape[1]
