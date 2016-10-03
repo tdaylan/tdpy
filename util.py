@@ -252,8 +252,8 @@ def retr_memoresi():
         proc = 0.
     else:
         proc = psutil.Process(os.getpid())
-    memoinfo = proc.memory_info()
-    memoresi = memoinfo.rss
+        memoinfo = proc.memory_info()
+        memoresi = memoinfo.rss
 
     return memoresi
 
