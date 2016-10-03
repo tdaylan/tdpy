@@ -245,18 +245,25 @@ def corr_catl(lgalseco, bgalseco, fluxseco, lgalfrst, bgalfrst, fluxfrst, anglas
     return indxsecoassc
 
 
-def show_memo_simp():
+def retr_memoresi():
     
     proc = psutil.Process(os.getpid())
     memoinfo = proc.memory_info()
     memoresi = memoinfo.rss
-    if memoresi > float(2**30):
+
+    return memoresi
+
+
+def show_memo_simp():
+    
+    memoresi = retr_memoresi()
+    if memoresi >= float(2**30):
         memoresi /= float(2**30)
         strg = 'GB'
-    elif memoresi > float(2**20):
+    elif memoresi >= float(2**20):
         memoresi /= float(2**20)
         strg = 'MB'
-    elif memoresi > float(2**10):
+    elif memoresi >= float(2**10):
         memoresi /= float(2**10)
         strg = 'KB'
     else:
