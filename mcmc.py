@@ -570,8 +570,6 @@ def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype
             from the chain. This normally means that the chain is too short.
     """
     size = 0.5 * x.shape[axis]
-    if int(c * low) >= size:
-        print "The chain is too short"
 
     # Compute the autocorrelation function.
     f = function(x, axis=axis, fast=fast)
@@ -605,7 +603,7 @@ def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype
             break
 
     print 'Autocorrelation time could not be estimated'
-    return f, 0
+    return f, zeros(x.shape[1:])
 
 
 def function(x, axis=0, fast=False):
