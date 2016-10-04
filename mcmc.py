@@ -215,7 +215,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
         if gdat.verbtype > 1:
             print 'Calculating autocorrelation...'
             timeinit = time.time()
-        atcr, timeatcr = retr_atcr(listsamp)
+        atcr, timeatcr = retr_timeatcr(listsamp)
         if gdat.verbtype > 1:
             timefinl = time.time()
             print 'Done in %.3g seconds' % (timefinl - timeinit)
