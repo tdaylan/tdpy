@@ -538,7 +538,7 @@ def retr_atcr_neww(listsamp):
     return atcr[:numbsamp/2, ...]
 
 
-def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype=1, axis=0, fast=False):
+def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype=1, axis=0, fast=False, boolmean=True):
     """Estimate the integrated autocorrelation time of a time series.
     This estimate uses the iterative procedure described on page 16 of `Sokal's
     notes <http://www.stat.unc.edu/faculty/cji/Sokal.pdf>`_ to determine a
@@ -593,17 +593,21 @@ def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype
 
         # Accept the window size if it satisfies the convergence criterion.
         if all(tau > 1.0) and M > c * tau.max():
-            if full_output:
-                return tau, M
-            return f, tau
+            if boolmean:
+                return mean(mean(f, 1), 1), mean(tau)
+            else:
+                return f, tau
 
         # If the autocorrelation time is too long to be estimated reliably
         # from the chain, it should fail.
         if c * tau.max() >= size:
             break
-
+    
     print 'Autocorrelation time could not be estimated'
-    return f, zeros(x.shape[1:])
+    if boolmean:
+        return mean(mean(f, 1), 1), 0.
+    else:
+        return f, zeros(x.shape[1:])
 
 
 def function(x, axis=0, fast=False):
