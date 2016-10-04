@@ -477,7 +477,7 @@ def work(gdat, indxprocwork):
     return chan
 
 
-def retr_atcr(listsampinpt, numbtimeatcr=5, verbtype=1, neww=True):
+def retr_timeatcr(listsampinpt, numbtimeatcr=5, verbtype=1, neww=True):
    
     numbsamp = listsampinpt.shape[0]
     numbproc = listsampinpt.shape[1]
@@ -492,7 +492,7 @@ def retr_atcr(listsampinpt, numbtimeatcr=5, verbtype=1, neww=True):
     listsamp /= std(listsamp, axis=0)
 
     if neww:
-        atcrneww = retr_atcr_neww()
+        atcrneww = retr_atcr_neww(listsampinpt)
 
     # compute the autocorrelation
     atcr = []
@@ -532,31 +532,45 @@ def retr_atcr(listsampinpt, numbtimeatcr=5, verbtype=1, neww=True):
 
 
 def retr_atcr_neww(listsamp):
-    numbsamp = x.shape[0]
+    numbsamp = listsamp.shape[0]
     four = fft.fft(listsamp - mean(listsamp, axis=0), axis=0)
     atcr = fft.ifft(four * conjugate(four), axis=0).real
     atcr /= amax(atcr, 0)
     return atcr[:numbsamp/2, ...]
 
 
-def retr_atcrtime_neww(x, low=10, high=None, step=1, c=10):
-    size = 0.5 * x.shape[0]
-    f = retr_atcr_neww(x)
-    oned = len(f.shape) == 1
-    m = [slice(None), ] * len(f.shape)
-    if high is None:
-        high = int(size / c)
-    for M in arange(low, high, step).astype(int):
-        if oned:
-            tau = 1 + 2 * sum(f[1:M])
-        else:
-            m[0] = slice(1, M)
-            tau = 1 + 2 * sum(f[m], axis=0)
-        if all(tau > 1.0) and M > c * tau.max():
-            return tau
-        if c * tau.max() >= size:
+def retr_timeatcr_neww(listsamp, factwndw=4, maxm=False, mean=False):
+    size = listsamp.shape[0] / 2
+    atcr = retr_atcr_neww(listsamp)
+    maxmtimewndw = size / factwndw
+    boolconv = False
+    for k in arange(factwndw, maxmtimewndw):
+        
+        # guess the integrated autocorrelation time
+        timeatcr = 1 + 2 * sum(atcr[1:k, ...], axis=0)
+        
+        # check if the guess is valid
+        if maxm:
+            if all(timeatcr > 1.) and k > factwndw * amax(timeatcr):
+                boolconv = True
+        if mean:
+            if mean(timeatcr, 0) > 1. and k > factwndw * mean(timeatcr, 0):
+                boolconv = True
+        if boolconv:
             break
-    raise Exception("The chain is too short to reliably estimate the autocorrelation time")
+        
+        # check if 
+        if factwndw * amax(timeatcr) >= size or k == maxmtimewndw - 1:
+            print 'Autocorrelation time could not be estimated.'
+            timeatcr = 0
+            break
+
+    if maxm:
+        atcr = amax(atcr, 0)
+    elif mean:
+        atcr = mean(atcr, 0)
+        
+    return atcrmean, timeatcr
 
 
 def retr_numbsamp(numbswep, numbburn, factthin):
