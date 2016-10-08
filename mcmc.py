@@ -541,6 +541,10 @@ def retr_atcr_neww(listsamp):
 def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype=1, axis=0, fast=False, boolmean=True):
     size = 0.5 * x.shape[axis]
 
+    if x.shape[axis] == 1:
+        print 'Autocorrelation time could not be estimated'
+        return zeros_like(x), 0.
+
     # Compute the autocorrelation function.
     f = function(x, axis=axis, fast=fast)
 
@@ -585,18 +589,6 @@ def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype
 
 
 def function(x, axis=0, fast=False):
-    """Estimate the autocorrelation function of a time series using the FFT.
-    Args:
-        x: The time series. If multidimensional, set the time axis using the
-            ``axis`` keyword argument and the function will be computed for
-            every other axis.
-        axis (Optional[int]): The time axis of ``x``. Assumed to be the first
-            axis if not specified.
-        fast (Optional[bool]): If ``True``, only use the first ``2^n`` (for
-            the largest power) entries for efficiency. (default: False)
-    Returns:
-        array: The autocorrelation function of the time series.
-    """
     x = atleast_1d(x)
     m = [slice(None), ] * len(x.shape)
 
