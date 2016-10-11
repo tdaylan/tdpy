@@ -3,7 +3,16 @@ from __init__ import *
 class gdatstrt(object):
     
     def __init__(self):
+        self.boollockmodi = False
         pass
+
+    def lockmodi(self):
+        self.boollockmodi = True
+
+    def __setattr__(self, attr, valu):
+        if hasattr(self, attr) and self.boollockmodi:
+            raise KeyError('{} has already been set'.format(attr))
+        super(gdatstrt, self).__setattr__(attr, valu)
 
 
 class datapara(object):
@@ -254,13 +263,14 @@ def retr_memoresi():
         proc = psutil.Process(os.getpid())
         memoinfo = proc.memory_info()
         memoresi = memoinfo.rss
+        memoresiperc = proc.memory_percent()
 
-    return memoresi
+    return memoresi, memoresiperc
 
 
 def show_memo_simp():
     
-    memoresi = retr_memoresi()
+    memoresi, memoresiperc = retr_memoresi()
     if memoresi >= float(2**30):
         memoresi /= float(2**30)
         strg = 'GB'
@@ -273,7 +283,7 @@ def show_memo_simp():
     else:
         strg = 'B'
         
-    print 'Resident memory: %.3g %s' % (memoresi, strg)
+    print 'Resident memory: %.3g %s, %4.3g%%' % (memoresi, strg, memoresiperc)
 
 
 def retr_axis(minm=None, maxm=None, numb=None, bins=None, scal='self'):
@@ -330,6 +340,60 @@ def retr_psfngausnorm(angl):
                         real(-erfi((angl**2 - pi * 1j) / sqrt(2) / angl) - erfi((angl**2 + pi * 1j) / sqrt(2) / angl) + 2. * erfi(angl / sqrt(2.)))
 
     return norm
+
+
+def retr_fermpsfn_depr(meanener, indxevtt, reco=7):
+   
+    
+    if reco == 8:
+        path = gdat.pathdata + 'expr/irfn/psf_P8R2_SOURCE_V6_PSF.fits'
+    else:
+        path = gdat.pathdata + 'expr/irfn/psf_P7REP_SOURCE_V15_back.fits'
+    irfn = pf.getdata(path, 1)
+    minmener = irfn['energ_lo'].squeeze() * 1e-3 # [GeV]
+    maxmener = irfn['energ_hi'].squeeze() * 1e-3 # [GeV]
+    enerirfn = sqrt(minmener * maxmener)
+
+    numbfermscalpara = 3
+    numbfermformpara = 5
+    
+    fermscal = zeros((gdat.numbevtt, numbfermscalpara))
+    fermform = zeros((gdat.numbener, gdat.numbevtt, numbfermformpara))
+    
+    strgpara = ['ntail', 'score', 'gcore', 'stail', 'gtail']
+    for m in gdat.indxevtt:
+        if reco == 8:
+            irfn = pf.getdata(path, 1 + 3 * gdat.indxevttincl[m])
+            fermscal[m, :] = pf.getdata(path, 2 + 3 * gdat.indxevttincl[m])['PSFSCALE']
+        else:
+            if m == 1:
+                path = gdat.pathdata + 'expr/irfn/psf_P7REP_SOURCE_V15_front.fits'
+            elif m == 0:
+                path = gdat.pathdata + 'expr/irfn/psf_P7REP_SOURCE_V15_back.fits'
+            else:
+                continue
+            irfn = pf.getdata(path, 1)
+            fermscal[m, :] = pf.getdata(path, 2)['PSFSCALE']
+        for k in range(numbfermformpara):
+            fermform[:, m, k] = interp1d(enerirfn, mean(irfn[strgpara[k]].squeeze(), axis=0))(gdat.meanener)
+        
+    # convert N_tail to f_core
+    for m in gdat.indxevtt:
+        for i in gdat.indxener:
+            fermform[i, m, 0] = 1. / (1. + fermform[i, m, 0] * fermform[i, m, 3]**2 / fermform[i, m, 1]**2)
+
+    # store the fermi PSF parameters
+    gdat.fermpsfipara = zeros((gdat.numbener * numbfermformpara * gdat.numbevtt))
+    for m in gdat.indxevtt:
+        for k in range(numbfermformpara):
+            indxfermpsfiparatemp = m * numbfermformpara * gdat.numbener + gdat.indxener * numbfermformpara + k
+            gdat.fermpsfipara[indxfermpsfiparatemp] = fermform[:, m, k]
+
+    # calculate the scale factor
+    gdat.fermscalfact = sqrt((fermscal[None, :, 0] * (10. * gdat.meanener[:, None])**fermscal[None, :, 2])**2 + fermscal[None, :, 1]**2)
+    
+    # evaluate the PSF
+    gdat.fermpsfn = retr_psfn(gdat, gdat.fermpsfipara, gdat.indxener, gdat.binsangl, 'doubking')
 
 
 def retr_mapspnts(lgal, bgal, stdv, flux, numbside=256, verbtype=0):
@@ -821,7 +885,7 @@ def retr_isot(binsener, numbside=256):
 
     # get the best-fit isotropic flux given by the Fermi-LAT collaboration
 
-    temp, pathdata = retr_path('tdpy')
+    pathdata = retr_path('tdpy', onlydata=True)
     path = pathdata + 'iso_P8R2_SOURCE_V6_v06.txt'
     isotdata = loadtxt(path)
     enerisot = isotdata[:, 0] * 1e-3 # [GeV]
@@ -992,34 +1056,40 @@ def plot_braz(axis, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mco
     axis.fill_between(xdat, percentile(ydat, 16., 0), percentile(ydat, 84., 0), color=dcol, alpha=alpha)#, label='68% C.L.')
 
 
-def retr_fermpsfn(enerthis, thisangl):
+def retr_fermpsfn(meanener, evtt, meanangl):
    
-    parastrg = ['ntail', 'score', 'gcore', 'stail', 'gtail']
+    numbener = meanener.size
+    indxener = arange(numbener)
     
-    path = os.environ["PCAT_DATA_PATH"] + '/irfn/psf_P8R2_SOURCE_V6_PSF.fits'
+    strgpara = ['ntail', 'score', 'gcore', 'stail', 'gtail']
+    
+    path = retr_path('tdpy', 'expr/irfn/', onlydata=True)
+    if reco == 8:
+        path += 'psf_P8R2_SOURCE_V6_PSF.fits'
+        indxevtt = array([4, 8, 16, 32])
+    else:
+        path += 'psf_P7REP_SOURCE_V15_back.fits'
+        indxevtt = array([1, 2])
     irfn = pf.getdata(path, 1)
     minmenerirfn = irfn['energ_lo'].squeeze() * 1e-3 # [GeV]
     maxmenerirfn = irfn['energ_hi'].squeeze() * 1e-3 # [GeV]
     meanenerirfn = sqrt(minmenerirfn * maxmenerirfn)
-
-    numbenerthis = enerthis.size
-    indxenerthis = arange(numbenerthis)
-    numbenerirfn = meanenerirfn.size
-    numbevtt = 4
-    indxevtt = arange(numbevtt)
+    
+    numbevttirfn = indxevttirfn.size
+    indxevttirfn = arange(numbevttirfn)
+    
     numbfermscalpara = 3
     numbfermformpara = 5
     
     fermscal = zeros((numbevtt, numbfermscalpara))
     fermform = zeros((numbenerthis, numbevtt, numbfermformpara))
-    
     for m in indxevtt:
         fermscal[m, :] = pf.getdata(path, 2 + 3 * indxevtt[m])['PSFSCALE']
         irfn = pf.getdata(path, 1 + 3 * indxevtt[m])
         for k in range(numbfermformpara):
-            fermform[:, m, k] = interp1d(meanenerirfn, mean(irfn[parastrg[k]].squeeze(), axis=0))(enerthis)
+            fermform[:, m, k] = interp1d(meanenerirfn, mean(irfn[strgpara[k]].squeeze(), axis=0))(meanener)
 
-    factener = (10. * enerthis[:, None])**fermscal[None, :, 2]
+    factener = (10. * meanener[:, None])**fermscal[None, :, 2]
     fermscalfact = sqrt((fermscal[None, :, 0] * factener)**2 + fermscal[None, :, 1]**2)
     
     # convert N_tail to f_core
@@ -1027,8 +1097,8 @@ def retr_fermpsfn(enerthis, thisangl):
         for i in indxenerthis:
             fermform[i, m, 0] = 1. / (1. + fermform[i, m, 0] * fermform[i, m, 3]**2 / fermform[i, m, 1]**2)
 
-    #temp = sqrt(2. - 2. * cos(thisangl[None, :, None]))
-    #scalangl = 2. * arcsin(temp / 2.) / fermscalfact[:, None, :]
+    temp = sqrt(2. - 2. * cos(thisangl[None, :, None]))
+    scalangl = 2. * arcsin(temp / 2.) / fermscalfact[:, None, :]
     
     fermform[:, :, 1] = fermscalfact * fermform[:, :, 1]
     fermform[:, :, 3] = fermscalfact * fermform[:, :, 3]
@@ -1039,10 +1109,7 @@ def retr_fermpsfn(enerthis, thisangl):
     sigt = fermform[:, :, 3]
     gamt = fermform[:, :, 4]
    
-    # temp
-    thisangl = thisangl[None, :, None]
-    #thisangl = scalangl
-    fermpsfn = retr_doubking(thisangl, frac[:, None, :], sigc[:, None, :], gamc[:, None, :], sigt[:, None, :], gamt[:, None, :])
+    fermpsfn = retr_doubking(scalangl, frac[:, None, :], sigc[:, None, :], gamc[:, None, :], sigt[:, None, :], gamt[:, None, :])
 
     return fermpsfn
 
