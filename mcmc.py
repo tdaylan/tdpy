@@ -538,12 +538,15 @@ def retr_atcr_neww(listsamp):
     return atcr[:numbsamp/2, ...]
 
 
-def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype=1, axis=0, fast=False, boolmean=True):
+def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype=1, axis=0, fast=False, boolmean=True, maxmatcr=False, meanatcr=False):
     size = 0.5 * x.shape[axis]
 
     if x.shape[axis] == 1:
-        print 'Autocorrelation time could not be estimated'
-        return zeros_like(x), 0.
+        print 'Autocorrelation time could not be estimated.'
+        if meanatcr or maxmatcr:
+            return zeros(x.shape[0]), 0.
+        else:
+            return zeros_like(x), 0.
 
     # Compute the autocorrelation function.
     f = function(x, axis=axis, fast=fast)
@@ -568,7 +571,7 @@ def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype
     
             # Accept the window size if it satisfies the convergence criterion.
             if all(tau > 1.0) and M > c * tau.max():
-                if boolmean:
+                if meanatcr:
                     return mean(mean(f, 1), 1), mean(tau)
                 else:
                     return f, tau
@@ -579,13 +582,32 @@ def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype
                 break
         
         print 'Autocorrelation time could not be estimated'
-        if boolmean:
+        if meanatcr:
             return mean(mean(f, 1), 1), 0.
         else:
             return f, zeros(x.shape[1:])
     else:
-        timeatcr = amax(where(f > 0.2)[0])
-        return mean(mean(f, 1), 1), timeatcr
+        timeatcr = amax(where(f > 0.2)[0], 0)
+        
+        print 'retr_timeatcr'
+        print 'timeatcr'
+        print timeatcr.shape
+        
+        if maxmatcr:
+            timeatcr = amax(timeatcr)
+            atcr = mean(mean(f, 1), 1)
+        elif meanatcr:
+            timeatcr = mean(timeatcr)
+            atcr = mean(mean(f, 1), 1)
+        else:
+            atcr = f
+        
+        print 'timeatcr'
+        print timeatcr.shape
+        print 'atcr'
+        print atcr.shape
+        
+        return atcr, timeatcr
 
 
 def function(x, axis=0, fast=False):
