@@ -938,7 +938,9 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
         for k in range(indxpixlrofi.size):
             pixlcnvt[indxpixlrofi[k]] = k
         indxpixltemp = pixlcnvt[indxpixlmesh]
-    hmapcart = zeros((numbsidebgal, numbsidelgal))
+    
+    # temp
+    hmapcart = zeros((numbsidebgal, numbsidelgal)) + nan
     hmapcart[meshgrid(indxbgcr, indxlgcr)] = hmap[indxpixltemp]
 
     return hmapcart
@@ -1112,6 +1114,35 @@ def retr_fermpsfn(meanener, evtt, meanangl):
     fermpsfn = retr_doubking(scalangl, frac[:, None, :], sigc[:, None, :], gamc[:, None, :], sigt[:, None, :], gamt[:, None, :])
 
     return fermpsfn
+
+
+def retr_fwhmferm():
+
+    psfn = retr_fermpsfn()
+    fwhm = retr_fwhm(psfn) 
+
+    return
+
+
+def retr_fwhm(psfn):
+
+    if psfn.ndim == 1:
+        indxener = arange(1)
+        indxevtt = arange(1)
+        psfn = psfn[None, :, None]
+    else:
+        numbener = psfn.shape[0]
+        indxener = arange(numbener)
+        numbevtt = psfn.shape[2]
+        indxevtt = arange(numbevtt)
+    wdth = zeros((numbener, numbevtt))
+    for i in indxener:
+        for m in indxevtt:
+            indxanglgood = argsort(psfn[i, :, m])
+            intpwdth = max(0.5 * amax(psfn[i, :, m]), amin(psfn[i, :, m]))
+            if intpwdth > amin(psfn[i, indxanglgood, m]) and intpwdth < amax(psfn[i, indxanglgood, m]):
+                wdth[i, m] = interp1d(psfn[i, indxanglgood, m], gdat.binsangl[indxanglgood])(intpwdth)
+    return wdth
 
 
 def retr_doubking(scaldevi, frac, sigc, gamc, sigt, gamt):

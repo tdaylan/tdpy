@@ -206,7 +206,11 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     levi = -log(mean(1. / exp(listllik - minmlistllik))) + minmlistllik
     info = mean(listllik) - levi
     
-    gdat.pathimag += 'tdmc_%s/' % gdat.rtag
+    if gdat.rtag == '':
+        gdat.pathimag += 'tdmc/'
+    else:
+        gdat.pathimag += 'tdmc_%s/' % gdat.rtag
+        
     os.system('mkdir -p %s' % gdat.pathimag)
 
     gmrbstat = zeros(gdat.numbpara)
@@ -215,7 +219,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
         if gdat.verbtype > 1:
             print 'Calculating autocorrelation...'
             timeinit = time.time()
-        atcr, timeatcr = retr_timeatcr(listsamp)
+        atcr, timeatcr = retr_timeatcr(listsamp, maxmatcr=True)
         if gdat.verbtype > 1:
             timefinl = time.time()
             print 'Done in %.3g seconds' % (timefinl - timeinit)
@@ -589,10 +593,6 @@ def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype
     else:
         timeatcr = amax(where(f > 0.2)[0], 0)
         
-        print 'retr_timeatcr'
-        print 'timeatcr'
-        print timeatcr.shape
-        
         if maxmatcr:
             timeatcr = amax(timeatcr)
             atcr = mean(mean(f, 1), 1)
@@ -601,11 +601,6 @@ def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype
             atcr = mean(mean(f, 1), 1)
         else:
             atcr = f
-        
-        print 'timeatcr'
-        print timeatcr.shape
-        print 'atcr'
-        print atcr.shape
         
         return atcr, timeatcr
 
