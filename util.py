@@ -259,6 +259,7 @@ def retr_memoresi():
     # temp
     if os.uname()[1] == 'fink1.rc.fas.harvard.edu' or os.uname()[1] == 'fink2.rc.fas.harvard.edu': 
         memoresi = 0.
+        memoresiperc = 0.
     else:
         proc = psutil.Process(os.getpid())
         memoinfo = proc.memory_info()
