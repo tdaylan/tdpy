@@ -939,8 +939,8 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
             pixlcnvt[indxpixlrofi[k]] = k
         indxpixltemp = pixlcnvt[indxpixlmesh]
     
-    # temp
-    hmapcart = zeros((numbsidebgal, numbsidelgal)) + nan
+    indxbgcrgrid, indxlgcrgrid = meshgrid(indxbgcr, indxlgcr)
+    hmapcart = empty((numbsidebgal, numbsidelgal))
     hmapcart[meshgrid(indxbgcr, indxlgcr)] = hmap[indxpixltemp]
 
     return hmapcart
