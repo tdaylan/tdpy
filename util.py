@@ -272,19 +272,27 @@ def retr_memoresi():
 def show_memo_simp():
     
     memoresi, memoresiperc = retr_memoresi()
-    if memoresi >= float(2**30):
-        memoresi /= float(2**30)
+
+    strgmemo = retr_strgmemo(memoresi)
+
+    print 'Resident memory: %s, %4.3g%%' % (strgmemo, memoresiperc)
+
+
+def retr_strgmemo(memo):
+
+    if memo >= float(2**30):
+        memonorm = memo / float(2**30)
         strg = 'GB'
-    elif memoresi >= float(2**20):
-        memoresi /= float(2**20)
+    elif memo >= float(2**20):
+        memonorm = memo / float(2**20)
         strg = 'MB'
-    elif memoresi >= float(2**10):
-        memoresi /= float(2**10)
+    elif memo >= float(2**10):
+        memonorm = memo / float(2**10)
         strg = 'KB'
     else:
         strg = 'B'
-        
-    print 'Resident memory: %.3g %s, %4.3g%%' % (memoresi, strg, memoresiperc)
+    strgmemo = '%d %s' % (memonorm, strg)
+    return strgmemo
 
 
 def retr_axis(minm=None, maxm=None, numb=None, bins=None, scal='self'):
@@ -829,7 +837,11 @@ def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, tit
     else:
         factsrnk = 0.8
     figr, axis = plt.subplots(figsize=(sizefigr, asperati * sizefigr))
-    imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none')
+    if resi:
+        valu = max(fabs(amin(cart)), fabs(amax(cart)))
+        imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none', vmin=-valu, vmax=valu)
+    else:
+        imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none')
 
     cbar = plt.colorbar(imag, shrink=factsrnk) 
     
