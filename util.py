@@ -351,64 +351,9 @@ def retr_psfngausnorm(angl):
     return norm
 
 
-def retr_fermpsfn_depr(meanener, indxevtt, reco=7):
-   
-    
-    if reco == 8:
-        path = gdat.pathdata + 'expr/irfn/psf_P8R2_SOURCE_V6_PSF.fits'
-    else:
-        path = gdat.pathdata + 'expr/irfn/psf_P7REP_SOURCE_V15_back.fits'
-    irfn = pf.getdata(path, 1)
-    minmener = irfn['energ_lo'].squeeze() * 1e-3 # [GeV]
-    maxmener = irfn['energ_hi'].squeeze() * 1e-3 # [GeV]
-    enerirfn = sqrt(minmener * maxmener)
-
-    numbfermscalpara = 3
-    numbfermformpara = 5
-    
-    fermscal = zeros((gdat.numbevtt, numbfermscalpara))
-    fermform = zeros((gdat.numbener, gdat.numbevtt, numbfermformpara))
-    
-    strgpara = ['ntail', 'score', 'gcore', 'stail', 'gtail']
-    for m in gdat.indxevtt:
-        if reco == 8:
-            irfn = pf.getdata(path, 1 + 3 * gdat.indxevttincl[m])
-            fermscal[m, :] = pf.getdata(path, 2 + 3 * gdat.indxevttincl[m])['PSFSCALE']
-        else:
-            if m == 1:
-                path = gdat.pathdata + 'expr/irfn/psf_P7REP_SOURCE_V15_front.fits'
-            elif m == 0:
-                path = gdat.pathdata + 'expr/irfn/psf_P7REP_SOURCE_V15_back.fits'
-            else:
-                continue
-            irfn = pf.getdata(path, 1)
-            fermscal[m, :] = pf.getdata(path, 2)['PSFSCALE']
-        for k in range(numbfermformpara):
-            fermform[:, m, k] = interp1d(enerirfn, mean(irfn[strgpara[k]].squeeze(), axis=0))(gdat.meanener)
-        
-    # convert N_tail to f_core
-    for m in gdat.indxevtt:
-        for i in gdat.indxener:
-            fermform[i, m, 0] = 1. / (1. + fermform[i, m, 0] * fermform[i, m, 3]**2 / fermform[i, m, 1]**2)
-
-    # store the fermi PSF parameters
-    gdat.fermpsfipara = zeros((gdat.numbener * numbfermformpara * gdat.numbevtt))
-    for m in gdat.indxevtt:
-        for k in range(numbfermformpara):
-            indxfermpsfiparatemp = m * numbfermformpara * gdat.numbener + gdat.indxener * numbfermformpara + k
-            gdat.fermpsfipara[indxfermpsfiparatemp] = fermform[:, m, k]
-
-    # calculate the scale factor
-    gdat.fermscalfact = sqrt((fermscal[None, :, 0] * (10. * gdat.meanener[:, None])**fermscal[None, :, 2])**2 + fermscal[None, :, 1]**2)
-    
-    # evaluate the PSF
-    gdat.fermpsfn = retr_psfn(gdat, gdat.fermpsfipara, gdat.indxener, gdat.binsangl, 'doubking')
-
-
 def retr_mapspnts(lgal, bgal, stdv, flux, numbside=256, verbtype=0):
-
+    
     # lgal, bgal and stdv are in degrees
-
     numbpnts = lgal.size
     lgalheal, bgalheal, numbpixl, apix = retr_healgrid(numbside)
     gridheal = array([lgalheal, bgalheal])
@@ -417,7 +362,7 @@ def retr_mapspnts(lgal, bgal, stdv, flux, numbside=256, verbtype=0):
     for n in range(numbpnts):
         gridpnts = array([lgal[n], bgal[n]])
         angl = angdist(gridheal, gridpnts, lonlat=True)
-        norm = retr_psfngausnorm(stdvradi[n])
+        norm = retr_psfngausnorm(stdvradi)
         print 'norm'
         print norm
         print 'angl'
@@ -427,12 +372,103 @@ def retr_mapspnts(lgal, bgal, stdv, flux, numbside=256, verbtype=0):
         print 'stdvradi'
         print stdvradi
         print
-
-        mapspnts += apix * norm * flux[n] * exp(-0.5 * angl**2 / stdvradi[n]**2)
+        
+        mapspnts += apix * norm * flux[n] * exp(-0.5 * angl**2 / stdvradi**2)
         if verbtype > 0:
             print '%d out of %d' % (n, numbpnts)
 
     return mapspnts
+
+
+def retr_mapsplnkfreq(indxpixloutprofi=None, numbsideoutp=256, indxfreqrofi=None):
+
+    numbside = 2048
+    numbpixl = 12 * numbside**2
+    meanfreq = array([30, 44, 70, 100, 143, 217, 353, 545, 857])
+    numbfreq = meanfreq.size
+    indxfreq = arange(numbfreq)
+    strgfreq = ['%04d' % meanfreq[k] for k in indxfreq]
+    
+    indxpixloutp = arange(numbsideoutp)
+
+    if indxfreqrofi == None:
+        indxfreqrofi = indxfreq
+
+    if indxpixloutprofi == None:
+        indxpixloutprofi = indxpixloutp
+
+    rtag = '_%04d' % (numbsideoutp)
+
+    path = retr_path('tdpy', onlydata=True)
+    pathflux = path + 'plnkflux_%s.fits' % rtag
+    pathfluxstdv = path + 'plnkfluxstdv_%s.fits' % rtag
+    if os.path.isfile(pathflux) and os.path.isfile(pathfluxstdv):
+        print 'Reading %s...' % pathflux
+        mapsplnkfreq = pf.getdata(pathflux)
+        print 'Reading %s...' % pathfluxstdv
+        mapsplnkfreqstdv= pf.getdata(pathfluxstdv)
+    else:
+        mapsplnkfreq = zeros((numbfreq, numbpixl))
+        mapsplnkfreqstdv = zeros((numbfreq, numbpixl))
+        for k in indxfreq:
+            print 'Processing Planck Map at %d GHz...' % (meanfreq[k])
+            # read sky maps
+            if strgfreq[k][1] == '0':
+                strgfrst = 'plnk/LFI_SkyMap_' 
+                strgseco = '-BPassCorrected-field-IQU_0256_R2.01_full.fits'
+                strgcols = 'TEMPERATURE'
+            elif strgfreq[k][1] == '1' or strgfreq[k][1] == '2' or strgfreq[k][1] == '3':
+                strgfrst = 'plnk/HFI_SkyMap_'
+                strgseco = '-field-IQU_2048_R2.02_full.fits'
+                strgcols = 'I_STOKES'
+            else:
+                strgfrst = 'plnk/HFI_SkyMap_'
+                strgseco = '-field-Int_2048_R2.02_full.fits'
+                strgcols = 'I_STOKES'
+            strg = strgfrst + '%s' % strgfreq[k][1:] + strgseco
+        
+            mapsinpt = pf.getdata(path + strg, 1)[strgcols]
+            numbpixlinpt = mapstemp.size
+            numbsideinpt = int(sqrt(numbpixlinpt / 12))
+            mapsplnkfreq[k, :] = pf.getdata(path + strg, 1)[strgcols]
+            mapsplnkfreq[k, :] = hp.reorder(mapsplnkfreq[k, :], n2r=True)
+        
+            print 'Changing units...'
+            # change units of the sky maps to Jy/sr
+            if strgfreq[k] != '0545' and strgfreq[k] != '0857':
+                ## from Kcmb
+                if calcfactconv:
+                    # read Planck band transmission data
+                    if strgfreq[k][1] == '0':
+                        strg = 'LFI_RIMO_R2.50'
+                        strgextn = 'BANDPASS_%s' % strgfreq[k][1:]
+                        freqband = pf.open(path + '%s.fits' % strg)[strgextn].data['WAVENUMBER'][1:] * 1e9
+                    else:
+                        strg = 'plnk/HFI_RIMO_R2.00'
+                        strgextn = 'BANDPASS_F%s' % strgfreq[k][1:]
+                        freqband = 1e2 * velolght * pf.open(path + '%s.fits' % strg)[strgextn].data['WAVENUMBER'][1:]
+                    tranband = pf.open(path + '%s.fits' % strg)[strgextn].data['TRANSMISSION'][1:]
+                    indxfreqbandgood = where(tranband > 1e-6)[0]
+                    indxfreqbandgood = arange(amin(indxfreqbandgood), amax(indxfreqbandgood) + 1)
+        
+                    # calculate the unit conversion factor
+                    freqscal = consplnk * freqband[indxfreqbandgood] / consbolt / tempcmbr
+                    freqcntr = float(strgfreq[k]) * 1e9
+                    specdipo = 1e26 * 2. * (consplnk * freqband[indxfreqbandgood]**2 / velolght / tempcmbr)**2 / consbolt / (exp(freqscal) - 1.)**2 * exp(freqscal) # [Jy/sr]
+                    factconv = trapz(specdipo * tranband[indxfreqbandgood], freqband[indxfreqbandgood]) / \
+                                                    trapz(freqcntr * tranband[indxfreqbandgood] / freqband[indxfreqbandgood], freqband[indxfreqbandgood]) # [Jy/sr/Kcmb]
+                else:
+                    # read the unit conversion factors provided by Planck
+                    factconv = factconvplnk[k, 1] * 1e6
+            else:
+                ## from MJy/sr
+                factconv = 1e6
+            mapsplnk[k, :] *= factconv
+        
+        pf.writeto(pathflux, mapsplnkfreq, clobber=True)
+        pf.writeto(pathfluxstdv, mapsplnkfreqstdv, clobber=True)
+        
+    return mapsplnkfreq, mapsplnkfreqstdv
 
 
 def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=10., maxmswep=None, limtpara=None, tolrfunc=1e-6, optiprop=True, pathbase='./', rtag=''):
@@ -1071,48 +1107,47 @@ def plot_braz(axis, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mco
     axis.fill_between(xdat, percentile(ydat, 16., 0), percentile(ydat, 84., 0), color=dcol, alpha=alpha)#, label='68% C.L.')
 
 
-def retr_fermpsfn(meanener, evtt, meanangl):
+def retr_fermpsfn(meanenerrofi, indxevttrofi, meanangl, reco=8):
    
-    numbener = meanener.size
-    indxener = arange(numbener)
-    
+    numbenerrofi = meanenerrofi.size
+    indxenerrofi = arange(numbenerrofi)
+    numbevttrofi = indxevttrofi.size
+    indxevttrofi = arange(numbevttrofi)
+
     strgpara = ['ntail', 'score', 'gcore', 'stail', 'gtail']
     
-    path = retr_path('tdpy', 'expr/irfn/', onlydata=True)
+    path = retr_path('tdpy', onlydata=True) + 'irfn/ferm/'
     if reco == 8:
         path += 'psf_P8R2_SOURCE_V6_PSF.fits'
-        indxevtt = array([4, 8, 16, 32])
     else:
         path += 'psf_P7REP_SOURCE_V15_back.fits'
-        indxevtt = array([1, 2])
     irfn = pf.getdata(path, 1)
-    minmenerirfn = irfn['energ_lo'].squeeze() * 1e-3 # [GeV]
-    maxmenerirfn = irfn['energ_hi'].squeeze() * 1e-3 # [GeV]
-    meanenerirfn = sqrt(minmenerirfn * maxmenerirfn)
+    minmener = irfn['energ_lo'].squeeze() * 1e-3 # [GeV]
+    maxmener = irfn['energ_hi'].squeeze() * 1e-3 # [GeV]
+    meanener = sqrt(minmener * maxmener)
     
-    numbevttirfn = indxevttirfn.size
-    indxevttirfn = arange(numbevttirfn)
+    indxevtt = arange(4)
+    numbevtt = indxevtt.size
     
     numbfermscalpara = 3
     numbfermformpara = 5
     
-    fermscal = zeros((numbevtt, numbfermscalpara))
-    fermform = zeros((numbenerthis, numbevtt, numbfermformpara))
-    for m in indxevtt:
-        fermscal[m, :] = pf.getdata(path, 2 + 3 * indxevtt[m])['PSFSCALE']
-        irfn = pf.getdata(path, 1 + 3 * indxevtt[m])
+    fermscal = zeros((numbevttrofi, numbfermscalpara))
+    fermform = zeros((numbenerrofi, numbevttrofi, numbfermformpara))
+    for m in indxevttrofi:
+        fermscal[m, :] = pf.getdata(path, 2 + 3 * m)['PSFSCALE']
+        irfn = pf.getdata(path, 1 + 3 * m)
         for k in range(numbfermformpara):
-            fermform[:, m, k] = interp1d(meanenerirfn, mean(irfn[strgpara[k]].squeeze(), axis=0))(meanener)
+            fermform[:, m, k] = interp1d(meanener, mean(irfn[strgpara[k]].squeeze(), axis=0))(meanenerrofi)
 
-    factener = (10. * meanener[:, None])**fermscal[None, :, 2]
-    fermscalfact = sqrt((fermscal[None, :, 0] * factener)**2 + fermscal[None, :, 1]**2)
+    fermscalfact = sqrt((fermscal[None, :, 0] * (10. * meanenerrofi[:, None])**fermscal[None, :, 2])**2 + fermscal[None, :, 1]**2)
     
     # convert N_tail to f_core
-    for m in indxevtt:
-        for i in indxenerthis:
+    for m in arange(fermform.shape[1]):
+        for i in arange(fermform.shape[0]):
             fermform[i, m, 0] = 1. / (1. + fermform[i, m, 0] * fermform[i, m, 3]**2 / fermform[i, m, 1]**2)
 
-    temp = sqrt(2. - 2. * cos(thisangl[None, :, None]))
+    temp = sqrt(2. - 2. * cos(meanangl[None, :, None]))
     scalangl = 2. * arcsin(temp / 2.) / fermscalfact[:, None, :]
     
     fermform[:, :, 1] = fermscalfact * fermform[:, :, 1]
@@ -1129,15 +1164,65 @@ def retr_fermpsfn(meanener, evtt, meanangl):
     return fermpsfn
 
 
-def retr_fwhmferm():
+def retr_fermpsfn_depr(gdat):
+    
+    irfn = pf.getdata(path, 1)
+    minmener = irfn['energ_lo'].squeeze() * 1e-3 # [GeV]
+    maxmener = irfn['energ_hi'].squeeze() * 1e-3 # [GeV]
+    enerirfn = sqrt(minmener * maxmener)
 
-    psfn = retr_fermpsfn()
-    fwhm = retr_fwhm(psfn) 
+    numbfermscalpara = 3
+    numbfermformpara = 5
+    
+    fermscal = zeros((gdat.numbevtt, numbfermscalpara))
+    fermform = zeros((gdat.numbener, gdat.numbevtt, numbfermformpara))
+    
+    parastrg = ['ntail', 'score', 'gcore', 'stail', 'gtail']
+    for m in gdat.indxevtt:
+        if reco == 8:
+            irfn = pf.getdata(path, 1 + 3 * gdat.indxevttincl[m])
+            fermscal[m, :] = pf.getdata(path, 2 + 3 * gdat.indxevttincl[m])['PSFSCALE']
+        else:
+            if m == 1:
+                path = gdat.pathdata + 'expr/irfn/psf_P7REP_SOURCE_V15_front.fits'
+            elif m == 0:
+                path = gdat.pathdata + 'expr/irfn/psf_P7REP_SOURCE_V15_back.fits'
+            else:
+                continue
+            irfn = pf.getdata(path, 1)
+            fermscal[m, :] = pf.getdata(path, 2)['PSFSCALE']
+        for k in range(numbfermformpara):
+            fermform[:, m, k] = interp1d(enerirfn, mean(irfn[parastrg[k]].squeeze(), axis=0))(gdat.meanener)
+        
+    # convert N_tail to f_core
+    for m in gdat.indxevtt:
+        for i in gdat.indxener:
+            fermform[i, m, 0] = 1. / (1. + fermform[i, m, 0] * fermform[i, m, 3]**2 / fermform[i, m, 1]**2)
 
-    return
+    # store the fermi PSF parameters
+    gdat.fermpsfipara = zeros((gdat.numbener * numbfermformpara * gdat.numbevtt))
+    for m in gdat.indxevtt:
+        for k in range(numbfermformpara):
+            indxfermpsfiparatemp = m * numbfermformpara * gdat.numbener + gdat.indxener * numbfermformpara + k
+            gdat.fermpsfipara[indxfermpsfiparatemp] = fermform[:, m, k]
+
+    # calculate the scale factor
+    gdat.fermscalfact = sqrt((fermscal[None, :, 0] * (10. * gdat.meanener[:, None])**fermscal[None, :, 2])**2 + fermscal[None, :, 1]**2)
+    
+    # evaluate the PSF
+    gdat.fermpsfn = retr_psfn(gdat, gdat.fermpsfipara, gdat.indxener, gdat.binsangl, 'doubking')
 
 
-def retr_fwhm(psfn):
+def retr_fwhmferm(meanener, evtt):
+
+    meanangl = linspace(0., 20., 1000)
+    psfn = retr_fermpsfn(meanener, evtt, meanangl)
+    fwhm = retr_fwhm(psfn, meanangl) 
+
+    return fwhm
+
+
+def retr_fwhm(psfn, binsangl):
 
     if psfn.ndim == 1:
         indxener = arange(1)
@@ -1154,7 +1239,7 @@ def retr_fwhm(psfn):
             indxanglgood = argsort(psfn[i, :, m])
             intpwdth = max(0.5 * amax(psfn[i, :, m]), amin(psfn[i, :, m]))
             if intpwdth > amin(psfn[i, indxanglgood, m]) and intpwdth < amax(psfn[i, indxanglgood, m]):
-                wdth[i, m] = interp1d(psfn[i, indxanglgood, m], gdat.binsangl[indxanglgood])(intpwdth)
+                wdth[i, m] = interp1d(psfn[i, indxanglgood, m], binsangl[indxanglgood])(intpwdth)
     return wdth
 
 
@@ -1166,12 +1251,12 @@ def retr_doubking(scaldevi, frac, sigc, gamc, sigt, gamt):
     return psfn
 
 
-def retr_beam(enerthis, indxevttthis, numbside, maxmmpol, fulloutp=False):
+def retr_beam(meanener, indxevttthis, numbside, maxmmpol, fulloutp=False):
    
     numbpixl = 12 * numbside**2
     apix = 4. * pi / numbpixl
 
-    numbener = enerthis.size
+    numbener = meanener.size
     numbevtt = indxevttthis.size
 
     # alm of the delta function at the North Pole
@@ -1185,7 +1270,7 @@ def retr_beam(enerthis, indxevttthis, numbside, maxmmpol, fulloutp=False):
     dir1 = array([lgalgrid, bgalgrid])
     dir2 = array([0., 90.])
     thisangl = hp.rotator.angdist(dir1, dir2, lonlat=True)
-    mapsoutp = retr_fermpsfn(enerthis, thisangl)
+    mapsoutp = retr_fermpsfn(meanener, evtt, meanangl)
     almcoutp = empty((numbener, maxmmpol+1, numbevtt))
     for i in range(numbener):
         for m in range(numbevtt):
@@ -1398,7 +1483,7 @@ def make_maps_work(gdat, indxprocwork):
     os.system(cmnd)
 
 
-def smth_ferm(mapsinpt, enerthis, indxevttthis, maxmmpol=None, makeplot=False, gaus=False):
+def smth_ferm(mapsinpt, meanener, indxevttthis, maxmmpol=None, makeplot=False, gaus=False):
     
     numbpixl = mapsinpt.shape[1]
 
@@ -1406,13 +1491,13 @@ def smth_ferm(mapsinpt, enerthis, indxevttthis, maxmmpol=None, makeplot=False, g
     if maxmmpol == None:
         maxmmpol = 3 * numbside - 1
 
-    numbener = enerthis.size
+    numbener = meanener.size
     numbevtt = indxevttthis.size
     
     numbalmc = (maxmmpol + 1) * (maxmmpol + 2) / 2
     
     # get the beam
-    beam = retr_beam(enerthis, indxevttthis, numbside, maxmmpol)
+    beam = retr_beam(meanener, indxevttthis, numbside, maxmmpol)
     
     # construct the transfer function
     tranfunc = ones((numbener, numbalmc, numbevtt))
@@ -1423,8 +1508,8 @@ def smth_ferm(mapsinpt, enerthis, indxevttthis, maxmmpol=None, makeplot=False, g
 
     mapsoutp = empty_like(mapsinpt)
 
-    for i in arange(enerthis.size):
-        for m in arange(indxevttthis.size):
+    for i in indxener:
+        for m in indxevtt:
             almc = hp.map2alm(mapsinpt[i, :, m], lmax=maxmmpol)
             almc *= tranfunc[i, :, m]
             mapsoutp[i, :, m] = hp.alm2map(almc, numbside, lmax=maxmmpol)

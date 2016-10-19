@@ -87,9 +87,9 @@ def gmrb_test(griddata):
     return psrf
 
 
-def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=True, \
-                            gdatextr=None, pathdata='./', pathimag='./', extn='', numbburn=None, truepara=None, \
-                            savevaripara=False, numbplotside=None, factthin=None, verbtype=0, factpropeffi=2.):
+def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=True, loadchan=True, loadvaripara=True, \
+                            gdatextr=None, pathdata='./', pathimag='./', rtag='', numbburn=None, truepara=None, \
+                            numbplotside=None, factthin=None, verbtype=0, factpropeffi=1.2):
   
     timeinit = time.time()
 
@@ -103,20 +103,26 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     gdat.optiprop = optiprop
     gdat.pathimag = pathimag
     gdat.pathdata = pathdata
-    gdat.extn = extn
+    gdat.rtag = rtag
     gdat.numbburn = numbburn
-    gdat.savevaripara = savevaripara
     gdat.numbplotside = numbplotside
     gdat.factthin = factthin
     gdat.verbtype = verbtype
     gdat.factpropeffi = factpropeffi
     gdat.gdatextr = gdatextr
+    gdat.loadvaripara = loadvaripara
 
-    if gdat.verbtype > 1:
+    if gdat.verbtype > 0:
         print 'TDMC initialized.'
     
-    pathchan = gdat.pathdata + 'tdmcchan_%s.p' % gdat.extn
-    if os.path.isfile(pathchan):
+    if gdat.rtag == '':
+        strg = 'tdmcchan.p'
+    else:
+        strg = 'tdmcchan_%s.p' % gdat.rtag
+    pathchan = gdat.pathdata + strg
+    if os.path.isfile(pathchan) and loadchan:
+        if gdat.verbtype > 0:
+            print 'Reading the previously computed chain from %s...' % pathchan
         fobj = open(pathchan, 'rb')
         chan = cPickle.load(fobj)
         fobj.close()
@@ -134,7 +140,10 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
 
     # Sampler settings
     if gdat.numbburn == None:
-        gdat.numbburn = int(floor(0.1 * gdat.numbswep))
+        if gdat.optiprop:
+            gdat.numbburn = 0
+        else:
+            gdat.numbburn = int(floor(0.1 * gdat.numbswep))
     if gdat.factthin == None:
         gdat.factthin = min(gdat.numbswep - gdat.numbburn, 1000 * gdat.numbpara)
    
@@ -216,11 +225,8 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     levi = -log(mean(1. / exp(listllik - minmlistllik))) + minmlistllik
     info = mean(listllik) - levi
     
-    if gdat.extn == '':
-        gdat.pathimag += 'tdmc/'
-    else:
-        gdat.pathimag += 'tdmc_%s/' % gdat.extn
-        
+    gdat.pathimag += 'tdmc/'
+       
     os.system('mkdir -p %s' % gdat.pathimag)
 
     gmrbstat = zeros(gdat.numbpara)
@@ -303,7 +309,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     # temp
     if timefinl - timeinit > 1.:
         if not os.path.isfile(pathchan):
-            print 'Writing the tdmc output to disc...'
+            print 'Writing the chain to %s...' % pathchan
             fobj = open(pathchan, 'wb')
             cPickle.dump(chan, fobj, protocol=cPickle.HIGHEST_PROTOCOL)
             fobj.close()
@@ -345,13 +351,15 @@ def work(gdat, indxprocwork):
     varipara = copy(gdat.datapara.vari)
     
     # proposal scale optimization
-    pathvaripara = gdat.pathdata + 'varipara_' + gdat.extn + '.fits'
+    if gdat.rtag == '':
+        strg = 'tdmcvaripara.fits'
+    else:
+        strg = 'tdmcvaripara_%s.fits' % gdat.rtag
+    pathvaripara = gdat.pathdata + strg
     if gdat.optiprop:
-        # temp
-        if False and os.path.isfile(pathvaripara): 
-            print 'Reading %s...' % pathvaripara
+        if os.path.isfile(pathvaripara) and gdat.loadvaripara:
             if gdat.verbtype > 0 and indxprocwork == 0:
-                print 'Retrieving the optimal proposal scale from %s...' % pathvaripara
+                print 'Reading the previously computed proposal scale from %s...' % pathvaripara
             gdat.optipropdone = True
             varipara = pf.getdata(pathvaripara)
         else:
@@ -360,7 +368,7 @@ def work(gdat, indxprocwork):
             targpropeffi = 0.25
             minmpropeffi = targpropeffi / gdat.factpropeffi
             maxmpropeffi = targpropeffi * gdat.factpropeffi
-            perdpropeffi = 400 * gdat.numbpara
+            perdpropeffi = 4000 * gdat.numbpara
             cntrprop = zeros(gdat.numbpara)
             cntrproptotl = zeros(gdat.numbpara)
             gdat.optipropdone = False
@@ -459,10 +467,11 @@ def work(gdat, indxprocwork):
         if gdat.optipropdone:
             gdat.cntrswep += 1
         else:
+
             cntrproptotl[indxparamodi] += 1.
             if listaccp[gdat.cntrswep]:
                 cntrprop[indxparamodi] += 1.
-
+            
             if cntroptisamp % perdpropeffi == 0 and (cntrproptotl > 0).all():
                 
                 thispropeffi = cntrprop / cntrproptotl
@@ -478,9 +487,7 @@ def work(gdat, indxprocwork):
                     print varipara
                     print 'Writing the optimized variance to %s...' % pathvaripara
                     gdat.optipropdone = True
-                    
-                    if gdat.savevaripara:
-                        pf.writeto(pathvaripara, varipara, clobber=True)
+                    pf.writeto(pathvaripara, varipara, clobber=True)
                 else:
                     factcorr = 2**(thispropeffi / targpropeffi - 1.)
                     varipara *= factcorr
@@ -709,7 +716,7 @@ def plot_atcr(path, atcr, timeatcr):
     axis.plot(arange(numbsampatcr), atcr)
     axis.set_xlabel(r'$\tau$')
     axis.set_ylabel(r'$\xi(\tau)$')
-    axis.text(0.8, 0.8, r'$\tau_{exp} = %.3g' % timeatcr, ha='center', va='center', transform=axis.transAxes)
+    axis.text(0.8, 0.8, r'$\tau_{exp} = %.3g$' % timeatcr, ha='center', va='center', transform=axis.transAxes)
     plt.tight_layout()
     figr.savefig(path + 'atcr.pdf')
     plt.close(figr)
@@ -741,7 +748,7 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara
     plt.close(figr)
 
 
-def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, quan=True):
+def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, quan=True, varbdraw=None, labldraw=None):
     
     numbbins = 20
     
@@ -778,6 +785,9 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
                 axis.set_yticks(listtick)
                 axis.set_yticklabels(listlabltick)
             axis.set_ylim(limspara)
+            if varbdraw != None:
+                for k in range(len(varbdraw)):
+                    axis.axhline(varbdraw[k], label=labldraw[k])
             if quan:
                 axis.axhline(quanarry[0], color='b', ls='--')
                 axis.axhline(quanarry[1], color='b', ls='-.')
@@ -794,6 +804,9 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
                 axis.set_xticks(listtick)
                 axis.set_xticklabels(listlabltick)
             axis.set_xlim(limspara)
+            if varbdraw != None:
+                for k in range(len(varbdraw)):
+                    axis.axvline(varbdraw[k], label=labldraw[k])
             if quan:
                 axis.axvline(quanarry[0], color='b', ls='--')
                 axis.axvline(quanarry[1], color='b', ls='-.')
@@ -838,10 +851,14 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
         lims = zeros((2, numbpara))
         lims[0, :] = amin(listsamp, 0)
         lims[1, :] = amax(listsamp, 0)
+        for k in range(numbpara):
+            if lims[0, k] == lims[1, k]:
+                lims[0, k] /= 2.
+                lims[1, k] *= 2.
         
     indxparagood = ones(numbpara, dtype=bool)
     indxparagood[where(lims[0, :] == lims[1, :])] = False
-        
+    
     bins = zeros((numbbins + 1, numbpara))
     for k in range(numbpara):
         if scalpara[k] == 'self':
@@ -856,7 +873,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
         if n == numbfram - 1 and numbplotsidelast != 0:
             thisnumbpara = numbplotsidelast
             thislistsamp = listsamp[:, n*numbplotside:]
-            thisparastrg = strgpara[n*numbplotside:]
+            thisstrgpara = strgpara[n*numbplotside:]
             thisscalpara = scalpara[n*numbplotside:]
             thistruepara = truepara[n*numbplotside:]
             thisbins = bins[:, n*numbplotside:]
@@ -866,7 +883,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
         else:
             thisnumbpara = numbplotside
             thislistsamp = listsamp[:, n*numbplotside:(n+1)*numbplotside]
-            thisparastrg = strgpara[n*numbplotside:(n+1)*numbplotside]
+            thisstrgpara = strgpara[n*numbplotside:(n+1)*numbplotside]
             thisscalpara = scalpara[n*numbplotside:(n+1)*numbplotside]
             thistruepara = truepara[n*numbplotside:(n+1)*numbplotside]
             thisbins = bins[:, n*numbplotside:(n+1)*numbplotside]
@@ -881,6 +898,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                 if k < l or thisindxparagood[k] == False or thisindxparagood[l] == False:
                     axis.axis('off')
                     continue
+
                 if k == l and not join:
                     axis.hist(thislistsamp[:, k], bins=thisbins[:, k])
                     if thistruepara[k] != None:
@@ -897,7 +915,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                     axis.set_xlim([amin(thisbins[:, l]), amax(thisbins[:, l])])
                     axis.set_ylim([amin(thisbins[:, k]), amax(thisbins[:, k])])
                     if thistruepara[l] != None and thistruepara[k] != None:
-                        axis.scatter(thistruepara[l], thistruepara[k], color='g', marker='x', s=100)
+                        axis.scatter(thistruepara[l], thistruepara[k], color='g', marker='o', s=100)
                     if thisscalpara[k] == 'logt':
                         axis.set_yscale('log', basey=10)
                         arry = logspace(log10(thislims[0, k]), log10(thislims[1, k]), numbtickbins)
@@ -912,20 +930,20 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                     axis.set_xticklabels(strgarry)
                 axis.set_xlim(thislims[:, l])
                 if k == thisnumbpara - 1:
-                    axis.set_xlabel(thisparastrg[l])
+                    axis.set_xlabel(thisstrgpara[l])
                 else:
                     axis.set_xticklabels([])
-                if l == 0 and k != 0:
-                    axis.set_ylabel(thisparastrg[k])
+                if l == 0 and k != 0 or join:
+                    axis.set_ylabel(thisstrgpara[k])
                 else:
                     if k != 0:
                         axis.set_yticklabels([])
 
         figr.subplots_adjust(bottom=0.2)
         if join:
-            strg = 'join'
+            strg = '_join'
         else:
-            strg = 'grid'
+            strg = '_grid'
             if numbfram != 1:
                 strg += '%04d' % n
         plt.savefig(path + strg + '.pdf')
