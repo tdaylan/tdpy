@@ -938,8 +938,9 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                 else:
                     if k != 0:
                         axis.set_yticklabels([])
-
-        figr.subplots_adjust(bottom=0.2)
+        figr.tight_layout()
+        # temp
+        #figr.subplots_adjust(bottom=0.2)
         if join:
             strg = '_join'
         else:

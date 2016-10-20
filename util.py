@@ -64,7 +64,12 @@ def retr_postvarb(listvarb):
     return postvarb
 
 
-def retr_errrvarb(postvarb):
+def retr_errrvarb(inpt, samp=False):
+
+    if samp:
+        postvarb = retr_postvarb(inpt)
+    else:
+        postvarb = inpt
 
     errr = fabs(postvarb[0, :] - postvarb[1:3, :])
 
