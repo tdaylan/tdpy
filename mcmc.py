@@ -712,11 +712,12 @@ def plot_atcr(path, atcr, timeatcr):
 
     numbsampatcr = atcr.size
     
-    figr, axis = plt.subplots()
+    figr, axis = plt.subplots(figsize=(6, 6))
     axis.plot(arange(numbsampatcr), atcr)
     axis.set_xlabel(r'$\tau$')
     axis.set_ylabel(r'$\xi(\tau)$')
     axis.text(0.8, 0.8, r'$\tau_{exp} = %.3g$' % timeatcr, ha='center', va='center', transform=axis.transAxes)
+    axis.axhline(0., ls='--', alpha=0.5)
     plt.tight_layout()
     figr.savefig(path + 'atcr.pdf')
     plt.close(figr)

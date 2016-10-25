@@ -49,6 +49,26 @@ class datapara(object):
         self.cntr += 1
 
 
+def time_func(func, *args):
+    
+    numbiter = 100
+    timediff = empty(numbiter)
+    for k in range(numbiter):
+        timeinit = time.time()
+        func(*args)
+        timediff[k] = time.time() - timeinit
+    
+    return mean(timediff), std(timediff)
+
+
+def time_func_verb(func, *args):
+    
+    meantimediff, stdvtimediff = time_func(func, *args)
+    
+    print 'Calling %s' % func.__name__ 
+    print '%3g pm %3g ms' % (meantimediff * 1e3, stdvtimediff * 1e3)
+    
+
 def retr_postvarb(listvarb):
 
     shap = zeros(len(listvarb.shape), dtype=int)
@@ -819,7 +839,7 @@ def read_fits(path, pathimag=None):
                         print
 
 
-def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, titl='', minmlgal=None, maxmlgal=None, minmbgal=None, maxmbgal=None, \
+def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=None, maxmlgal=None, minmbgal=None, maxmbgal=None, \
                                                                                                 resi=False, satu=False, numbsidelgal=None, numbsidebgal=None, igal=False):
    
     if minmlgal == None:
@@ -883,10 +903,15 @@ def plot_maps(path, maps, pixltype='heal', indxpixlrofi=None, numbpixl=None, tit
         imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none', vmin=-valu, vmax=valu)
     else:
         imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none')
+    
+    if scat != None:
+        numbscat = len(scat)
+        for k in range(numbscat):
+            axis.scatter(scat[k][0], scat[k][1])
 
     cbar = plt.colorbar(imag, shrink=factsrnk) 
     
-    plt.title(titl)
+    plt.title(titl, y=1.08)
 
     plt.savefig(path)
     plt.close(figr)
