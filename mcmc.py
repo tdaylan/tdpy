@@ -351,12 +351,12 @@ def work(gdat, indxprocwork):
     varipara = copy(gdat.datapara.vari)
     
     # proposal scale optimization
-    if gdat.rtag == '':
-        strg = 'tdmcvaripara.fits'
-    else:
-        strg = 'tdmcvaripara_%s.fits' % gdat.rtag
-    pathvaripara = gdat.pathdata + strg
     if gdat.optiprop:
+        if gdat.rtag == '':
+            strg = 'tdmcvaripara.fits'
+        else:
+            strg = 'tdmcvaripara_%s.fits' % gdat.rtag
+        pathvaripara = gdat.pathdata + strg
         if os.path.isfile(pathvaripara) and gdat.loadvaripara:
             if gdat.verbtype > 0 and indxprocwork == 0:
                 print 'Reading the previously computed proposal scale from %s...' % pathvaripara
