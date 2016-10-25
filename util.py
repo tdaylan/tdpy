@@ -315,6 +315,7 @@ def retr_strgmemo(memo):
         memonorm = memo / float(2**10)
         strg = 'KB'
     else:
+        memonorm = memo
         strg = 'B'
     strgmemo = '%d %s' % (memonorm, strg)
     return strgmemo
