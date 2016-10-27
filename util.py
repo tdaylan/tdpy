@@ -454,7 +454,7 @@ def retr_mapsplnkfreq(indxpixloutprofi=None, numbsideoutp=256, indxfreqrofi=None
             strg = strgfrst + '%s' % strgfreq[k][1:] + strgseco
         
             mapsinpt = pf.getdata(path + strg, 1)[strgcols]
-            numbpixlinpt = mapstemp.size
+            numbpixlinpt = mapsinpt.size
             numbsideinpt = int(sqrt(numbpixlinpt / 12))
             mapsplnkfreq[k, :] = pf.getdata(path + strg, 1)[strgcols]
             mapsplnkfreq[k, :] = hp.reorder(mapsplnkfreq[k, :], n2r=True)
