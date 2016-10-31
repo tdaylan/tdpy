@@ -618,8 +618,15 @@ def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype
         else:
             return f, zeros(x.shape[1:])
     else:
-        timeatcr = amax(where(f > 0.2)[0], 0)
-        
+        indxatcr = where(f > 0.2)[0]
+        if indxatcr.size > 0:
+            timeatcr = amax(indxatcr, 0)
+        else:
+            print 'hey'
+            print 'f'
+            print f
+            timeatcr = 0
+
         if maxmatcr:
             timeatcr = amax(timeatcr)
             atcr = mean(mean(f, 1), 1)
