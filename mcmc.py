@@ -87,9 +87,9 @@ def gmrb_test(griddata):
     return psrf
 
 
-def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=True, loadchan=True, loadvaripara=True, \
-                            gdatextr=None, pathdata='./', pathimag='./', rtag='', numbburn=None, truepara=None, \
-                            numbplotside=None, factthin=None, verbtype=0, factpropeffi=1.2):
+def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=True, loadchan=False, loadvaripara=True, fracrand=0., \
+                            gdatextr=None, pathdata='./', pathimag='./', rtag='', numbburn=None, truepara=None, numbbinsplot=None, \
+                            numbplotside=None, factthin=None, verbtype=1, factpropeffi=1.2):
   
     timeinit = time.time()
 
@@ -111,6 +111,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     gdat.factpropeffi = factpropeffi
     gdat.gdatextr = gdatextr
     gdat.loadvaripara = loadvaripara
+    gdat.fracrand = fracrand
 
     if gdat.verbtype > 0:
         print 'TDMC initialized.'
@@ -136,7 +137,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
         truepara = array([None] * gdat.numbpara)
         
     if numbplotside == None:
-        numbplotside = gdat.numbpara
+        numbplotside = min(gdat.numbpara, 4)
 
     # Sampler settings
     if gdat.numbburn == None:
@@ -292,11 +293,11 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     
     if numbplotside != 0:
         path = gdat.pathimag
-        plot_grid(path, listsampvarb, gdat.datapara.strg, truepara=gdat.datapara.true, scalpara=gdat.datapara.scal, numbplotside=numbplotside)
+        plot_grid(path, listsampvarb, gdat.datapara.strg, truepara=gdat.datapara.true, scalpara=gdat.datapara.scal, numbplotside=numbplotside, numbbinsplot=numbbinsplot)
         
     for k in gdat.indxpara:
         path = gdat.pathimag + gdat.datapara.name[k]
-        plot_trac(path, listsampvarb[:, k], gdat.datapara.strg[k], scalpara=gdat.datapara.scal[k], truepara=gdat.datapara.true[k])
+        plot_trac(path, listsampvarb[:, k], gdat.datapara.strg[k], scalpara=gdat.datapara.scal[k], truepara=gdat.datapara.true[k], numbbinsplot=numbbinsplot)
         
     if gdat.verbtype > 1:
         timefinl = time.time()
@@ -338,7 +339,7 @@ def work(gdat, indxprocwork):
         thissamp = copy(gdat.initsamp[indxprocwork, :])
 
     thissampvarb = icdf_samp(thissamp, gdat.datapara)
-    thisllik, thissampcalc = gdat.llikfunc(thissampvarb, gdat.gdatextr, gdat)
+    thisllik, thissampcalc = gdat.llikfunc(thissampvarb, gdat.gdatextr)
     
     if gdat.verbtype > 1:
         print 'Process %d' % indxprocwork
@@ -401,7 +402,10 @@ def work(gdat, indxprocwork):
         # propose a sample
         indxparamodi = choice(gdat.indxpara)
         nextsamp = copy(thissamp)
-        nextsamp[indxparamodi] = randn() * varipara[indxparamodi] + thissamp[indxparamodi]
+        if gdat.fracrand > rand():
+            nextsamp[indxparamodi] = rand()
+        else:
+            nextsamp[indxparamodi] = randn() * varipara[indxparamodi] + thissamp[indxparamodi]
         
         if gdat.verbtype > 1:
             print 'indxparamodi'
@@ -418,7 +422,7 @@ def work(gdat, indxprocwork):
                 print nextsampvarb
 
             # evaluate the log-likelihood
-            nextllik, nextsampcalc = gdat.llikfunc(nextsampvarb, gdat.gdatextr, gdat)
+            nextllik, nextsampcalc = gdat.llikfunc(nextsampvarb, gdat.gdatextr)
             accpprob = exp(nextllik - thisllik)
 
             if gdat.verbtype > 1:
@@ -704,8 +708,8 @@ def retr_numbsamp(numbswep, numbburn, factthin):
 
 def plot_gmrb(path, gmrbstat):
 
-    numbbins = 40
-    bins = linspace(1., amax(gmrbstat), numbbins + 1)
+    numbbinsplot = 40
+    bins = linspace(1., amax(gmrbstat), numbbinsplot + 1)
     figr, axis = plt.subplots()
     axis.hist(gmrbstat, bins=bins)
     axis.set_title('Gelman-Rubin Convergence Test')
@@ -756,19 +760,17 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara
     plt.close(figr)
 
 
-def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, quan=True, varbdraw=None, labldraw=None):
-    
-    numbbins = 20
+def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, quan=True, varbdraw=None, labldraw=None, numbbinsplot=20):
     
     minmpara = amin(listpara)
     maxmpara = amax(listpara)
     limspara = array([minmpara, maxmpara])
     if scalpara == 'self':
-        bins = icdf_self(linspace(0., 1., numbbins + 1), minmpara, maxmpara)
+        bins = icdf_self(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
     if scalpara == 'logt':
-        bins = icdf_logt(linspace(0., 1., numbbins + 1), minmpara, maxmpara)
+        bins = icdf_logt(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
     if scalpara == 'atan':
-        bins = icdf_atan(linspace(0., 1., numbbins + 1), minmpara, maxmpara)
+        bins = icdf_atan(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
         
     if quan:
         quanarry = sp.stats.mstats.mquantiles(listpara, prob=[0.025, 0.16, 0.84, 0.975])
@@ -827,7 +829,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
     plt.close(figr)
 
 
-def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, plotsize=6, numbbins=20, numbplotside=None, truepara=None, numbtickbins=3, quan=True):
+def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, plotsize=6, numbplotside=None, truepara=None, numbtickbins=3, numbbinsplot=20, quan=True):
     
     numbpara = listsamp.shape[1]
     
@@ -867,14 +869,14 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
     indxparagood = ones(numbpara, dtype=bool)
     indxparagood[where(lims[0, :] == lims[1, :])] = False
     
-    bins = zeros((numbbins + 1, numbpara))
+    bins = zeros((numbbinsplot + 1, numbpara))
     for k in range(numbpara):
         if scalpara[k] == 'self':
-            bins[:, k] = icdf_self(linspace(0., 1., numbbins + 1), lims[0, k], lims[1, k])
+            bins[:, k] = icdf_self(linspace(0., 1., numbbinsplot + 1), lims[0, k], lims[1, k])
         if scalpara[k] == 'logt':
-            bins[:, k] = icdf_logt(linspace(0., 1., numbbins + 1), lims[0, k], lims[1, k])
+            bins[:, k] = icdf_logt(linspace(0., 1., numbbinsplot + 1), lims[0, k], lims[1, k])
         if scalpara[k] == 'atan':
-            bins[:, k] = icdf_atan(linspace(0., 1., numbbins + 1), lims[0, k], lims[1, k])
+            bins[:, k] = icdf_atan(linspace(0., 1., numbbinsplot + 1), lims[0, k], lims[1, k])
          
     for n in range(numbfram):
         
@@ -952,7 +954,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
         if join:
             strg = '_join'
         else:
-            strg = '_grid'
+            strg = 'grid'
             if numbfram != 1:
                 strg += '%04d' % n
         plt.savefig(path + strg + '.pdf')

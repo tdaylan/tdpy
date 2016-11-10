@@ -90,25 +90,14 @@ def cnfg_flag():
     os.system(cmnd)
 
 
-# define some likelihood functions
 def retr_llik_gaus(sampvarb, gdat):
         
     xpos = sampvarb[0]
     ypos = sampvarb[1]
 
-    print 'hey'
-
-    print sampvarb
-    print
     llik = 0.
     for n in range(gdat.numbgaus):
-        print llik
-        print gdat.stdvgaus[n]**2
-        print 0.5 * ((xpos - gdat.xposgaus[n])**2 + (ypos - gdat.yposgaus[n])**2)
-        print
         llik -= 0.5 * ((xpos - gdat.xposgaus[n])**2 + (ypos - gdat.yposgaus[n])**2) / gdat.stdvgaus[n]**2
-        
-    print
 
     return llik, []
 
@@ -118,9 +107,9 @@ def retr_llik_ebox(sampvarb, gdat):
     xpos = sampvarb[0]
     ypos = sampvarb[1]
     
-    llik = sin(xpos) * sin(ypos)
+    llik = 100. * sin(xpos) * sin(ypos)
 
-    return llik
+    return llik, []
 
 
 def cnfg_gaus():
@@ -134,19 +123,25 @@ def cnfg_gaus():
     xgrd = linspace(minmxpos, maxmxpos, 100)
     ygrd = linspace(minmypos, maxmypos, 100)
     
-    # construct the parameter object
-    datapara = util.datapara(2)
-    datapara.defn_para('xpos', minmxpos, maxmxpos, 'self', r'$x$', '', None, None)
-    datapara.defn_para('ypos', minmypos, maxmypos, 'self', r'$y$', '', None, None)
-    
     gdat = util.gdatstrt()
-    gdat.numbgaus = 10
-    gdat.xposgaus = rand(gdat.numbgaus) * maxmxpos
-    gdat.yposgaus = rand(gdat.numbgaus) * maxmypos
-    gdat.stdvgaus = 0.5 + rand(gdat.numbgaus)
+   
+    if False:
+        gdat.numbgaus = 3
+        gdat.xposgaus = rand(gdat.numbgaus) * maxmxpos
+        gdat.yposgaus = rand(gdat.numbgaus) * maxmypos
+        gdat.stdvgaus = 0.5 + rand(gdat.numbgaus)
+        datapara = util.datapara(2 * gdat.numbgaus)
+        for k in range(gdat.numbgaus):
+            # construct the parameter object
+            datapara.defn_para('xpos%04d' % k, minmxpos, maxmxpos, 'self', r'$x$', '', 0.01, gdat.xposgaus[k])
+            datapara.defn_para('ypos%04d' % k, minmypos, maxmypos, 'self', r'$y$', '', 0.01, gdat.yposgaus[k])
+            
+    datapara = util.datapara(2)
+    datapara.defn_para('xpos', minmxpos, maxmxpos, 'self', r'$x$', '', 0.01, None)
+    datapara.defn_para('ypos', minmypos, maxmypos, 'self', r'$y$', '', 0.01, None)
 
     # run MCMC
-    sampbund = mcmc.init(retr_llik_gaus, datapara, gdatextr=gdat)
+    sampbund = mcmc.init(retr_llik_ebox, datapara, numbswep=100000, optiprop=True, gdatextr=gdat, numbburn=0, factthin=10, rtag='gausgame', numbbinsplot=100, fracrand=0.1)
 
 cnfg_gaus()
 
