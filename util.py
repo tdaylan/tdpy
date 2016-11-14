@@ -241,12 +241,11 @@ def regr(xaxi, yaxi, ordr):
     return coef, func, strg
 
 
-def corr_catl(lgalseco, bgalseco, fluxseco, lgalfrst, bgalfrst, fluxfrst, anglassc=deg2rad(1.), verbtype=1):
+def corr_catl(lgalseco, bgalseco, lgalfrst, bgalfrst, anglassc=deg2rad(1.), verbtype=1):
 
     numbfrst = lgalfrst.size
 
     indxsecoassc = zeros(numbfrst, dtype=int) - 1
-    fluxassc = zeros(numbfrst)
     numbassc = zeros(numbfrst, dtype=int)
     distassc = zeros(numbfrst) + 1000.
     lgalbgalfrst = array([lgalfrst, bgalfrst])
@@ -267,7 +266,6 @@ def corr_catl(lgalseco, bgalseco, fluxseco, lgalfrst, bgalfrst, fluxfrst, anglas
             # store the index of the model PS
             numbassc[thisindxfrst[0]] += 1
             if dist[0] < distassc[thisindxfrst[0]]:
-                fluxassc[thisindxfrst[0]] = fluxseco[k]
                 distassc[thisindxfrst[0]] = dist[0]
                 indxsecoassc[thisindxfrst[0]] = k
 
@@ -497,7 +495,27 @@ def retr_mapsplnkfreq(indxpixloutprofi=None, numbsideoutp=256, indxfreqrofi=None
     return mapsplnkfreq, mapsplnkfreqstdv
 
 
-def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=10., maxmswep=None, limtpara=None, tolrfunc=1e-6, optiprop=True, pathbase='./', rtag=''):
+def retr_indximagmaxm(data):
+
+    sizeneig = 10
+    cntsthrs = 10
+    maxmdata = sp.ndimage.filters.maximum_filter(data, sizeneig)
+    
+    boolmaxm = (data == maxmdata)
+    minmdata = sp.ndimage.filters.minimum_filter(data, sizeneig)
+    diff = ((maxmdata - minmdata) > cntsthrs)
+    boolmaxm[diff == 0] = 0
+    mapslabl, numbobjt = sp.ndimage.label(boolmaxm)
+    mapslablones = zeros_like(mapslabl)
+    mapslablones[where(mapslabl > 0)] = 1.
+    indxmaxm = array(sp.ndimage.center_of_mass(data, mapslabl, range(1, numbobjt+1))).astype(int)
+    indxyaximaxm = indxmaxm[:, 1]
+    indxxaximaxm = indxmaxm[:, 0]
+
+    return indxxaximaxm, indxyaximaxm
+
+
+def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=2., gdat=None, maxmswep=None, limtpara=None, tolrfunc=1e-6, optiprop=True, pathbase='./', rtag=''):
 
     print 'TDMN launched...'
     numbpara = thissamp.size
@@ -513,7 +531,7 @@ def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=10., maxmswep=N
     matriden = zeros((numbpara, numbpara))
     matriden[indxpara, indxpara] = 1.
 
-    thisfunc = func(thissamp)
+    thisfunc = func(thissamp, gdat)
     thisstdvpara = stdvpara
 
     thiserrr = 1e10
@@ -556,7 +574,7 @@ def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=10., maxmswep=N
 
         # evaluate the function
         if boollimt:
-            nextfunc = func(nextsamp)
+            nextfunc = func(nextsamp, gdat)
 
             if verbtype > 1:
                 print 'thisfunc: '
@@ -597,7 +615,7 @@ def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=10., maxmswep=N
         #    detrvari = determinant(matrvari)
         
         nextsampconv = randn(numbpara) * thisstdvpara + thissamp
-        nextfuncconv = func(nextsampconv)
+        nextfuncconv = func(nextsampconv, gdat)
         nexterrr = fabs(nextfuncconv / thisfunc - 1.)
         if nexterrr < thiserrr:
             thiserrr = nexterrr
@@ -886,7 +904,7 @@ def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpix
         cart = retr_cart(maps, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal, numbsidelgal=numbsidelgal, numbsidebgal=numbsidebgal)
     else:
         numbsidetemp = int(sqrt(maps.size))
-        cart = maps.reshape((numbsidetemp, numbsidetemp))
+        cart = maps.reshape((numbsidetemp, numbsidetemp)).T
 
     sizefigr = 8
     if resi:
