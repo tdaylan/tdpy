@@ -88,7 +88,7 @@ def gmrb_test(griddata):
 
 
 def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=True, loadchan=False, loadvaripara=True, fracrand=0., \
-                            gdatextr=None, pathdata='./', pathimag='./', rtag='', numbburn=None, truepara=None, numbbinsplot=None, \
+                            gdatextr=None, pathdata='./', pathimag='./', rtag='', numbburn=None, truepara=None, numbbinsplot=20, \
                             numbplotside=None, factthin=None, verbtype=1, factpropeffi=1.2):
   
     timeinit = time.time()
