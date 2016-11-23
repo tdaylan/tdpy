@@ -573,90 +573,38 @@ def retr_atcr_neww(listsamp):
     return atcr[:numbsamp/2, ...]
 
 
-def retr_timeatcr(x, low=1, high=None, step=1, c=10, full_output=False, verbtype=1, axis=0, fast=False, boolmean=True, maxmatcr=False, meanatcr=False):
-    size = 0.5 * x.shape[axis]
+def retr_timeatcr(listsamp, verbtype=1, boolmean=True, maxmatcr=False, meanatcr=False):
 
-    if x.shape[axis] == 1:
+    if listsamp.shape[0] == 1:
         print 'Autocorrelation time could not be estimated.'
         if meanatcr or maxmatcr:
-            return zeros(x.shape[0]), 0.
+            return zeros(listsamp.shape[0]), 0.
         else:
-            return zeros_like(x), 0.
+            return zeros_like(listsamp), 0.
 
-    # Compute the autocorrelation function.
-    f = function(x, axis=axis, fast=fast)
-
-    if False:
-        # Check the dimensions of the array.
-        oned = len(f.shape) == 1
-        m = [slice(None), ] * len(f.shape)
+    atcr = retr_atcr_neww(listsamp)
+    indxatcr = where(atcr > 0.2)[0]
     
-        # Loop over proposed window sizes until convergence is reached.
-        if high is None:
-            high = int(size / c)
-        for M in arange(low, high, step).astype(int):
-            # Compute the autocorrelation time with the given window.
-            if oned:
-                # Special case 1D for simplicity.
-                tau = 1 + 2 * sum(f[1:M])
-            else:
-                # N-dimensional case.
-                m[axis] = slice(1, M)
-                tau = 1 + 2 * sum(f[m], axis=axis)
-    
-            # Accept the window size if it satisfies the convergence criterion.
-            if all(tau > 1.0) and M > c * tau.max():
-                if meanatcr:
-                    return mean(mean(f, 1), 1), mean(tau)
-                else:
-                    return f, tau
-    
-            # If the autocorrelation time is too long to be estimated reliably
-            # from the chain, it should fail.
-            if c * tau.max() >= size:
-                break
-        
-        print 'Autocorrelation time could not be estimated'
-        if meanatcr:
-            return mean(mean(f, 1), 1), 0.
-        else:
-            return f, zeros(x.shape[1:])
+    if indxatcr.size > 0:
+        timeatcr = amax(indxatcr, 0)
     else:
-        indxatcr = where(f > 0.2)[0]
-        if indxatcr.size > 0:
-            timeatcr = amax(indxatcr, 0)
-        else:
-            print 'hey'
-            print 'f'
-            print f
-            timeatcr = 0
+        timeatcr = 0
 
-        if maxmatcr:
-            timeatcr = amax(timeatcr)
-            atcr = mean(mean(f, 1), 1)
-        elif meanatcr:
-            timeatcr = mean(timeatcr)
-            atcr = mean(mean(f, 1), 1)
-        else:
-            atcr = f
-        
-        return atcr, timeatcr
+    if maxmatcr:
+        timeatcr = amax(timeatcr)
+        atcr = mean(mean(atcr, 1), 1)
+    elif meanatcr:
+        timeatcr = mean(timeatcr)
+        atcr = mean(mean(atcr, 1), 1)
+    else:
+        atcr = atcr
+    
+    return atcr, timeatcr
 
 
-def function(x, axis=0, fast=False):
-    x = atleast_1d(x)
+def function(x, axis=0):
     m = [slice(None), ] * len(x.shape)
-
-    # For computational efficiency, crop the chain to the largest power of
-    # two if requested.
-    if fast:
-        n = int(2**floor(log2(x.shape[axis])))
-        m[axis] = slice(0, n)
-        x = x
-    else:
-        n = x.shape[axis]
-
-    # Compute the FFT and then (from that) the auto-correlation function.
+    n = x.shape[axis]
     f = fft.fft(x - mean(x, axis=axis), n=2*n, axis=axis)
     m[axis] = slice(0, n)
     acf = fft.ifft(f * conjugate(f), axis=axis)[m].real
@@ -829,8 +777,21 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
     plt.close(figr)
 
 
+def plot_hist(path, listvarb, strg, titl=None):
+
+    figr, axis = plt.subplots(figsize=(6, 6))
+    axis.hist(listvarb)
+    axis.set_ylabel(r'$N_{samp}$')
+    axis.set_xlabel(strg)
+    if titl != None:
+        axis.set_title(titl)
+    plt.tight_layout()
+    figr.savefig(path + '_hist.pdf')
+    plt.close(figr)
+
+
 def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, plotsize=6, numbplotside=None, truepara=None, numbtickbins=3, numbbinsplot=20, quan=True):
-    
+
     numbpara = listsamp.shape[1]
     
     if numbpara != 2 and join:
@@ -899,7 +860,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
             thisbins = bins[:, n*numbplotside:(n+1)*numbplotside]
             thisindxparagood = indxparagood[n*numbplotside:(n+1)*numbplotside]
             thislims = lims[:, n*numbplotside:(n+1)*numbplotside]
-            
+    
         figr, axgr = plt.subplots(thisnumbpara, thisnumbpara, figsize=(plotsize*thisnumbpara, plotsize*thisnumbpara))
         if thisnumbpara == 1:
             axgr = [[axgr]]

@@ -9,8 +9,11 @@ class gdatstrt(object):
     def lockmodi(self):
         self.boollockmodi = True
 
+    def unlkmodi(self):
+        self.boollockmodi = False
+
     def __setattr__(self, attr, valu):
-        if hasattr(self, attr) and self.boollockmodi:
+        if hasattr(self, attr) and self.boollockmodi and attr != 'boollockmodi':
             raise KeyError('{} has already been set'.format(attr))
         super(gdatstrt, self).__setattr__(attr, valu)
 
@@ -509,9 +512,12 @@ def retr_indximagmaxm(data):
     mapslablones = zeros_like(mapslabl)
     mapslablones[where(mapslabl > 0)] = 1.
     indxmaxm = array(sp.ndimage.center_of_mass(data, mapslabl, range(1, numbobjt+1))).astype(int)
-    indxyaximaxm = indxmaxm[:, 1]
-    indxxaximaxm = indxmaxm[:, 0]
-
+    if len(indxmaxm) == 0:
+        indxyaximaxm = array([0])
+        indxxaximaxm = array([0])
+    else:
+        indxyaximaxm = indxmaxm[:, 1]
+        indxxaximaxm = indxmaxm[:, 0]
     return indxxaximaxm, indxyaximaxm
 
 
