@@ -159,10 +159,12 @@ def show(varb):
     print
 
 
-def summ(strg):
-    varb = eval(strg)
+def summ(gdat, strg, k=None):
+    if k == None:
+        varb = getattr(gdat, strg)
+    else:
+        varb = getattr(gdat, strg)[k]
     print strg
-    print varb
     print amin(varb)
     print amax(varb)
     print mean(varb)

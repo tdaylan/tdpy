@@ -915,7 +915,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
         if join:
             strg = '_join'
         else:
-            strg = 'grid'
+            strg = '_grid'
             if numbfram != 1:
                 strg += '%04d' % n
         plt.savefig(path + strg + '.pdf')
