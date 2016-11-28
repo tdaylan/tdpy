@@ -780,7 +780,10 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
 def plot_hist(path, listvarb, strg, titl=None):
 
     figr, axis = plt.subplots(figsize=(6, 6))
-    axis.hist(listvarb)
+    try:
+        axis.hist(listvarb)
+    except:
+        pass
     axis.set_ylabel(r'$N_{samp}$')
     axis.set_xlabel(strg)
     if titl != None:
@@ -871,7 +874,10 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                     continue
 
                 if k == l and not join:
-                    axis.hist(thislistsamp[:, k], bins=thisbins[:, k])
+                    try:
+                        axis.hist(thislistsamp[:, k], bins=thisbins[:, k])
+                    except:
+                        pass
                     if thistruepara[k] != None:
                         axis.axvline(thistruepara[k], color='g')
                     if quan:
@@ -881,8 +887,11 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                         axis.axvline(thisquan[2], color='b', ls='-.')
                         axis.axvline(thisquan[3], color='b', ls='--')
                 else:
-                    hist = histogram2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]])[0]
-                    axis.pcolor(thisbins[:, l], thisbins[:, k], hist, cmap='Blues')
+                    try:
+                        hist = histogram2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]])[0]
+                        axis.pcolor(thisbins[:, l], thisbins[:, k], hist, cmap='Blues')
+                    except:
+                        pass
                     axis.set_xlim([amin(thisbins[:, l]), amax(thisbins[:, l])])
                     axis.set_ylim([amin(thisbins[:, k]), amax(thisbins[:, k])])
                     if thistruepara[l] != None and thistruepara[k] != None:
