@@ -18,9 +18,4 @@ You can install `tdpy` by running the `setup.py` script.
 python setup.py install
 ```
 
-### Usage
-
-```
-```
-
 

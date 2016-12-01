@@ -172,6 +172,14 @@ def summ(gdat, strg, k=None):
     print
 
 
+def summgene(varb):
+    print amin(varb)
+    print amax(varb)
+    print mean(varb)
+    print varb.shape
+    print
+
+
 def retr_p4dm_spec(anch, part='el'):
     
     pathimag, pathdata = retr_path('tdpy')
