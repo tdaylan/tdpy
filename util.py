@@ -172,6 +172,38 @@ def summ(gdat, strg, k=None):
     print
 
 
+class varb(object):
+    
+    def __init__(self, numb=None):
+        
+        self.name = []
+        self.strg = []
+        self.para = []
+        self.scal = []
+        self.strg = []
+        if numb != None:
+            self.numb = numb
+
+    
+    def defn_para(self, name, minm, maxm, numb=None, strg='', scal='self'):
+        
+        if numb != None:
+            numbtemp = numb
+        else:
+            numbtemp = self.numb
+
+        if scal == 'logt':
+            arry = logspace(log10(minm), log10(maxm), numbtemp) 
+        if scal == 'self':
+            arry = linspace(minm, maxm, numbtemp) 
+        
+        self.name.append(name)
+        self.para.append(arry)
+        self.scal.append(scal)
+        self.strg.append(strg)
+        self.size = len(self.para)
+
+    
 def summgene(varb):
     print amin(varb)
     print amax(varb)
