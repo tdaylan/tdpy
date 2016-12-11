@@ -709,7 +709,10 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara
 
 
 def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, quan=True, varbdraw=None, labldraw=None, numbbinsplot=20):
-    
+   
+    if listpara.size == 0:
+        return
+
     minmpara = amin(listpara)
     maxmpara = amax(listpara)
     limspara = array([minmpara, maxmpara])
