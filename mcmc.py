@@ -892,7 +892,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                 else:
                     try:
                         hist = histogram2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]])[0]
-                        axis.pcolor(thisbins[:, l], thisbins[:, k], hist, cmap='Blues')
+                        axis.pcolor(thisbins[:, l], thisbins[:, k], hist.T, cmap='Blues')
                     except:
                         pass
                     axis.set_xlim([amin(thisbins[:, l]), amax(thisbins[:, l])])
