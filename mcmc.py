@@ -512,139 +512,48 @@ def work(gdat, indxprocwork):
     return chan
 
 
-def retr_timeatcr_depr(listsampinpt, numbtimeatcr=5, verbtype=1, neww=True):
-   
-    numbsamp = listsampinpt.shape[0]
-    numbproc = listsampinpt.shape[1]
-    numbpara = listsampinpt.shape[2]
-    
-    if numbsamp == 1:
-        return array([1.]), 0
-
-    # normalize the samples
-    listsamp = copy(listsampinpt)
-    listsamp -= mean(listsamp, axis=0)
-    listsamp /= std(listsamp, axis=0)
-
-    if neww:
-        atcrneww = retr_atcr_neww(listsampinpt)
-
-    # compute the autocorrelation
-    atcr = []
-    timeatcr = 0
-    boolcomp = False
-    cntrsamp = 0
-    while True:
-        if not neww:
-            # calculate autocorrelation
-            atcrtemp = mean(roll(listsamp, cntrsamp, axis=0) * listsamp, axis=0)
-            atcr.append(atcrtemp)
-        else:
-            atcr.append(atcrneww[cntrsamp])
-        if mean(atcr[cntrsamp]) < 0.37:
-            if not boolcomp:
-                timeatcr = cntrsamp
-            boolcomp = True
-        if cntrsamp == numbtimeatcr * timeatcr and boolcomp or cntrsamp == numbsamp / 2:
-            if not (cntrsamp == numbtimeatcr * timeatcr and boolcomp) and verbtype > 0:
-                print 'Autocorrelation calculation failed.'
-            break
-        if cntrsamp % 100 == 0 and verbtype > 0:
-            print 'Autocorrelation time calculation, iteration number %d' % cntrsamp
-        cntrsamp += 1
-
-    # write the accumulated list of autocorrelation values to an array
-    numbtime = len(atcr)
-    atcroutp = empty((numbtime, numbproc, numbpara))
-    for n in range(numbtime):
-        atcroutp[n, :, :] = atcr[n]
-   
-    # mean autocorrelation
-    atcrmean = mean(mean(atcroutp, axis=1), axis=1)
-
-    return atcrmean, timeatcr
-
-
 def retr_atcr_neww(listsamp):
+
     numbsamp = listsamp.shape[0]
     four = fft.fft(listsamp - mean(listsamp, axis=0), axis=0)
     atcr = fft.ifft(four * conjugate(four), axis=0).real
     atcr /= amax(atcr, 0)
+    
     return atcr[:numbsamp/2, ...]
 
 
-def retr_timeatcr(listsamp, verbtype=1, boolmean=True, maxmatcr=False, meanatcr=False):
+def retr_timeatcr(listsamp, verbtype=1, atcrtype='maxm'):
 
+    numbsamp = listsamp.shape[0]
+    listsamp = listsamp.reshape((numbsamp, -1))
+    numbpara = listsamp.shape[1]
+
+    boolfail = False
     if listsamp.shape[0] == 1:
-        print 'Autocorrelation time could not be estimated.'
-        if meanatcr or maxmatcr:
-            return zeros(listsamp.shape[0]), 0.
-        else:
-            return zeros_like(listsamp), 0.
+        boolfail = True
 
     atcr = retr_atcr_neww(listsamp)
-    indxatcr = where(atcr > 0.2)[0]
+    indxatcr = where(atcr > 0.2)
     
-    if indxatcr.size > 0:
-        timeatcr = amax(indxatcr, 0)
-    else:
+    if indxatcr[0].size == 0:
+        boolfail = True
         timeatcr = 0
-
-    if maxmatcr:
-        timeatcr = amax(timeatcr)
-        atcr = mean(mean(atcr, 1), 1)
-    elif meanatcr:
-        timeatcr = mean(timeatcr)
-        atcr = mean(mean(atcr, 1), 1)
     else:
-        atcr = atcr
-    
-    return atcr, timeatcr
+        if atcrtype == 'maxm':
+            indx = argmax(indxatcr[0])
+            indxtimemaxm = indxatcr[0][indx]
+            indxparamaxm = indxatcr[1][indx]
+            atcr = atcr[:, indxparamaxm]
+            timeatcr = indxtimemaxm
 
-
-def function(x, axis=0):
-    m = [slice(None), ] * len(x.shape)
-    n = x.shape[axis]
-    f = fft.fft(x - mean(x, axis=axis), n=2*n, axis=axis)
-    m[axis] = slice(0, n)
-    acf = fft.ifft(f * conjugate(f), axis=axis)[m].real
-    m[axis] = 0
-    return acf / acf[m]
-
-
-def retr_timeatcr_neww(listsamp, factwndw=4, maxm=False, mean=False, verbtype=1):
-    atcr = retr_atcr_neww(listsamp)
-    size = atcr.shape[0]
-    maxmtimewndw = size / factwndw
-    boolconv = False
-    for k in arange(1, maxmtimewndw):
-        
-        # guess the integrated autocorrelation time
-        timeatcr = 1 + 2 * sum(atcr[1:k+1, ...], axis=0)
-        
-        # check if the guess is valid
-        if maxm:
-            if all(timeatcr > 1.) and (k + 1) > factwndw * amax(timeatcr):
-                boolconv = True
-        if mean:
-            if mean(timeatcr, 0) > 1. and (k + 1) > factwndw * mean(timeatcr, 0):
-                boolconv = True
-        if boolconv:
-            break
-        
-        # check if 
-        if factwndw * amax(timeatcr) >= size or k == maxmtimewndw - 1:
-            if verbtype > 0:
-                print 'Autocorrelation time could not be estimated.'
-            timeatcr = 0
-            break
-
-    if maxm:
-        atcr = amax(atcr, 0)
-    elif mean:
-        atcr = mean(atcr, 0)
-        
-    return atcr, timeatcr
+    if boolfail:
+        print 'Autocorrelation time could not be estimated.'
+        if atcrtype == 'maxm':
+            return zeros((1, 1)), 0.
+        else:
+            return zeros((1, numbpara)), 0.
+    else:
+        return atcr, timeatcr
 
 
 def retr_numbsamp(numbswep, numbburn, factthin):
