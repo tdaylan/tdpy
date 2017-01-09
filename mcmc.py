@@ -88,11 +88,25 @@ def gmrb_test(griddata):
 
 
 def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=True, loadchan=False, loadvaripara=True, fracrand=0., \
-                            gdatextr=None, pathdata='./', pathimag='./', rtag='', numbburn=None, truepara=None, numbbinsplot=20, \
+                            gdatextr=None, pathdata=None, pathimag=None, rtag='', numbburn=None, truepara=None, numbbinsplot=20, \
                             numbplotside=None, factthin=None, verbtype=1, factpropeffi=1.2):
   
     timeinit = time.time()
 
+    if pathimag == None:
+        try:
+            pathimag = os.environ["TDPY_DATA_PATH"] + '/'
+        except:
+            pathimag = './'
+        pathimag += 'imag/'
+    
+    if pathdata == None:
+        try:
+            pathdata = os.environ["TDPY_DATA_PATH"] + '/'
+        except:
+            pathdata = './'
+        pathdata += 'data/'
+    
     # construct the global object
     gdat = util.gdatstrt()
     gdat.numbproc = numbproc
@@ -226,7 +240,9 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     levi = -log(mean(1. / exp(listllik - minmlistllik))) + minmlistllik
     info = mean(listllik) - levi
     
-    gdat.pathimag += 'tdmc/'
+    gdat.strgtimestmp = util.retr_strgtimestmp()
+
+    gdat.pathimag += '%s_%s/' % (gdat.strgtimestmp, gdat.rtag)
        
     os.system('mkdir -p %s' % gdat.pathimag)
 
@@ -236,7 +252,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
         if gdat.verbtype > 1:
             print 'Calculating autocorrelation...'
             timeinit = time.time()
-        atcr, timeatcr = retr_timeatcr(listsamp, maxmatcr=True)
+        atcr, timeatcr = retr_timeatcr(listsamp, atcrtype='maxm')
         if gdat.verbtype > 1:
             timefinl = time.time()
             print 'Done in %.3g seconds' % (timefinl - timeinit)
@@ -292,7 +308,7 @@ def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=
     plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
     
     if numbplotside != 0:
-        path = gdat.pathimag
+        path = gdat.pathimag + 'fixp'
         plot_grid(path, listsampvarb, gdat.datapara.strg, truepara=gdat.datapara.true, scalpara=gdat.datapara.scal, numbplotside=numbplotside, numbbinsplot=numbbinsplot)
         
     for k in gdat.indxpara:

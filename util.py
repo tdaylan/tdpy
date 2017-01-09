@@ -582,6 +582,9 @@ def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=2., gdat=None, 
     thisfunc = func(thissamp, gdat)
     thisstdvpara = stdvpara
 
+    numbsccs = 100
+    nextbool = zeros(numbsccs, dtype=bool)
+
     thiserrr = 1e10
     cntrswep = 0
     while True:
@@ -667,7 +670,8 @@ def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=2., gdat=None, 
         nexterrr = fabs(nextfuncconv / thisfunc - 1.)
         if nexterrr < thiserrr:
             thiserrr = nexterrr
-        nextbool = nexterrr < tolrfunc
+        nextbool[0] = nexterrr < tolrfunc
+
         
         if verbtype > 1:
             print 'Checking convergence...'
@@ -678,11 +682,12 @@ def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=2., gdat=None, 
             print 'nexterrr'
             print nexterrr
 
-        if nextbool or cntrswep == maxmswep:
+        if nextbool.all() or cntrswep == maxmswep:
             minmsamp = thissamp
             minmfunc = thisfunc
             break
         else:
+            roll(nextbool, 1)
             cntrswep += 1
 
     if verbtype > 0:
@@ -703,13 +708,15 @@ def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=2., gdat=None, 
 
 def test_minm():
 
-    def func_test(samp):
+    def func_test(samp, gdat=None):
+        
         return sum((samp / 0.2 - 1.)**2)
+    
     numbpara = 10
     stdvpara = ones(numbpara)
     thissamp = rand(numbpara)
     minm(thissamp, func_test, verbtype=1, factcorrscal=100., stdvpara=stdvpara, maxmswep=None, limtpara=None, tolrfunc=1e-6, pathbase='./', rtag='')
-
+    
 
 def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
     
