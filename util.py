@@ -80,9 +80,9 @@ def retr_postvarb(listvarb):
     shap = list(shap)
     postvarb = zeros(shap)
     
-    postvarb[0, :] = percentile(listvarb, 50., axis=0)
-    postvarb[1, :] = percentile(listvarb, 16., axis=0)
-    postvarb[2, :] = percentile(listvarb, 84., axis=0)
+    postvarb[0, ...] = percentile(listvarb, 50., axis=0)
+    postvarb[1, ...] = percentile(listvarb, 16., axis=0)
+    postvarb[2, ...] = percentile(listvarb, 84., axis=0)
 
     return postvarb
 
@@ -94,7 +94,7 @@ def retr_errrvarb(inpt, samp=False):
     else:
         postvarb = inpt
 
-    errr = fabs(postvarb[0, :] - postvarb[1:3, :])
+    errr = fabs(postvarb[0, ...] - postvarb[1:3, ...])
 
     return errr
 
