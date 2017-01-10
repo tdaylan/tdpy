@@ -720,7 +720,7 @@ def test_minm():
 
 def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat=''):
     
-    figr, axis = plt.subplots(figsize=(gdat.plotsize * gdat.numbener, gdat.plotsize))
+    figr, axis = plt.subplots(figsize=(6, 6))
 
     axis.plot(xdat, ydat)
 
