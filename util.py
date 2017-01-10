@@ -718,6 +718,25 @@ def test_minm():
     minm(thissamp, func_test, verbtype=1, factcorrscal=100., stdvpara=stdvpara, maxmswep=None, limtpara=None, tolrfunc=1e-6, pathbase='./', rtag='')
     
 
+def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat=''):
+    
+    figr, axis = plt.subplots(figsize=(gdat.plotsize * gdat.numbener, gdat.plotsize))
+
+    axis.plot(xdat, ydat)
+
+    if scalxdat == 'logt':
+        axis.set_xscale('log')
+    if scalydat == 'logt':
+        axis.set_yscale('log')
+    
+    axis.set_xlabel(lablxdat)
+    axis.set_ylabel(lablydat)
+
+    plt.tight_layout()
+    plt.savefig(path)
+    plt.close(figr)
+
+
 def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, numbside=256):
     
     numbbgcr = cart.shape[0]
