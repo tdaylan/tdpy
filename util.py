@@ -718,11 +718,17 @@ def test_minm():
     minm(thissamp, func_test, verbtype=1, factcorrscal=100., stdvpara=stdvpara, maxmswep=None, limtpara=None, tolrfunc=1e-6, pathbase='./', rtag='')
     
 
-def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat=''):
+def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', scat=False, hist=False):
     
     figr, axis = plt.subplots(figsize=(6, 6))
-
-    axis.plot(xdat, ydat)
+    
+    if scat:
+        axis.scatter(xdat, ydat)
+    elif hist:
+        deltxdat = xdat[1] - xdat[0]
+        axis.bar(xdat - deltxdat / 2., ydat, deltxdat)
+    else:
+        axis.plot(xdat, ydat)
 
     if scalxdat == 'logt':
         axis.set_xscale('log')
