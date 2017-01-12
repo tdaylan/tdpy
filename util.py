@@ -246,7 +246,7 @@ def retr_p4dm_spec(anch, part='el'):
     return mult, enerscal, mass
 
 
-def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None, showmemo=False):
+def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None, showmemo=False, accp=None):
 
     nextcntr = int(nprog * float(cntr + 1) / maxmcntr) * 100 / nprog
     if nextcntr > thiscntr:
@@ -254,6 +254,8 @@ def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None, showmemo=Fa
             print 'Process %d is %3d%% completed.' % (indxprocwork, nextcntr)
         else:
             print '%3d%% completed.' % nextcntr
+        if accp != None:
+            print 'Acceptance ratio: %.3g%%' % accp
         thiscntr = nextcntr
         if showmemo:
             show_memo_simp()
