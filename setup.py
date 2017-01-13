@@ -2,7 +2,6 @@ from distutils.core import setup
 
 setup( \
       name='tdpy', \
-      packages=['tdpy'], \
       version='0.1', \
       description='A library of MCMC and numerical routines', \
       author='Tansu Daylan', \
