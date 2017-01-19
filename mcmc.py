@@ -641,15 +641,15 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
     minmpara = amin(listpara)
     maxmpara = amax(listpara)
     limspara = array([minmpara, maxmpara])
-    if scalpara == 'self':
-        bins = icdf_self(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
-    if scalpara == 'logt':
-        bins = icdf_logt(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
-    if scalpara == 'atan':
-        bins = icdf_atan(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
     # temp
     if scalpara == 'asnh':
         bins = globals('icdf_%s' % scalpara)(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
+    elif scalpara == 'logt':
+        bins = icdf_logt(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
+    elif scalpara == 'atan':
+        bins = icdf_atan(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
+    else:
+        bins = icdf_self(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
         
     if quan:
         quanarry = sp.stats.mstats.mquantiles(listpara, prob=[0.025, 0.16, 0.84, 0.975])

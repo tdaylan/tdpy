@@ -1087,9 +1087,10 @@ def retr_isot(binsener, numbside=256):
 
 def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, \
                                                                                                             numbsidelgal=None, numbsidebgal=None):
-    
+   
+    shap = hmap.shape
     if indxpixlrofi == None:
-        numbpixlinpt = hmap.size
+        numbpixlinpt = shap[0]
         numbsideinpt = int(sqrt(numbpixlinpt / 12.))
     else:
         numbpixlinpt = numbsideinpt**2 * 12
@@ -1120,8 +1121,14 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
         indxpixltemp = pixlcnvt[indxpixlmesh]
     
     indxbgcrgrid, indxlgcrgrid = meshgrid(indxbgcr, indxlgcr)
-    hmapcart = empty((numbsidebgal, numbsidelgal))
-    hmapcart[meshgrid(indxbgcr, indxlgcr)] = hmap[indxpixltemp]
+
+    if hmap.ndim == 2:
+        hmapcart = empty((numbsidebgal, numbsidelgal, shap[1]))
+        for k in range(shap[1]):
+            hmapcart[meshgrid(indxbgcr, indxlgcr, k)] = hmap[indxpixltemp, k][:, :, None]
+    else:
+        hmapcart = empty((numbsidebgal, numbsidelgal))
+        hmapcart[meshgrid(indxbgcr, indxlgcr)] = hmap[indxpixltemp]
 
     return hmapcart
 
