@@ -735,11 +735,6 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
     
     for ydat in listydat:
         if scat:
-            print 'xdat'
-            print xdat
-            print 'ydat'
-            print ydat
-
             axis.scatter(xdat, ydat)
         elif hist:
             deltxdat = xdat[1] - xdat[0]
