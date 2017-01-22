@@ -138,17 +138,21 @@ def retr_nfwp(nfwg, numbside, norm=None):
 
 
 def mexp(numb):
-    logn = log10(numb)
-    expo = floor(logn)
-    mant = 10**(logn - expo)
-    
-    if numb > 1e2 or numb < 1e-2:
-        if mant == 1.:
-            strg = r'$10^{%d}$' % expo
-        else:
-            strg = r'$%.3g \times 10^{%d}$' % (mant, expo)
+    if numb == 0.:
+        strg = '0'
     else:
-        strg = '%.3g' % numb
+        logn = log10(fabs(numb))
+        expo = floor(logn)
+        expo = int(expo)
+        mant = 10**(logn - expo) * numb / fabs(numb)
+        
+        if fabs(numb) > 1e2 or fabs(numb) < 1e-2:
+            if mant == 1. or mant == -1.:
+                strg = r'$10^{%d}$' % expo
+            else:
+                strg = r'$%.3g \times 10^{%d}$' % (mant, expo)
+        else:
+            strg = r'%.3g' % numb
 
     return strg
 
@@ -720,42 +724,22 @@ def test_minm():
     minm(thissamp, func_test, verbtype=1, factcorrscal=100., stdvpara=stdvpara, maxmswep=None, limtpara=None, tolrfunc=1e-6, pathbase='./', rtag='')
     
 
-def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', scat=False, hist=False):
+def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', scat=False, hist=False, limtxdat=None, limtydat=None):
     
     figr, axis = plt.subplots(figsize=(6, 6))
     
-    if scat:
-        axis.scatter(xdat, ydat)
-    elif hist:
-        deltxdat = xdat[1] - xdat[0]
-        axis.bar(xdat - deltxdat / 2., ydat, deltxdat)
-    else:
-        axis.plot(xdat, ydat)
-
-    if scalxdat == 'logt':
-        axis.set_xscale('log')
-    if scalydat == 'logt':
-        axis.set_yscale('log')
-    
-    axis.set_xlabel(lablxdat)
-    axis.set_ylabel(lablydat)
-
-    plt.tight_layout()
-    plt.savefig(path)
-    plt.close(figr)
-
-
-def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', scat=False, hist=False):
-    
-    figr, axis = plt.subplots(figsize=(6, 6))
-    
-    if not isinstance(ydat):
+    if not isinstance(ydat, list):
         listydat = [ydat]
     else:
         listydat = ydat
-
+    
     for ydat in listydat:
         if scat:
+            print 'xdat'
+            print xdat
+            print 'ydat'
+            print ydat
+
             axis.scatter(xdat, ydat)
         elif hist:
             deltxdat = xdat[1] - xdat[0]
@@ -767,7 +751,12 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
         axis.set_xscale('log')
     if scalydat == 'logt':
         axis.set_yscale('log')
-    
+
+    if limtxdat != None:
+        axis.set_xlim(limtxdat)
+    if limtydat != None:
+        axis.set_ylim(limtydat)
+
     axis.set_xlabel(lablxdat)
     axis.set_ylabel(lablydat)
 
@@ -1260,20 +1249,27 @@ def plot_matr(axis, xdat, ydat, labl, loc=1):
     axis.legend(line, labl, loc=loc, ncol=2) 
 
 
-def plot_braz(axis, xdat, ydat, numbsampdraw=0, lcol='yellow', dcol='green', mcol='black', labl=None, alpha=None):
+def plot_braz(axis, xdat, ydat, yerr=None, numbsampdraw=0, lcol='yellow', dcol='green', mcol='black', labl=None, alpha=None):
     
     if numbsampdraw > 0:
         jsampdraw = choice(arange(ydat.shape[0]), size=numbsampdraw)
         axis.plot(xdat, ydat[jsampdraw[0], :], alpha=0.1, color='b', label='Samples')
         for k in range(1, numbsampdraw):
             axis.plot(xdat, ydat[jsampdraw[k], :], alpha=0.1, color='b')
-    axis.plot(xdat, percentile(ydat, 2.5, 0), color=lcol, alpha=alpha)
-    axis.plot(xdat, percentile(ydat, 16., 0), color=dcol, alpha=alpha)
-    axis.plot(xdat, percentile(ydat, 84., 0), color=dcol, alpha=alpha)
-    axis.plot(xdat, percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)
-    axis.plot(xdat, percentile(ydat, 50., 0), color=mcol, label=labl, alpha=alpha)
-    axis.fill_between(xdat, percentile(ydat, 2.5, 0), percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)#, label='95% C.L.')
-    axis.fill_between(xdat, percentile(ydat, 16., 0), percentile(ydat, 84., 0), color=dcol, alpha=alpha)#, label='68% C.L.')
+
+    if yerr != None:
+        axis.plot(xdat, ydat - yerr[0, :], color=dcol, alpha=alpha)
+        axis.plot(xdat, ydat, color=mcol, label=labl, alpha=alpha)
+        axis.plot(xdat, ydat + yerr[1, :], color=dcol, alpha=alpha)
+        axis.fill_between(xdat, ydat - yerr[0, :], ydat + yerr[1, :], color=dcol, alpha=alpha)
+    else:
+        axis.plot(xdat, percentile(ydat, 2.5, 0), color=lcol, alpha=alpha)
+        axis.plot(xdat, percentile(ydat, 16., 0), color=dcol, alpha=alpha)
+        axis.plot(xdat, percentile(ydat, 50., 0), color=mcol, label=labl, alpha=alpha)
+        axis.plot(xdat, percentile(ydat, 84., 0), color=dcol, alpha=alpha)
+        axis.plot(xdat, percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)
+        axis.fill_between(xdat, percentile(ydat, 2.5, 0), percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)#, label='95% C.L.')
+        axis.fill_between(xdat, percentile(ydat, 16., 0), percentile(ydat, 84., 0), color=dcol, alpha=alpha)#, label='68% C.L.')
 
 
 def retr_fermpsfn(meanenerrofi, indxevttrofi, meanangl, reco=8):
