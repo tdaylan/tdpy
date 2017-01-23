@@ -724,23 +724,34 @@ def test_minm():
     minm(thissamp, func_test, verbtype=1, factcorrscal=100., stdvpara=stdvpara, maxmswep=None, limtpara=None, tolrfunc=1e-6, pathbase='./', rtag='')
     
 
-def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', scat=False, hist=False, limtxdat=None, limtydat=None):
+def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', plottype=['line'], limtxdat=None, limtydat=None, colr=None, alph=None):
     
     figr, axis = plt.subplots(figsize=(6, 6))
+    
+    if not isinstance(plottype, list):
+        listplottype = [plottype]
+    else:
+        listplottype = plottype
+    
+    if not isinstance(xdat, list):
+        listxdat = [xdat]
+    else:
+        listxdat = xdat
     
     if not isinstance(ydat, list):
         listydat = [ydat]
     else:
         listydat = ydat
     
-    for ydat in listydat:
-        if scat:
-            axis.scatter(xdat, ydat)
-        elif hist:
+    for xdat, ydat, plottype in zip(listxdat, listydat, listplottype):
+        
+        if plottype == 'scat':
+            axis.scatter(xdat, ydat, color=colr, alpha=alph)
+        elif plottype == 'hist':
             deltxdat = xdat[1] - xdat[0]
-            axis.bar(xdat - deltxdat / 2., ydat, deltxdat)
+            axis.bar(xdat - deltxdat / 2., ydat, deltxdat, color=colr, alpha=alph)
         else:
-            axis.plot(xdat, ydat)
+            axis.plot(xdat, ydat, color=colr, lw=2, alpha=alph)
     
     if scalxdat == 'logt':
         axis.set_xscale('log')
