@@ -628,8 +628,8 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara
             histotl = axis.hist(indxlistpara, binstime, color='b')
             histaccp = axis.hist(indxlistintc, binstime, color='g')
             axis.set_title(strgpara[k])
-    plt.subplots_adjust(hspace=0.3)
-    plt.savefig(path + 'propeffi.pdf')
+    figr.subplots_adjust(hspace=0.3)
+    figr.savefig(path + 'propeffi.pdf')
     plt.close(figr)
 
 
@@ -858,6 +858,6 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
             strg = '_grid'
             if numbfram != 1:
                 strg += '%04d' % n
-        plt.savefig(path + strg + '.pdf')
+        figr.savefig(path + strg + '.pdf')
         plt.close(figr)
     

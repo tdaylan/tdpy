@@ -766,8 +766,8 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
     axis.set_xlabel(lablxdat)
     axis.set_ylabel(lablydat)
 
-    plt.tight_layout()
-    plt.savefig(path)
+    figr.tight_layout()
+    figr.savefig(path)
     plt.close(figr)
 
 
@@ -959,7 +959,7 @@ def read_fits(path, pathimag=None):
                         axis.set_xlabel('%s' % (listtype[n]))
                         plt.tight_layout()
                         path = pathimag + 'readfits_%s.pdf' % listtype[n]
-                        plt.savefig(path)
+                        figr.savefig(path)
                         plt.close(figr)
                     except:
                         print 'Failed on %s' % listtype[n]
@@ -1040,7 +1040,7 @@ def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpix
     
     plt.title(titl, y=1.08)
 
-    plt.savefig(path)
+    figr.savefig(path)
     plt.close(figr)
     
 
