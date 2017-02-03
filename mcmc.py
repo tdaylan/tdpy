@@ -633,7 +633,7 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara
     plt.close(figr)
 
 
-def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, quan=True, varbdraw=None, labldraw=None, numbbinsplot=20):
+def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, quan=True, varbdraw=None, labldraw=None, numbbinsplot=20, logthist=False):
    
     if listpara.size == 0:
         return
@@ -685,6 +685,8 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
         else:
             axis.hist(listpara, bins=bins)
             axis.set_xlabel(labl)
+            if logthist:
+                axis.set_yscale('log')
             axis.set_ylabel('$N_{samp}$')
             if truepara != None:
                 axis.axvline(truepara, color='g')
