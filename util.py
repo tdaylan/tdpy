@@ -250,7 +250,7 @@ def retr_p4dm_spec(anch, part='el'):
     return mult, enerscal, mass
 
 
-def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None, showmemo=False, accp=None, rejeprio=None):
+def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None, showmemo=False, accp=None, accpprio=None):
 
     nextcntr = int(nprog * float(cntr + 1) / maxmcntr) * 100 / nprog
     if nextcntr > thiscntr:
@@ -260,7 +260,7 @@ def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None, showmemo=Fa
             print '%3d%% completed.' % nextcntr
         if accp != None:
             print 'Acceptance ratio: %.3g%%' % accp
-            print 'Rejection ratio due to prior boundaries: %.3g%%' % rejeprio
+            print 'Acceptance through prior boundaries: %.3g%%' % accpprio
         thiscntr = nextcntr
         if showmemo:
             show_memo_simp()
