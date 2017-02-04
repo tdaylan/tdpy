@@ -392,6 +392,13 @@ def retr_axis(minm=None, maxm=None, numb=None, bins=None, scal='self'):
     return bins, mean, diff(bins), numb, indx
 
 
+def clos_figr(figr, path):
+    
+    figr.tight_layout()
+    figr.savefig(path)
+    plt.close(figr)
+        
+
 def show_memo(objt, name):
 
     if isinstance(objt, list):
