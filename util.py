@@ -732,24 +732,28 @@ def test_minm():
     minm(thissamp, func_test, verbtype=1, factcorrscal=100., stdvpara=stdvpara, maxmswep=None, limtpara=None, tolrfunc=1e-6, pathbase='./', rtag='')
     
 
-def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', plottype=['line'], limtxdat=None, limtydat=None, colr=None, alph=None):
-    
-    figr, axis = plt.subplots(figsize=(6, 6))
-    
-    if not isinstance(plottype, list):
-        listplottype = [plottype]
-    else:
-        listplottype = plottype
-    
-    if not isinstance(xdat, list):
-        listxdat = [xdat]
-    else:
-        listxdat = xdat
+def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', plottype=None, limtxdat=None, limtydat=None, colr=None, alph=None):
     
     if not isinstance(ydat, list):
         listydat = [ydat]
     else:
         listydat = ydat
+
+    numbplot = len(listydat)
+
+    if not isinstance(xdat, list):
+        listxdat = [xdat for k in range(numbplot)]
+    else:
+        listxdat = xdat
+    
+    if plottype == None:
+        listplottype = ['line' for k in range(numbplot)]
+    elif not isinstance(plottype, list):
+        listplottype = [plottype]
+    else:
+        listplottype = plottype
+    
+    figr, axis = plt.subplots(figsize=(6, 6))
     
     for xdat, ydat, plottype in zip(listxdat, listydat, listplottype):
         if plottype == 'scat':

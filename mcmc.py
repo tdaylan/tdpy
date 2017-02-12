@@ -667,7 +667,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
             axis.plot(listpara, lw=0.5)
             axis.set_xlabel('$i_{samp}$')
             axis.set_ylabel(labl)
-            if truepara != None:
+            if truepara != None and not isnan(truepara):
                 axis.axhline(y=truepara, color='g')
             if scalpara == 'logt':
                 axis.set_yscale('log')
@@ -688,7 +688,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
             if logthist:
                 axis.set_yscale('log')
             axis.set_ylabel('$N_{samp}$')
-            if truepara != None:
+            if truepara != None and not isnan(truepara):
                 axis.axvline(truepara, color='g')
             if scalpara == 'logt':
                 axis.set_xscale('log')
@@ -749,7 +749,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
             numbfram += 1
       
     if truepara == None:
-        truepara = array([None] * numbpara)
+        truepara = zeros(numbpara) + nan
         
     if scalpara == None:
         scalpara = ['self'] * numbpara
@@ -811,7 +811,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                         axis.hist(thislistsamp[:, k], bins=thisbins[:, k])
                     except:
                         pass
-                    if thistruepara[k] != None:
+                    if thistruepara[k] != None and not isnan(thistruepara[k]):
                         axis.axvline(thistruepara[k], color='g')
                     if quan:
                         thisquan = sp.stats.mstats.mquantiles(thislistsamp[:, k], prob=[0.025, 0.16, 0.84, 0.975])
@@ -827,7 +827,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                         pass
                     axis.set_xlim([amin(thisbins[:, l]), amax(thisbins[:, l])])
                     axis.set_ylim([amin(thisbins[:, k]), amax(thisbins[:, k])])
-                    if thistruepara[l] != None and thistruepara[k] != None:
+                    if thistruepara[l] != None and not isnan(thistruepara[l]) and thistruepara[k] != None and not isnan(thistruepara[k]):
                         axis.scatter(thistruepara[l], thistruepara[k], color='g', marker='o', s=100)
                     if thisscalpara[k] == 'logt':
                         axis.set_yscale('log', basey=10)
