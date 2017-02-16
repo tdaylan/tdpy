@@ -726,7 +726,7 @@ def plot_hist(path, listvarb, strg, titl=None):
     plt.close(figr)
 
 
-def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, plotsize=6, numbplotside=None, truepara=None, numbtickbins=3, numbbinsplot=20, quan=True):
+def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, plotsize=6, numbplotside=6, truepara=None, numbtickbins=3, numbbinsplot=20, quan=True):
 
     numbpara = listsamp.shape[1]
     
@@ -736,9 +736,6 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
     if join:
         numbplotside = 1
 
-    if numbplotside == None:
-        numbplotside = numbpara
-    
     if join:
         numbfram = 1
         numbplotsidelast = 1
@@ -820,6 +817,10 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                         axis.axvline(thisquan[2], color='b', ls='-.')
                         axis.axvline(thisquan[3], color='b', ls='--')
                 else:
+                    if join:
+                        k = 0
+                        l = 1
+
                     try:
                         hist = histogram2d(thislistsamp[:, l], thislistsamp[:, k], bins=[thisbins[:, l], thisbins[:, k]])[0]
                         axis.pcolor(thisbins[:, l], thisbins[:, k], hist.T, cmap='Blues')
