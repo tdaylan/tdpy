@@ -99,6 +99,13 @@ def retr_errrvarb(inpt, samp=False):
     return errr
 
 
+def rbin(arry, shap):
+        
+    arry = arry[[slice(None, None, thissize / nextsize) for thissize, nextsize in zip(arry.shape, shap)]]
+    
+    return arry
+
+
 def retr_nfwp(nfwg, numbside, norm=None):
     
     edenlocl = 0.3 # [GeV/cm^3]
