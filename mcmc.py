@@ -710,6 +710,19 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
     plt.close(figr)
 
 
+def plot_plot(path, listvarb, strg, lablxdat, lablydat, titl=None, **args):
+
+    figr, axis = plt.subplots(figsize=(6, 6))
+    axis.plot(xdat, ydat, args)
+    axis.set_ylabel(lablydat)
+    axis.set_xlabel(lablxdat)
+    if titl != None:
+        axis.set_title(titl)
+    plt.tight_layout()
+    figr.savefig(path + '.pdf')
+    plt.close(figr)
+
+
 def plot_hist(path, listvarb, strg, titl=None):
 
     figr, axis = plt.subplots(figsize=(6, 6))
