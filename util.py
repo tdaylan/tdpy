@@ -739,7 +739,7 @@ def test_minm():
     minm(thissamp, func_test, verbtype=1, factcorrscal=100., stdvpara=stdvpara, maxmswep=None, limtpara=None, tolrfunc=1e-6, pathbase='./', rtag='')
     
 
-def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', plottype=None, limtxdat=None, limtydat=None, colr=None, alph=None):
+def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', plottype=None, limtxdat=None, limtydat=None, colr=None, alph=None, listledg=None):
     
     if not isinstance(ydat, list):
         listydat = [ydat]
@@ -778,7 +778,7 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
         else:
             axis.plot(xdat, ydat, color=colr, lw=2, alpha=alph, label=ledg)
     
-    if legd != None:
+    if listledg != None:
         axis.legend()
 
     if scalxdat == 'logt':
