@@ -739,7 +739,8 @@ def test_minm():
     minm(thissamp, func_test, verbtype=1, factcorrscal=100., stdvpara=stdvpara, maxmswep=None, limtpara=None, tolrfunc=1e-6, pathbase='./', rtag='')
     
 
-def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', plottype=None, limtxdat=None, limtydat=None, colr=None, alph=None, listledg=None):
+def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', plottype=None, limtxdat=None, limtydat=None, colr=None, \
+                                                                                                                alph=None, listledg=None, listvlinfrst=None, listvlinseco=None):
     
     if not isinstance(ydat, list):
         listydat = [ydat]
@@ -791,6 +792,18 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
     if limtydat != None:
         axis.set_ylim(limtydat)
 
+    if listvlinfrst != None:
+        if isscalar(listvlinfrst):
+            listvlinfrst = [listvlinfrst]
+        for k in range(len(listvlinfrst)):
+            axis.axvline(listvlinfrst[k], ls='--', alpha=0.2, color=colr)
+    
+    if listvlinseco != None:
+        if isscalar(listvlinseco):
+            listvlinseco = [listvlinseco]
+        for k in range(len(listvlinseco)):
+            axis.axvline(listvlinseco[k], ls='-.', alpha=0.2, color=colr)
+    
     axis.set_xlabel(lablxdat)
     axis.set_ylabel(lablydat)
 
