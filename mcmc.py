@@ -719,7 +719,13 @@ def plot_plot(path, xdat, ydat, lablxdat, lablydat, titl=None, linestyl=[None], 
 
     figr, axis = plt.subplots(figsize=(6, 6))
     for k, ydat in enumerate(listydat):
-        axis.plot(xdat, ydat, ls=linestyl[k], color=colr[k], label=legd[k], **args)
+        if k == 0:
+            linestyl = '-'
+        else:
+            linestyl = '--'
+        axis.plot(xdat, ydat, ls=linestyl, color='k', **args)
+        # temp
+        #axis.plot(xdat, ydat, ls=linestyl[k], color=colr[k], label=legd[k], **args)
     axis.set_ylabel(lablydat)
     axis.set_xlabel(lablxdat)
     if titl != None:
