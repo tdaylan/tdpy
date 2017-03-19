@@ -710,10 +710,16 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
     plt.close(figr)
 
 
-def plot_plot(path, xdat, ydat, lablxdat, lablydat, titl=None, **args):
+def plot_plot(path, xdat, ydat, lablxdat, lablydat, titl=None, linestyl=None, colr=None, legd=None, **args):
     
+    if not isinstance(ydat, list):
+        listydat = [ydat]
+    else:
+        listydat = ydat
+
     figr, axis = plt.subplots(figsize=(6, 6))
-    axis.plot(xdat, ydat, **args)
+    for k, ydat in enumerate(listydat):
+        axis.plot(xdat, ydat, ls=linestyl, color=colr, label=legd, **args)
     axis.set_ylabel(lablydat)
     axis.set_xlabel(lablxdat)
     if titl != None:

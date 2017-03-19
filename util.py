@@ -740,7 +740,7 @@ def test_minm():
     
 
 def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', plottype=None, limtxdat=None, limtydat=None, colr=None, \
-                                                                                                                alph=None, listledg=None, listvlinfrst=None, listvlinseco=None):
+                                                                                                                alph=None, listlegd=None, listvlinfrst=None, listvlinseco=None):
     
     if not isinstance(ydat, list):
         listydat = [ydat]
@@ -749,8 +749,8 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
     
     numbelem = len(listydat)
 
-    if listledg == None:
-        listledg = [None for k in range(numbelem)]
+    if listlegd == None:
+        listlegd = [None for k in range(numbelem)]
 
     if not isinstance(xdat, list):
         listxdat = [xdat for k in range(numbelem)]
@@ -770,16 +770,16 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
         xdat = listxdat[k]
         ydat = listydat[k]
         plottype = listplottype[k]
-        ledg = listledg[k]
+        legd = listlegd[k]
         if plottype == 'scat':
-            axis.scatter(xdat, ydat, color=colr, alpha=alph, label=ledg)
+            axis.scatter(xdat, ydat, color=colr, alpha=alph, label=legd)
         elif plottype == 'hist':
             deltxdat = xdat[1] - xdat[0]
-            axis.bar(xdat - deltxdat / 2., ydat, deltxdat, color=colr, alpha=alph, label=ledg)
+            axis.bar(xdat - deltxdat / 2., ydat, deltxdat, color=colr, alpha=alph, label=legd)
         else:
-            axis.plot(xdat, ydat, color=colr, lw=2, alpha=alph, label=ledg)
+            axis.plot(xdat, ydat, color=colr, lw=2, alpha=alph, label=legd)
     
-    if listledg != None:
+    if listlegd != None:
         axis.legend()
 
     if scalxdat == 'logt':
