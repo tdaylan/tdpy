@@ -740,7 +740,7 @@ def test_minm():
     
 
 def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', plottype=None, limtxdat=None, limtydat=None, colr=None, \
-                                                                                                                alph=None, listlegd=None, listvlinfrst=None, listvlinseco=None):
+                                                                  alph=None, listlegd=None, listvlinfrst=None, listvlinseco=None, listhlin=None, drawdiag=False):
     
     if not isinstance(ydat, list):
         listydat = [ydat]
@@ -779,6 +779,9 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
         else:
             axis.plot(xdat, ydat, color=colr, lw=2, alpha=alph, label=legd)
     
+    if drawdiag:
+        axis.plot(xdat, xdat, ls='--', alpha=0.3, color='black')
+
     if listlegd != None:
         axis.legend()
 
@@ -787,11 +790,20 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
     if scalydat == 'logt':
         axis.set_yscale('log')
 
-    if limtxdat != None:
-        axis.set_xlim(limtxdat)
-    if limtydat != None:
-        axis.set_ylim(limtydat)
-
+    if limtxdat == None:
+        limtxdat = [amin(concatenate(listxdat)), amax(concatenate(listxdat))]
+    if limtydat == None:
+        limtydat = [amin(concatenate(listydat)), amax(concatenate(listydat))]
+    
+    axis.set_xlim(limtxdat)
+    axis.set_ylim(limtydat)
+    
+    if listhlin != None:
+        if isscalar(listhlin):
+            listhlin = [listhlin]
+        for k in range(len(listhlin)):
+            axis.axhline(listhlin[k], ls='--', alpha=0.2, color=colr)
+    
     if listvlinfrst != None:
         if isscalar(listvlinfrst):
             listvlinfrst = [listvlinfrst]
