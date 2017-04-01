@@ -746,7 +746,8 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
         listydat = [ydat]
     else:
         listydat = ydat
-    
+   
+
     numbelem = len(listydat)
 
     if listlegd == None:
@@ -789,7 +790,7 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
         axis.set_xscale('log')
     if scalydat == 'logt':
         axis.set_yscale('log')
-
+    
     if limtxdat == None:
         limtxdat = [amin(concatenate(listxdat)), amax(concatenate(listxdat))]
     if limtydat == None:
