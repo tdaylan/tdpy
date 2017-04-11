@@ -780,9 +780,6 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
         else:
             axis.plot(xdat, ydat, color=colr, lw=2, alpha=alph, label=legd)
     
-    if drawdiag:
-        axis.plot(xdat, xdat, ls='--', alpha=0.3, color='black')
-
     if listlegd != None:
         axis.legend()
 
@@ -795,6 +792,9 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
         limtxdat = [amin(concatenate(listxdat)), amax(concatenate(listxdat))]
     if limtydat == None:
         limtydat = [amin(concatenate(listydat)), amax(concatenate(listydat))]
+    
+    if drawdiag:
+        axis.plot(limtxdat, limtxdat, ls='--', alpha=0.3, color='black')
     
     axis.set_xlim(limtxdat)
     axis.set_ylim(limtydat)
