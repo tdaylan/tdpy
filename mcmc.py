@@ -634,7 +634,13 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara
 
 
 def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, quan=True, varbdraw=None, labldraw=None, numbbinsplot=20, logthist=False):
-   
+    
+    if not isfinite(listpara).all():
+        print 'plot_trac encountered infinite input. Returning...'
+        print 'path'
+        print path
+        return
+
     if listpara.size == 0:
         return
 
