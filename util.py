@@ -773,7 +773,7 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
         plottype = listplottype[k]
         legd = listlegd[k]
         if plottype == 'scat':
-            axis.scatter(xdat, ydat, color=colr, alpha=alph, label=legd)
+            axis.scatter(xdat, ydat, color=colr, alpha=alph, label=legd, s=2)
         elif plottype == 'hist':
             deltxdat = xdat[1] - xdat[0]
             axis.bar(xdat - deltxdat / 2., ydat, deltxdat, color=colr, alpha=alph, label=legd)
