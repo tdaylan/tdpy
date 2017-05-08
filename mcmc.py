@@ -633,7 +633,7 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara
     plt.close(figr)
 
 
-def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, quan=True, varbdraw=None, labldraw=None, numbbinsplot=20, logthist=False):
+def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, quan=True, varbdraw=None, labldraw=None, numbbinsplot=20, logthist=False, colrdraw=None):
     
     if not isfinite(listpara).all():
         print 'plot_trac encountered infinite input. Returning...'
@@ -682,7 +682,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
             axis.set_ylim(limspara)
             if varbdraw != None:
                 for k in range(len(varbdraw)):
-                    axis.axhline(varbdraw[k], label=labldraw[k])
+                    axis.axhline(varbdraw[k], label=labldraw[k], color=colrdraw[k])
             if quan:
                 axis.axhline(quanarry[0], color='b', ls='--')
                 axis.axhline(quanarry[1], color='b', ls='-.')
@@ -703,7 +703,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
             axis.set_xlim(limspara)
             if varbdraw != None:
                 for k in range(len(varbdraw)):
-                    axis.axvline(varbdraw[k], label=labldraw[k])
+                    axis.axvline(varbdraw[k], label=labldraw[k], color=colrdraw[k])
             if quan:
                 axis.axvline(quanarry[0], color='b', ls='--')
                 axis.axvline(quanarry[1], color='b', ls='-.')
@@ -741,13 +741,10 @@ def plot_plot(path, xdat, ydat, lablxdat, lablydat, titl=None, linestyl=[None], 
     plt.close(figr)
 
 
-def plot_hist(path, listvarb, strg, titl=None):
+def plot_hist(path, listvarb, strg, titl=None, numbbins=20):
 
     figr, axis = plt.subplots(figsize=(6, 6))
-    try:
-        axis.hist(listvarb)
-    except:
-        pass
+    axis.hist(listvarb, numbbins)
     axis.set_ylabel(r'$N_{samp}$')
     axis.set_xlabel(strg)
     if titl != None:
