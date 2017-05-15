@@ -647,13 +647,8 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
     minmpara = amin(listpara)
     maxmpara = amax(listpara)
     limspara = array([minmpara, maxmpara])
-    # temp
-    if scalpara == 'asnh':
-        bins = globals('icdf_%s' % scalpara)(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
-    elif scalpara == 'logt':
+    if scalpara == 'logt':
         bins = icdf_logt(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
-    elif scalpara == 'atan':
-        bins = icdf_atan(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
     else:
         bins = icdf_self(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
         
@@ -741,14 +736,31 @@ def plot_plot(path, xdat, ydat, lablxdat, lablydat, titl=None, linestyl=[None], 
     plt.close(figr)
 
 
-def plot_hist(path, listvarb, strg, titl=None, numbbins=20):
+def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, quan=True, scalpara='self', varbdraw=None, labldraw=None, colrdraw=None):
 
+    minmvarb = amin(listvarb)
+    maxmvarb = amax(listvarb)
+    if scalpara == 'logt':
+        bins = icdf_logt(linspace(0., 1., numbbins + 1), minmvarb, maxmvarb)
+    else:
+        bins = icdf_self(linspace(0., 1., numbbins + 1), minmvarb, maxmvarb)
     figr, axis = plt.subplots(figsize=(6, 6))
-    axis.hist(listvarb, numbbins)
+    axis.hist(listvarb, numbbins, bins=bins)
     axis.set_ylabel(r'$N_{samp}$')
     axis.set_xlabel(strg)
+    if quan:
+        quanarry = sp.stats.mstats.mquantiles(listvarb, prob=[0.025, 0.16, 0.84, 0.975])
+        axis.axvline(quanarry[0], color='b', ls='--')
+        axis.axvline(quanarry[1], color='b', ls='-.')
+        axis.axvline(quanarry[2], color='b', ls='-.')
+        axis.axvline(quanarry[3], color='b', ls='--')
+    if truepara != None:
+        axis.axvline(truepara, color='g')
     if titl != None:
         axis.set_title(titl)
+    if varbdraw != None:
+        for k in range(len(varbdraw)):
+            axis.axvline(varbdraw[k], label=labldraw[k], color=colrdraw[k])
     plt.tight_layout()
     figr.savefig(path + '_hist.pdf')
     plt.close(figr)
