@@ -739,14 +739,18 @@ def test_minm():
     minm(thissamp, func_test, verbtype=1, factcorrscal=100., stdvpara=stdvpara, maxmswep=None, limtpara=None, tolrfunc=1e-6, pathbase='./', rtag='')
     
 
-def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lablydat='', plottype=None, limtxdat=None, limtydat=None, colr=None, listlinestyl=None, \
-                                                                  alph=None, listlegd=None, listvlinfrst=None, listvlinseco=None, listhlin=None, drawdiag=False):
+def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, lablxdat='', lablydat='', plottype=None, limtxdat=None, limtydat=None, colr=None, listlinestyl=None, \
+                                                                                   alph=None, listlegd=None, listvlinfrst=None, listvlinseco=None, listhlin=None, drawdiag=False):
     
     if not isinstance(ydat, list):
         listydat = [ydat]
     else:
         listydat = ydat
-   
+  
+    if yerr != None and not isinstance(ydat, list):
+        listyerr = [yerr]
+    else:
+        listyerr = yerr
 
     numbelem = len(listydat)
     
@@ -781,7 +785,10 @@ def plot_gene(path, xdat, ydat, scalxdat=None, scalydat=None, lablxdat='', lably
             deltxdat = xdat[1] - xdat[0]
             axis.bar(xdat - deltxdat / 2., ydat, deltxdat, color=colr, alpha=alph, label=legd)
         else:
-            axis.plot(xdat, ydat, color=colr, lw=2, alpha=alph, label=legd, ls=listlinestyl[k])
+            if listyerr != None:
+                axis.errorbar(xdat, ydat, yerr=listyerr[k], color=colr, lw=2, alpha=alph, label=legd, ls=listlinestyl[k])
+            else:
+                axis.plot(xdat, ydat, color=colr, lw=2, alpha=alph, label=legd, ls=listlinestyl[k])
     
     if listlegd != None:
         axis.legend()

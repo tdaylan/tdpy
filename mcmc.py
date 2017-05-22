@@ -745,7 +745,7 @@ def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, quan=
     else:
         bins = icdf_self(linspace(0., 1., numbbins + 1), minmvarb, maxmvarb)
     figr, axis = plt.subplots(figsize=(6, 6))
-    axis.hist(listvarb, numbbins, bins=bins)
+    axis.hist(listvarb, bins=bins)
     axis.set_ylabel(r'$N_{samp}$')
     axis.set_xlabel(strg)
     if quan:
@@ -766,7 +766,8 @@ def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, quan=
     plt.close(figr)
 
 
-def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, plotsize=6, numbplotside=6, truepara=None, numbtickbins=3, numbbinsplot=20, quan=True):
+def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, plotsize=6, numbplotside=6, \
+                                                truepara=None, numbtickbins=3, numbbinsplot=20, quan=True, varbdraw=None):
 
     numbpara = listsamp.shape[1]
     
@@ -825,6 +826,8 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
             thisstrgpara = strgpara[n*numbplotside:]
             thisscalpara = scalpara[n*numbplotside:]
             thistruepara = truepara[n*numbplotside:]
+            if varbdraw != None:
+                thisvarbdraw = varbdraw[n*numbplotside:]
             thisbins = bins[:, n*numbplotside:]
             thisindxparagood = indxparagood[n*numbplotside:]
             thislims = lims[:, n*numbplotside:]
@@ -835,6 +838,8 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
             thisstrgpara = strgpara[n*numbplotside:(n+1)*numbplotside]
             thisscalpara = scalpara[n*numbplotside:(n+1)*numbplotside]
             thistruepara = truepara[n*numbplotside:(n+1)*numbplotside]
+            if varbdraw != None:
+                thisvarbdraw = varbdraw[n*numbplotside:(n+1)*numbplotside]
             thisbins = bins[:, n*numbplotside:(n+1)*numbplotside]
             thisindxparagood = indxparagood[n*numbplotside:(n+1)*numbplotside]
             thislims = lims[:, n*numbplotside:(n+1)*numbplotside]
@@ -844,6 +849,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
             axgr = [[axgr]]
         for k, axrw in enumerate(axgr):
             for l, axis in enumerate(axrw):
+
                 if k < l or thisindxparagood[k] == False or thisindxparagood[l] == False:
                     axis.axis('off')
                     continue
@@ -861,6 +867,11 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                         axis.axvline(thisquan[1], color='b', ls='-.')
                         axis.axvline(thisquan[2], color='b', ls='-.')
                         axis.axvline(thisquan[3], color='b', ls='--')
+                    
+                    # draw the provided reference values
+                    if varbdraw != None:
+                        axis.axvline(varbdraw[k], color='r')
+
                 else:
                     if join:
                         k = 0
@@ -874,13 +885,18 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                     axis.set_xlim([amin(thisbins[:, l]), amax(thisbins[:, l])])
                     axis.set_ylim([amin(thisbins[:, k]), amax(thisbins[:, k])])
                     if thistruepara[l] != None and not isnan(thistruepara[l]) and thistruepara[k] != None and not isnan(thistruepara[k]):
-                        axis.scatter(thistruepara[l], thistruepara[k], color='g', marker='o', s=100)
+                        axis.scatter(thistruepara[l], thistruepara[k], color='g', marker='x', s=300)
                     if thisscalpara[k] == 'logt':
                         axis.set_yscale('log', basey=10)
                         arry = logspace(log10(thislims[0, k]), log10(thislims[1, k]), numbtickbins)
                         strgarry = [util.mexp(arry[a]) for a in range(numbtickbins)]
                         axis.set_yticks(arry)
                         axis.set_yticklabels(strgarry)
+                    
+                    # draw the provided reference values
+                    if varbdraw != None:
+                        axis.scatter(thisvarbdraw[l], thisvarbdraw[k], color='r', marker='x', s=300)
+                
                 if thisscalpara[l] == 'logt':
                     axis.set_xscale('log', basex=10)
                     arry = logspace(log10(thislims[0, l]), log10(thislims[1, l]), numbtickbins)
