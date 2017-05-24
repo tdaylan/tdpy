@@ -870,7 +870,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                     
                     # draw the provided reference values
                     if varbdraw != None:
-                        axis.axvline(varbdraw[k], color='r')
+                        axis.axvline(thisvarbdraw[k], color='r')
 
                 else:
                     if join:
