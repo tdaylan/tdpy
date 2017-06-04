@@ -980,7 +980,7 @@ def retr_strgtimestmp():
     return strgtimestmp
 
 
-def read_fits(path, pathimag=None):
+def read_fits(path, pathimag=None, full=False):
     
     print 'Reading the header of %s...' % path
         
@@ -989,10 +989,27 @@ def read_fits(path, pathimag=None):
     
     hdun = pf.open(path)
     numbhead = len(hdun)
+    print '%s extensions found.' % numbhead
+    listdata = []
     for k in range(numbhead):
         print 'Extension %d' % k
         head = hdun[k].header
         data = hdun[k].data
+        
+        listdata.append(data)
+
+        if data == None:
+            print 'Data is None, skipping...'
+            continue
+        else:
+            if isinstance(data, ndarray):
+                print 'data is an ndarray'
+                print data.shape
+            else:
+                print 'data object has keys'
+                print data.names
+        
+
         arry = array(stack((head.keys(), head.values()), 1))
         listtype = []
         listform = []
@@ -1000,8 +1017,13 @@ def read_fits(path, pathimag=None):
         for n in range(arry.shape[0]):
             if arry[n, 0] == 'EXTNAME':
                 print 'Extension name: ', arry[n, 1]
+       
+        if full:
+            print 'Header:'
+            print head
+        
         for n in range(arry.shape[0]):
-            if arry[n, 0].startswith('TTYPE') or arry[n, 0].startswith('TFORM') or arry[n, 0].startswith('TUNIT'):
+            if arry[n, 0].startswith('TTYPE') or arry[n, 0].startswith('TFORM') or arry[n, 0].startswith('TUNIT') and not full:
                 print arry[n, 0], ': ', arry[n, 1]
             if arry[n, 0].startswith('TTYPE'):
                 listtype.append(arry[n, 1])
@@ -1009,7 +1031,8 @@ def read_fits(path, pathimag=None):
                 listform.append(arry[n, 1])
             if arry[n, 0].startswith('TUNIT'):
                 listunit.append(arry[n, 1])
-                print
+                if not full:
+                    print
 
         if pathimag != None:
             for n in range(len(listtype)):
@@ -1020,14 +1043,18 @@ def read_fits(path, pathimag=None):
                         axis.hist(data[listtype[n]], bins=bins)
                         #axis.set_xlabel('%s [%s]' % (listtype[n], listunit[n]))
                         axis.set_yscale('log')
+                        
                         axis.set_xlabel('%s' % (listtype[n]))
                         plt.tight_layout()
                         path = pathimag + 'readfits_%s.pdf' % listtype[n]
                         figr.savefig(path)
                         plt.close(figr)
                     except:
+                        raise
                         print 'Failed on %s' % listtype[n]
                         print
+        
+    return listdata
 
 
 def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=None, maxmlgal=None, minmbgal=None, maxmbgal=None, \
