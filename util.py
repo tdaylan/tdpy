@@ -980,35 +980,39 @@ def retr_strgtimestmp():
     return strgtimestmp
 
 
-def read_fits(path, pathimag=None, full=False):
+def read_fits(path, pathimag=None, full=False, verbtype=0):
     
-    print 'Reading the header of %s...' % path
+    if verbtype > 0:
+        print 'Reading the header of %s...' % path
         
     if pathimag != None:
         os.system('mkdir -p ' + pathimag)
     
     hdun = pf.open(path)
     numbhead = len(hdun)
-    print '%s extensions found.' % numbhead
+    if verbtype > 0:
+        print '%s extensions found.' % numbhead
     listdata = []
     for k in range(numbhead):
-        print 'Extension %d' % k
+        if verbtype > 0:
+            print 'Extension %d' % k
         head = hdun[k].header
         data = hdun[k].data
         
         listdata.append(data)
 
         if data == None:
-            print 'Data is None, skipping...'
+            if verbtype > 0:
+                print 'Data is None, skipping...'
             continue
         else:
-            if isinstance(data, ndarray):
-                print 'data is an ndarray'
-                print data.shape
-            else:
-                print 'data object has keys'
-                print data.names
-        
+            if verbtype > 0:
+                if isinstance(data, ndarray):
+                    print 'data is an ndarray'
+                    print data.shape
+                else:
+                    print 'data object has keys'
+                    print data.names
 
         arry = array(stack((head.keys(), head.values()), 1))
         listtype = []
@@ -1016,23 +1020,27 @@ def read_fits(path, pathimag=None, full=False):
         listunit = []
         for n in range(arry.shape[0]):
             if arry[n, 0] == 'EXTNAME':
-                print 'Extension name: ', arry[n, 1]
+                if verbtype > 0:
+                    print 'Extension name: ', arry[n, 1]
        
         if full:
-            print 'Header:'
-            print head
+            if verbtype > 0:
+                print 'Header:'
+                print head
         
         for n in range(arry.shape[0]):
             if arry[n, 0].startswith('TTYPE') or arry[n, 0].startswith('TFORM') or arry[n, 0].startswith('TUNIT') and not full:
-                print arry[n, 0], ': ', arry[n, 1]
+                if verbtype > 0:
+                    print arry[n, 0], ': ', arry[n, 1]
             if arry[n, 0].startswith('TTYPE'):
                 listtype.append(arry[n, 1])
             if arry[n, 0].startswith('TFORM'):
                 listform.append(arry[n, 1])
             if arry[n, 0].startswith('TUNIT'):
                 listunit.append(arry[n, 1])
-                if not full:
-                    print
+                if verbtype > 0:
+                    if not full:
+                        print
 
         if pathimag != None:
             for n in range(len(listtype)):
