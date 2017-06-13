@@ -669,7 +669,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
             axis.set_xlabel('$i_{samp}$')
             axis.set_ylabel(labl)
             if truepara != None and not isnan(truepara):
-                axis.axhline(y=truepara, color='g')
+                axis.axhline(y=truepara, color='g', lw=4)
             if scalpara == 'logt':
                 axis.set_yscale('log')
                 axis.set_yticks(listtick)
@@ -677,12 +677,12 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
             axis.set_ylim(limspara)
             if varbdraw != None:
                 for k in range(len(varbdraw)):
-                    axis.axhline(varbdraw[k], label=labldraw[k], color=colrdraw[k])
+                    axis.axhline(varbdraw[k], label=labldraw[k], color=colrdraw[k], lw=3)
             if quan:
-                axis.axhline(quanarry[0], color='b', ls='--')
-                axis.axhline(quanarry[1], color='b', ls='-.')
-                axis.axhline(quanarry[2], color='b', ls='-.')
-                axis.axhline(quanarry[3], color='b', ls='--')
+                axis.axhline(quanarry[0], color='b', ls='--', lw=2)
+                axis.axhline(quanarry[1], color='b', ls='-.', lw=2)
+                axis.axhline(quanarry[2], color='b', ls='-.', lw=2)
+                axis.axhline(quanarry[3], color='b', ls='--', lw=2)
         else:
             axis.hist(listpara, bins=bins)
             axis.set_xlabel(labl)
@@ -690,7 +690,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
                 axis.set_yscale('log')
             axis.set_ylabel('$N_{samp}$')
             if truepara != None and not isnan(truepara):
-                axis.axvline(truepara, color='g')
+                axis.axvline(truepara, color='g', lw=4)
             if scalpara == 'logt':
                 axis.set_xscale('log')
                 axis.set_xticks(listtick)
@@ -698,12 +698,12 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
             axis.set_xlim(limspara)
             if varbdraw != None:
                 for k in range(len(varbdraw)):
-                    axis.axvline(varbdraw[k], label=labldraw[k], color=colrdraw[k])
+                    axis.axvline(varbdraw[k], label=labldraw[k], color=colrdraw[k], lw=3)
             if quan:
-                axis.axvline(quanarry[0], color='b', ls='--')
-                axis.axvline(quanarry[1], color='b', ls='-.')
-                axis.axvline(quanarry[2], color='b', ls='-.')
-                axis.axvline(quanarry[3], color='b', ls='--')
+                axis.axvline(quanarry[0], color='b', ls='--', lw=2)
+                axis.axvline(quanarry[1], color='b', ls='-.', lw=2)
+                axis.axvline(quanarry[2], color='b', ls='-.', lw=2)
+                axis.axvline(quanarry[3], color='b', ls='--', lw=2)
                 
     figr.subplots_adjust(top=0.9, wspace=0.4, bottom=0.2)
 
@@ -748,19 +748,19 @@ def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, quan=
     axis.hist(listvarb, bins=bins)
     axis.set_ylabel(r'$N_{samp}$')
     axis.set_xlabel(strg)
-    if quan:
-        quanarry = sp.stats.mstats.mquantiles(listvarb, prob=[0.025, 0.16, 0.84, 0.975])
-        axis.axvline(quanarry[0], color='b', ls='--')
-        axis.axvline(quanarry[1], color='b', ls='-.')
-        axis.axvline(quanarry[2], color='b', ls='-.')
-        axis.axvline(quanarry[3], color='b', ls='--')
     if truepara != None:
-        axis.axvline(truepara, color='g')
-    if titl != None:
-        axis.set_title(titl)
+        axis.axvline(truepara, color='g', lw=4)
     if varbdraw != None:
         for k in range(len(varbdraw)):
-            axis.axvline(varbdraw[k], label=labldraw[k], color=colrdraw[k])
+            axis.axvline(varbdraw[k], label=labldraw[k], color=colrdraw[k], lw=3)
+    if quan:
+        quanarry = sp.stats.mstats.mquantiles(listvarb, prob=[0.025, 0.16, 0.84, 0.975])
+        axis.axvline(quanarry[0], color='b', ls='--', lw=2)
+        axis.axvline(quanarry[1], color='b', ls='-.', lw=2)
+        axis.axvline(quanarry[2], color='b', ls='-.', lw=2)
+        axis.axvline(quanarry[3], color='b', ls='--', lw=2)
+    if titl != None:
+        axis.set_title(titl)
     plt.tight_layout()
     figr.savefig(path + '_hist.pdf')
     plt.close(figr)
@@ -861,18 +861,17 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                     except:
                         pass
                     if thistruepara[k] != None and not isnan(thistruepara[k]):
-                        axis.axvline(thistruepara[k], color='g')
-                    if quan:
-                        thisquan = sp.stats.mstats.mquantiles(thislistsamp[:, k], prob=[0.025, 0.16, 0.84, 0.975])
-                        axis.axvline(thisquan[0], color='b', ls='--')
-                        axis.axvline(thisquan[1], color='b', ls='-.')
-                        axis.axvline(thisquan[2], color='b', ls='-.')
-                        axis.axvline(thisquan[3], color='b', ls='--')
-                    
+                        axis.axvline(thistruepara[k], color='g', lw=4)
                     # draw the provided reference values
                     if varbdraw != None:
-                        axis.axvline(thisvarbdraw[k], color='r')
-
+                        axis.axvline(thisvarbdraw[k], color='r', lw=3)
+                    if quan:
+                        thisquan = sp.stats.mstats.mquantiles(thislistsamp[:, k], prob=[0.025, 0.16, 0.84, 0.975])
+                        axis.axvline(thisquan[0], color='b', ls='--', lw=2)
+                        axis.axvline(thisquan[1], color='b', ls='-.', lw=2)
+                        axis.axvline(thisquan[2], color='b', ls='-.', lw=2)
+                        axis.axvline(thisquan[3], color='b', ls='--', lw=2)
+                    
                 else:
                     if join:
                         k = 0
@@ -886,7 +885,10 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                     axis.set_xlim([amin(thisbins[:, l]), amax(thisbins[:, l])])
                     axis.set_ylim([amin(thisbins[:, k]), amax(thisbins[:, k])])
                     if thistruepara[l] != None and not isnan(thistruepara[l]) and thistruepara[k] != None and not isnan(thistruepara[k]):
-                        axis.scatter(thistruepara[l], thistruepara[k], color='g', marker='x', s=300)
+                        axis.scatter(thistruepara[l], thistruepara[k], color='g', marker='x', s=500)
+                    # draw the provided reference values
+                    if varbdraw != None:
+                        axis.scatter(thisvarbdraw[l], thisvarbdraw[k], color='r', marker='x', s=350)
                     if thisscalpara[k] == 'logt':
                         axis.set_yscale('log', basey=10)
                         arry = logspace(log10(thislims[0, k]), log10(thislims[1, k]), numbtickbins)
@@ -894,10 +896,6 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                         axis.set_yticks(arry)
                         axis.set_yticklabels(strgarry)
                     
-                    # draw the provided reference values
-                    if varbdraw != None:
-                        axis.scatter(thisvarbdraw[l], thisvarbdraw[k], color='r', marker='x', s=300)
-                
                 if thisscalpara[l] == 'logt':
                     axis.set_xscale('log', basex=10)
                     arry = logspace(log10(thislims[0, l]), log10(thislims[1, l]), numbtickbins)

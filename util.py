@@ -13,8 +13,13 @@ class gdatstrt(object):
         self.boollockmodi = False
 
     def __setattr__(self, attr, valu):
+        
         if hasattr(self, attr) and self.boollockmodi and attr != 'boollockmodi':
             raise KeyError('{} has already been set'.format(attr))
+        
+        if type(valu).__name__ == 'gdatstrt':
+            raise Exception('')
+            
         super(gdatstrt, self).__setattr__(attr, valu)
 
 
