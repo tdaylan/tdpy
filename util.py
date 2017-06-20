@@ -946,36 +946,34 @@ def prep_maps(recotype, enertype, regitype, pathdata, numbside, timetype):
     pf.writeto(path, flux, clobber=True)
 
 
-def prep_fdfm(regitype, enertype, pathdata):
+def writ_fdfm(numbside=256, regitype='igal', binsenertype='full'):
     
-    numbside = 256
+    pathdata = os.environ["PCAT_DATA_PATH"] + '/data/'
+
     indxevtt = arange(4)
     binsener = array([0.1, 0.3, 1., 3., 10., 100.])
-   
+    
     meanener = sqrt(binsener[1:] * binsener[:-1])
     numbpixl = 12 * numbside**2
     numbener = binsener.size - 1
-    numbevtt = evtt.size
+    numbevtt = indxevtt.size
 
     # get the Fermi-LAT diffuse model
-    temp = tdpy.util.retr_fdfm(binsener, numbside)
+    sbrtfdfm = retr_fdfm(binsener, numbside)
     
     # rotate if necessary
-    fdfmflux = zeros((numbener, numbpixl))
     for m in arange(numbevtt):
         if regitype == 'ngal':
             for i in range(numbener):
-                almc = hp.map2alm(fdfmfluxigaltemp[i, :])
+                almc = hp.map2alm(sbrtfdfm[i, :])
                 hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
-                fdfmflux[i, :, m] = hp.alm2map(almc, numbside)
-        else:
-            fdfmflux[:, :, m] = temp
+                sbrtfdfm[i, :] = hp.alm2map(almc, numbside)
 
     # smooth the model
-    fdfmflux = smth_ferm(maps, meanener, indxevtt)
+    sbrtfdfm = smth_ferm(sbrtfdfm[:, :, None], meanener, indxevtt)
 
-    path = pathdata + '/fdfmflux_%s_%s_%s.fits' % (recotype, enertype, regitype)
-    pf.writeto(path, fdfmfluxigal, clobber=True)
+    path = pathdata + 'sbrtfdfm%04d%s%s%s.fits' % (numbside, recotype, binsenertype, regitype)
+    pf.writeto(path, sbrtfdfm, clobber=True)
 
 
 def retr_strgtimestmp():
@@ -1533,13 +1531,13 @@ def retr_doubking(scaldevi, frac, sigc, gamc, sigt, gamt):
     return psfn
 
 
-def retr_beam(meanener, indxevttthis, numbside, maxmmpol, fulloutp=False):
+def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False):
    
     numbpixl = 12 * numbside**2
     apix = 4. * pi / numbpixl
 
     numbener = meanener.size
-    numbevtt = indxevttthis.size
+    numbevtt = evtt.size
 
     # alm of the delta function at the North Pole
     mapsinpt = zeros(numbpixl)
