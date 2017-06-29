@@ -290,9 +290,9 @@ def retr_galcfromequc(rasc, decl):
     return lgal, bgal
 
 
-def regr(xaxi, yaxi, ordr):
+def regr(xdat, ydat, ordr):
     
-    coef = polyfit(xaxi, yaxi, ordr)
+    coef = polyfit(xdat, ydat, ordr)
     func = poly1d(coef)
     strg = '$y = '
     if ordr == 0:
@@ -581,12 +581,12 @@ def retr_indximagmaxm(data):
     mapslablones[where(mapslabl > 0)] = 1.
     indxmaxm = array(sp.ndimage.center_of_mass(data, mapslabl, range(1, numbobjt+1))).astype(int)
     if len(indxmaxm) == 0:
-        indxyaximaxm = array([0])
-        indxxaximaxm = array([0])
+        indxydatmaxm = array([0])
+        indxxdatmaxm = array([0])
     else:
-        indxyaximaxm = indxmaxm[:, 1]
-        indxxaximaxm = indxmaxm[:, 0]
-    return indxxaximaxm, indxyaximaxm
+        indxydatmaxm = indxmaxm[:, 1]
+        indxxdatmaxm = indxmaxm[:, 0]
+    return indxxdatmaxm, indxydatmaxm
 
 
 def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=2., gdat=None, maxmswep=None, limtpara=None, tolrfunc=1e-6, optiprop=True, pathbase='./', rtag=''):
@@ -744,8 +744,9 @@ def test_minm():
     minm(thissamp, func_test, verbtype=1, factcorrscal=100., stdvpara=stdvpara, maxmswep=None, limtpara=None, tolrfunc=1e-6, pathbase='./', rtag='')
     
 
-def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, lablxdat='', lablydat='', plottype=None, limtxdat=None, limtydat=None, colr=None, listlinestyl=None, \
-                                                                                   alph=None, listlegd=None, listvlinfrst=None, listvlinseco=None, listhlin=None, drawdiag=False):
+def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, \
+                                            lablxdat='', lablydat='', plottype=None, limtxdat=None, limtydat=None, colr=None, listlinestyl=None, \
+                                            alph=None, listlegd=None, listvlinfrst=None, listvlinseco=None, listhlin=None, drawdiag=False):
     
     if not isinstance(ydat, list):
         listydat = [ydat]
