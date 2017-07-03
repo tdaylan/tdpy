@@ -226,7 +226,6 @@ def summgene(varb):
     print amax(varb)
     print mean(varb)
     print varb.shape
-    print
 
 
 def retr_p4dm_spec(anch, part='el'):
