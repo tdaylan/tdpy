@@ -1539,7 +1539,6 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False):
 
     numbener = meanener.size
     numbevtt = evtt.size
-
     # alm of the delta function at the North Pole
     mapsinpt = zeros(numbpixl)
     mapsinpt[:4] = 1.
@@ -1550,8 +1549,10 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False):
     lgalgrid, bgalgrid, numbpixl, apix = retr_healgrid(numbside)
     dir1 = array([lgalgrid, bgalgrid])
     dir2 = array([0., 90.])
-    thisangl = hp.rotator.angdist(dir1, dir2, lonlat=True)
-    mapsoutp = retr_fermpsfn(meanener, evtt, meanangl)
+    angl = hp.rotator.angdist(dir1, dir2, lonlat=True)
+    mapsoutp = retr_fermpsfn(meanener, evtt, angl)
+    print 'mapsoutp'
+    summgene(mapsoutp)
     almcoutp = empty((numbener, maxmmpol+1, numbevtt))
     for i in range(numbener):
         for m in range(numbevtt):
@@ -1764,21 +1765,22 @@ def make_maps_work(gdat, indxprocwork):
     os.system(cmnd)
 
 
-def smth_ferm(mapsinpt, meanener, indxevttthis, maxmmpol=None, makeplot=False, gaus=False):
-    
-    numbpixl = mapsinpt.shape[1]
+def smth_ferm(mapsinpt, meanener, evtt, maxmmpol=None, makeplot=False, gaus=False):
 
+    print 'smth_ferm()...'
+
+    numbpixl = mapsinpt.shape[1]
     numbside = int(sqrt(numbpixl / 12))
     if maxmmpol == None:
         maxmmpol = 3 * numbside - 1
 
     numbener = meanener.size
-    numbevtt = indxevttthis.size
+    numbevtt = evtt.size
     
     numbalmc = (maxmmpol + 1) * (maxmmpol + 2) / 2
     
     # get the beam
-    beam = retr_beam(meanener, indxevttthis, numbside, maxmmpol)
+    beam = retr_beam(meanener, evtt, numbside, maxmmpol)
     
     # construct the transfer function
     tranfunc = ones((numbener, numbalmc, numbevtt))
@@ -1789,8 +1791,11 @@ def smth_ferm(mapsinpt, meanener, indxevttthis, maxmmpol=None, makeplot=False, g
 
     mapsoutp = empty_like(mapsinpt)
 
+    indxener = arange(numbener)
+    indxevtt = arange(numbevtt)
     for i in indxener:
         for m in indxevtt:
+            print 'Working on energy bin %d, event type %d...' % (i, m)
             almc = hp.map2alm(mapsinpt[i, :, m], lmax=maxmmpol)
             almc *= tranfunc[i, :, m]
             mapsoutp[i, :, m] = hp.alm2map(almc, numbside, lmax=maxmmpol)
