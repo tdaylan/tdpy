@@ -1796,10 +1796,15 @@ def smth_ferm(mapsinpt, meanener, evtt, maxmmpol=None, makeplot=False, gaus=Fals
     for i in indxener:
         for m in indxevtt:
             print 'Working on energy bin %d, event type %d...' % (i, m)
-            almc = hp.map2alm(mapsinpt[i, :, m], lmax=maxmmpol)
-            almc *= tranfunc[i, :, m]
-            mapsoutp[i, :, m] = hp.alm2map(almc, numbside, lmax=maxmmpol)
+            
+            # temp
+            mapsoutp[i, :, m] = mapsinpt[i, :, m]
+            #almc = hp.map2alm(mapsinpt[i, :, m], lmax=maxmmpol)
+            #almc *= tranfunc[i, :, m]
+            #mapsoutp[i, :, m] = hp.alm2map(almc, numbside, lmax=maxmmpol)
     
+    print
+
     return mapsoutp
 
 
