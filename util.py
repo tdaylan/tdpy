@@ -1321,13 +1321,6 @@ def retr_fdfm(binsener, numbside=256, vfdm=7):
     if vfdm == 7:
         path += 'gll_iem_v06.fits'
     
-    # temp
-    read_fits(path)
-    print '0'
-    print pf.getdata(path, 0).shape
-    print '1'
-    print pf.getdata(path, 1).shape
-   
     fluxcart = pf.getdata(path, 0) * 1e3 # [1/cm^2/s/sr/GeV]
     enerfdfm = array(pf.getdata(path, 1).tolist()).flatten() * 1e-3 # [GeV]
     fdfmheal = zeros((enerfdfm.size, numbpixl))
