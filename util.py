@@ -1551,8 +1551,6 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False):
     dir2 = array([0., 90.])
     angl = hp.rotator.angdist(dir1, dir2, lonlat=True)
     mapsoutp = retr_fermpsfn(meanener, evtt, angl)
-    print 'mapsoutp'
-    summgene(mapsoutp)
     almcoutp = empty((numbener, maxmmpol+1, numbevtt))
     for i in range(numbener):
         for m in range(numbevtt):
