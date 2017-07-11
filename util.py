@@ -1541,10 +1541,13 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False, evaltype='invt
     almcinpt = real(hp.map2alm(mapsinpt, lmax=maxmmpol)[:maxmmpol+1])
     
     # alm of the point source at the North Pole
-    lgalgrid, bgalgrid, numbpixl, apix = retr_healgrid(numbside)
-    dir1 = array([lgalgrid, bgalgrid])
-    dir2 = array([0., 90.])
-    angl = hp.rotator.angdist(dir1, dir2, lonlat=True)
+    if evaltype != 'invt':
+        lgalgrid, bgalgrid, numbpixl, apix = retr_healgrid(numbside)
+        dir1 = array([lgalgrid, bgalgrid])
+        dir2 = array([0., 90.])
+        angl = hp.rotator.angdist(dir1, dir2, lonlat=True)
+    else:
+        angl = linspace(0., 10., 20)
     mapsoutp = retr_fermpsfn(meanener, evtt, angl)
     if evaltype != 'invt':
         almcoutp = empty((numbener, maxmmpol+1, numbevtt))
@@ -1556,11 +1559,17 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False, evaltype='invt
         tranfunc /= tranfunc[:, 0, :][:, None, :]
     else:    
         numbangl = angl.size
-        matrdesi = empty((numbangl, maxmmpol))
-        for k in range(numbangl):
-            for n in range(maxmmpol):
-                matrdesi[:, n, i, m] = mapsoutp[i, :, m] / sqrt(2. * n + 1.) * sqrt(4. * pi) / sp.special.lpmv(0, n, cos(angl))
-        tranfunc = inv(matrdesi)
+        matrdesi = empty((maxmmpol, numbener, numbangl, numbevtt))
+        tranfunc = empty((numbener, numbangl, numbevtt))
+        for n in range(maxmmpol):
+            temp = 1. / sqrt(2. * n + 1.) * sqrt(4. * pi) / sp.special.lpmv(0, n, cos(angl))
+            matrdesi[n, :, :, :] = mapsoutp * temp[None, :, None]
+            print 'n'
+            print n
+        for i in range(numbener):
+            for m in range(numbevtt):
+                print 'Inverting matrix for (i,m): ', i, m 
+                tranfunc[i, :, m] = inv(matrdesi[:, i, :, m])
 
     if fulloutp:
         return tranfunc, almcinpt, almcoutp
