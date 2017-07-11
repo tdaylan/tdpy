@@ -1525,13 +1525,15 @@ def retr_doubking(scaldevi, frac, sigc, gamc, sigt, gamt):
     return psfn
 
 
-def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False):
+def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False, evaltype='invt'):
    
     numbpixl = 12 * numbside**2
     apix = 4. * pi / numbpixl
 
     numbener = meanener.size
     numbevtt = evtt.size
+
+
     # alm of the delta function at the North Pole
     mapsinpt = zeros(numbpixl)
     mapsinpt[:4] = 1.
@@ -1544,15 +1546,21 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False):
     dir2 = array([0., 90.])
     angl = hp.rotator.angdist(dir1, dir2, lonlat=True)
     mapsoutp = retr_fermpsfn(meanener, evtt, angl)
-    almcoutp = empty((numbener, maxmmpol+1, numbevtt))
-    for i in range(numbener):
-        for m in range(numbevtt):
-            almcoutp[i, :, m] = real(hp.map2alm(mapsoutp[i, :, m], lmax=maxmmpol)[:maxmmpol+1])
-    
-    tranfunc = almcoutp / almcinpt[None, :, None]
-    
-    # temp
-    tranfunc /= tranfunc[:, 0, :][:, None, :]
+    if evaltype != 'invt':
+        almcoutp = empty((numbener, maxmmpol+1, numbevtt))
+        for i in range(numbener):
+            for m in range(numbevtt):
+                almcoutp[i, :, m] = real(hp.map2alm(mapsoutp[i, :, m], lmax=maxmmpol)[:maxmmpol+1])
+        tranfunc = almcoutp / almcinpt[None, :, None]
+        # temp
+        tranfunc /= tranfunc[:, 0, :][:, None, :]
+    else:    
+        numbangl = angl.size
+        matrdesi = empty((numbangl, maxmmpol))
+        for k in range(numbangl):
+            for n in range(maxmmpol):
+                matrdesi[:, n, i, m] = mapsoutp[i, :, m] / sqrt(2. * n + 1.) * sqrt(4. * pi) / sp.special.lpmv(0, n, cos(angl))
+        tranfunc = inv(matrdesi)
 
     if fulloutp:
         return tranfunc, almcinpt, almcoutp
@@ -1784,15 +1792,20 @@ def smth_ferm(mapsinpt, meanener, evtt, maxmmpol=None, makeplot=False, gaus=Fals
 
     indxener = arange(numbener)
     indxevtt = arange(numbevtt)
+    print 'maxmmpol'
+    print maxmmpol
     for i in indxener:
         for m in indxevtt:
             print 'Working on energy bin %d, event type %d...' % (i, m)
             
             # temp
-            mapsoutp[i, :, m] = mapsinpt[i, :, m]
-            #almc = hp.map2alm(mapsinpt[i, :, m], lmax=maxmmpol)
-            #almc *= tranfunc[i, :, m]
-            #mapsoutp[i, :, m] = hp.alm2map(almc, numbside, lmax=maxmmpol)
+            #mapsoutp[i, :, m] = hp.smoothing(mapsinpt[i, :, m], fwhm=radians(1.))
+            #mapsoutp[i, :, m] = mapsinpt[i, :, m]
+            almc = hp.map2alm(mapsinpt[i, :, m], lmax=maxmmpol)
+            almc *= tranfunc[i, :, m]
+            print 'tranfunc[i, :, m]'
+            print tranfunc[i, :, m]
+            mapsoutp[i, :, m] = hp.alm2map(almc, numbside, lmax=maxmmpol)
     
     print
 
