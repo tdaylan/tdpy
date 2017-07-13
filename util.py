@@ -1548,7 +1548,7 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False, evaltype='invt
         dir2 = array([0., 90.])
         angl = hp.rotator.angdist(dir1, dir2, lonlat=True)
     else:
-        angl = pi / linspace(0., maxmmpol, maxmmpol + 1)
+        angl = pi / linspace(1., maxmmpol, maxmmpol + 1)
     mapsoutp = retr_fermpsfn(meanener, evtt, angl)
     if evaltype != 'invt':
         almcoutp = empty((numbener, maxmmpol+1, numbevtt))
@@ -1570,6 +1570,15 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False, evaltype='invt
         for i in range(numbener):
             for m in range(numbevtt):
                 print 'Inverting matrix for (i,m): ', i, m 
+                print 'matrdesi[:, i, :, m]'
+                summgene(matrdesi[:, i, :, m])
+                print 'linalg.inv(matrdesi[:, i, :, m])'
+                print linalg.inv(matrdesi[:, i, :, m])
+                print 'mapsoutp[i, :, m]'
+                summgene(mapsoutp[i, :, m])
+                print 'matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m])'
+                summgene(matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m]))
+                print
                 tranfunc[i, :, m] = matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m])
 
     if fulloutp:
@@ -1790,7 +1799,8 @@ def smth_ferm(mapsinpt, meanener, evtt, maxmmpol=None, makeplot=False, gaus=Fals
     
     # get the beam
     beam = retr_beam(meanener, evtt, numbside, maxmmpol)
-    
+    print 'beam'
+    print beam
     # construct the transfer function
     tranfunc = ones((numbener, numbalmc, numbevtt))
     cntr = 0
