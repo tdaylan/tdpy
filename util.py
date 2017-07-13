@@ -1533,6 +1533,7 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False, evaltype='invt
     numbener = meanener.size
     numbevtt = evtt.size
 
+    numbmpol = int(maxmmpol) + 1
 
     # alm of the delta function at the North Pole
     mapsinpt = zeros(numbpixl)
@@ -1547,7 +1548,7 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False, evaltype='invt
         dir2 = array([0., 90.])
         angl = hp.rotator.angdist(dir1, dir2, lonlat=True)
     else:
-        angl = linspace(0., 10., 20)
+        angl = pi / linspace(0., maxmmpol, maxmmpol + 1)
     mapsoutp = retr_fermpsfn(meanener, evtt, angl)
     if evaltype != 'invt':
         almcoutp = empty((numbener, maxmmpol+1, numbevtt))
@@ -1559,17 +1560,17 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False, evaltype='invt
         tranfunc /= tranfunc[:, 0, :][:, None, :]
     else:    
         numbangl = angl.size
-        matrdesi = empty((maxmmpol, numbener, numbangl, numbevtt))
+        matrdesi = empty((numbmpol, numbener, numbangl, numbevtt))
         tranfunc = empty((numbener, numbangl, numbevtt))
-        for n in range(maxmmpol):
+        for n in range(numbmpol):
             temp = 1. / sqrt(2. * n + 1.) * sqrt(4. * pi) / sp.special.lpmv(0, n, cos(angl))
-            matrdesi[n, :, :, :] = mapsoutp * temp[None, :, None]
+            matrdesi[n, :, :, :] = temp[None, :, None]
             print 'n'
             print n
         for i in range(numbener):
             for m in range(numbevtt):
                 print 'Inverting matrix for (i,m): ', i, m 
-                tranfunc[i, :, m] = inv(matrdesi[:, i, :, m])
+                tranfunc[i, :, m] = matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m])
 
     if fulloutp:
         return tranfunc, almcinpt, almcoutp
