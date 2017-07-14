@@ -1580,6 +1580,10 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False, evaltype='invt
                 summgene(matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m]))
                 print
                 tranfunc[i, :, m] = matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m])
+        tranfunc = tranfunc**2
+        for i in range(numbener):
+            for m in range(numbevtt):
+                tranfunc[i, :, m] /= tranfunc[i, 0, m]
 
     if fulloutp:
         return tranfunc, almcinpt, almcoutp
