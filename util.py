@@ -781,7 +781,18 @@ def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, \
     figr, axis = plt.subplots(figsize=(6, 6))
     
     for k in range(numbelem):
-        xdat = listxdat[k]
+        try:
+            xdat = listxdat[k]
+        except:
+            print
+            print
+            print 'path'
+            print path
+            print 'listxdat'
+            print len(listxdat)
+            print 'listydat'
+            print len(listydat)
+            raise
         ydat = listydat[k]
         plottype = listplottype[k]
         legd = listlegd[k]
