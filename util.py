@@ -495,13 +495,13 @@ def retr_mapsplnkfreq(indxpixloutprofi=None, numbsideoutp=256, indxfreqrofi=None
     rtag = '_%04d' % (numbsideoutp)
 
     path = retr_path('tdpy', onlydata=True)
-    pathflux = path + 'plnkflux_%s.fits' % rtag
-    pathfluxstdv = path + 'plnkfluxstdv_%s.fits' % rtag
-    if os.path.isfile(pathflux) and os.path.isfile(pathfluxstdv):
-        print 'Reading %s...' % pathflux
-        mapsplnkfreq = pf.getdata(pathflux)
-        print 'Reading %s...' % pathfluxstdv
-        mapsplnkfreqstdv= pf.getdata(pathfluxstdv)
+    pathsbrt = path + 'plnksbrt_%s.fits' % rtag
+    pathsbrtstdv = path + 'plnksbrtstdv_%s.fits' % rtag
+    if os.path.isfile(pathsbrt) and os.path.isfile(pathsbrtstdv):
+        print 'Reading %s...' % pathsbrt
+        mapsplnkfreq = pf.getdata(pathsbrt)
+        print 'Reading %s...' % pathsbrtstdv
+        mapsplnkfreqstdv= pf.getdata(pathsbrtstdv)
     else:
         mapsplnkfreq = zeros((numbfreq, numbpixl))
         mapsplnkfreqstdv = zeros((numbfreq, numbpixl))
@@ -560,8 +560,8 @@ def retr_mapsplnkfreq(indxpixloutprofi=None, numbsideoutp=256, indxfreqrofi=None
                 factconv = 1e6
             mapsplnk[k, :] *= factconv
         
-        pf.writeto(pathflux, mapsplnkfreq, clobber=True)
-        pf.writeto(pathfluxstdv, mapsplnkfreqstdv, clobber=True)
+        pf.writeto(pathsbrt, mapsplnkfreq, clobber=True)
+        pf.writeto(pathsbrtstdv, mapsplnkfreqstdv, clobber=True)
         
     return mapsplnkfreq, mapsplnkfreqstdv
 
@@ -569,12 +569,12 @@ def retr_mapsplnkfreq(indxpixloutprofi=None, numbsideoutp=256, indxfreqrofi=None
 def retr_indximagmaxm(data):
 
     sizeneig = 10
-    cntsthrs = 10
+    cntpthrs = 10
     maxmdata = sp.ndimage.filters.maximum_filter(data, sizeneig)
     
     boolmaxm = (data == maxmdata)
     minmdata = sp.ndimage.filters.minimum_filter(data, sizeneig)
-    diff = ((maxmdata - minmdata) > cntsthrs)
+    diff = ((maxmdata - minmdata) > cntpthrs)
     boolmaxm[diff == 0] = 0
     mapslabl, numbobjt = sp.ndimage.label(boolmaxm)
     mapslablones = zeros_like(mapslabl)
@@ -878,87 +878,7 @@ class cntr():
         self.cntr = 0
 
 
-def prep_maps(recotype, enertype, regitype, pathdata, numbside, timetype):
-    
-    if enertype == 'back':
-        numbener = 30
-        minmener = 0.1
-        maxmener = 100.
-        binsener = logspace(log10(minmener), log10(maxmener), numbener + 1)
-    else:
-        binsener = array([0.1, 0.3, 1., 3., 10., 100.])
-        numbener = binsener.size - 1
-    indxener = arange(numbener)
-    diffener = binsener[1:] - binsener[:-1]
-
-    numbside = 256
-    evtt = array([4, 8, 16, 32])
-
-    numbpixl = 12 * numbside**2
-    numbevtt = evtt.size
-    indxevtt = arange(numbevtt)
-    apix = 4. * pi / numbpixl
-
-    cnts = zeros((numbener, numbpixl, numbevtt))
-    expo = zeros((numbener, numbpixl, numbevtt))
-    flux = zeros((numbener, numbpixl, numbevtt))
-    
-    for m in indxevtt:
-
-        if recotype == 'rec7':
-            if m < 2:
-                continue
-            elif m == 2:
-                thisevtt = 2
-            elif m == 3:
-                thisevtt = 1
-        else:
-            thisevtt = evtt[m]
-
-        path = pathdata + '/fermexpo_%04d_%s_%s_%04d_%s.fits' % (thisevtt, recotype, enertype, numbside, timetype)
-        expoarry = pf.getdata(path, 1)
-        for i in indxener:
-            expo[i, :, m] = expoarry['ENERGY%d' % (i + 1)]
-
-        path = pathdata + '/fermcnts_%04d_%s_%s_%04d_%s.fits' % (thisevtt, recotype, enertype, numbside, timetype)
-        cntsarry = pf.getdata(path)
-        for i in indxener:
-            cnts[i, :, m] = cntsarry['CHANNEL%d' % (i + 1)]
-
-    indxexpo = where(expo > 0.) 
-    flux[indxexpo] = cnts[indxexpo] / expo[indxexpo] / apix
-    flux /= diffener[:, None, None]
-
-    if regitype == 'ngal':
-        for i in indxener:
-            for m in indxevtt:
-                
-                if recotype == 'rec7':
-                    if m < 2:
-                        continue
-                    elif m == 2:
-                        thisevtt = 2
-                    elif m == 3:
-                        thisevtt = 1
-                else:
-                    thisevtt = evtt[m]
-
-                almc = hp.map2alm(flux[i, :, m])
-                hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
-                flux[i, :, m] = hp.alm2map(almc, numbside)
-
-                almc = hp.map2alm(expo[i, :, m])
-                hp.rotate_alm(almc, 0., 0.5 * pi, 0.)
-                expo[i, :, m] = hp.alm2map(almc, numbside)
-
-    path = pathdata + '/fermexpo_%s_%s_%s_%04d_%s.fits' % (recotype, enertype, regitype, numbside, timetype)
-    pf.writeto(path, expo, clobber=True)
-
-    path = pathdata + '/fermflux_%s_%s_%s_%04d_%s.fits' % (recotype, enertype, regitype, numbside, timetype)
-    pf.writeto(path, flux, clobber=True)
-
-
-def writ_fdfm(numbside=256, regitype='igal', binsenertype='full'):
+def writ_sbrtfdfm(numbside=256, regitype='igal', binsenertype='full'):
     
     pathdata = os.environ["PCAT_DATA_PATH"] + '/data/'
 
@@ -971,7 +891,7 @@ def writ_fdfm(numbside=256, regitype='igal', binsenertype='full'):
     numbevtt = indxevtt.size
 
     # get the Fermi-LAT diffuse model
-    sbrtfdfm = retr_fdfm(binsener, numbside)
+    sbrtfdfm = retr_sbrtfdfm(binsener, numbside)
     
     # rotate if necessary
     for m in arange(numbevtt):
@@ -1203,26 +1123,26 @@ def retr_isot(binsener, numbside=256):
     numbener = binsener.size - 1
     numbsamp = 10
 
-    # get the best-fit isotropic flux given by the Fermi-LAT collaboration
+    # get the best-fit isotropic surface brightness given by the Fermi-LAT collaboration
 
     pathdata = retr_path('tdpy', onlydata=True)
     path = pathdata + 'iso_P8R2_SOURCE_V6_v06.txt'
     isotdata = loadtxt(path)
     enerisot = isotdata[:, 0] * 1e-3 # [GeV]
-    isotfluxtemp = isotdata[:, 1] * 1e3 # [1/cm^2/s/sr/GeV]
+    sbrtisottemp = isotdata[:, 1] * 1e3 # [1/cm^2/s/sr/GeV]
     
     # sampling energy grid
     binsenersamp = logspace(log10(amin(binsener)), log10(amax(binsener)), numbsamp * numbener)
     
-    # interpolate the flux over the sampling energy grid
-    isotfluxtemp = interp(binsenersamp, enerisot, isotfluxtemp)
+    # interpolate the surface brightness over the sampling energy grid
+    sbrtisottemp = interp(binsenersamp, enerisot, sbrtisottemp)
     
-    # take the mean flux in the desired energy bins
-    isotflux = empty((numbener, numbpixl))
+    # take the mean surface brightness in the desired energy bins
+    sbrtisot = empty((numbener, numbpixl))
     for i in range(numbener):
-        isotflux[i, :] = trapz(isotfluxtemp[i*numbsamp:(i+1)*numbsamp], binsenersamp[i*numbsamp:(i+1)*numbsamp]) / diffener[i]
+        sbrtisot[i, :] = trapz(sbrtisottemp[i*numbsamp:(i+1)*numbsamp], binsenersamp[i*numbsamp:(i+1)*numbsamp]) / diffener[i]
         
-    return isotflux
+    return sbrtisot
 
 
 def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., nest=False, \
@@ -1273,45 +1193,7 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
     return hmapcart
 
 
-def smth(maps, scalsmth, mpol=False, retrfull=False, numbsideoutp=None, indxpixlmask=None):
-
-    if mpol:
-        mpolsmth = scalsmth
-    else:
-        mpolsmth = 180. / scalsmth
-
-    numbpixl = maps.size
-    numbside = int(sqrt(numbpixl / 12))
-    numbmpol = 3 * numbside
-    maxmmpol = 3. * numbside - 1.
-    mpolgrid, temp = hp.Alm.getlm(lmax=maxmmpol)
-    mpol = arange(maxmmpol + 1.)
-    
-    if numbsideoutp == None:
-        numbsideoutp = numbside
-    
-    if indxpixlmask != None:
-        mapsoutp = copy(maps)
-        mapsoutp[indxpixlmask] = hp.UNSEEN
-        mapsoutp = hp.ma(mapsoutp)
-        almctemp = hp.map2alm(maps)
-    else:
-        mapsoutp = maps
-    
-    almc = hp.map2alm(mapsoutp)
-
-    wght = exp(-0.5 * (mpolgrid / mpolsmth)**2)
-    almc *= wght
-    
-    mapsoutp = hp.alm2map(almc[where(mpolgrid < 3 * numbsideoutp)], numbsideoutp, verbose=False)
-
-    if retrfull:
-        return mapsoutp, almc, mpol, exp(-0.5 * (mpol / mpolsmth)**2)
-    else:
-        return mapsoutp
-
-
-def retr_fdfm(binsener, numbside=256, vfdm=7):                    
+def retr_sbrtfdfm(binsener, numbside=256, vfdm=7):                    
     
     diffener = binsener[1:] - binsener[0:-1]
     numbener = diffener.size
@@ -1332,21 +1214,21 @@ def retr_fdfm(binsener, numbside=256, vfdm=7):
     if vfdm == 7:
         path += 'gll_iem_v06.fits'
     
-    fluxcart = pf.getdata(path, 0) * 1e3 # [1/cm^2/s/sr/GeV]
+    sbrtcart = pf.getdata(path, 0) * 1e3 # [1/cm^2/s/sr/GeV]
     enerfdfm = array(pf.getdata(path, 1).tolist()).flatten() * 1e-3 # [GeV]
-    fdfmheal = zeros((enerfdfm.size, numbpixl))
+    sbrtfdfmheal = zeros((enerfdfm.size, numbpixl))
     for i in range(enerfdfm.size):
-        fdfmheal[i, :] = cart_heal(fliplr(fluxcart[i, :, :]), numbside=numbside)
+        sbrtfdfmheal[i, :] = cart_heal(fliplr(sbrtcart[i, :, :]), numbside=numbside)
     
-    fdfm = empty((numbener, numbpixl))
+    sbrtfdfm = empty((numbener, numbpixl))
     numbsampbins = 10
     enersamp = logspace(log10(amin(binsener)), log10(amax(binsener)), numbsampbins * numbener)
     
-    fdfmheal = interpolate.interp1d(enerfdfm, fdfmheal, axis=0)(enersamp)
+    sbrtfdfmheal = interpolate.interp1d(enerfdfm, sbrtfdfmheal, axis=0)(enersamp)
     for i in range(numbener):
-        fdfm[i, :] = trapz(fdfmheal[i*numbsampbins:(i+1)*numbsampbins, :], enersamp[i*numbsampbins:(i+1)*numbsampbins], axis=0) / diffener[i]
+        sbrtfdfm[i, :] = trapz(sbrtfdfmheal[i*numbsampbins:(i+1)*numbsampbins, :], enersamp[i*numbsampbins:(i+1)*numbsampbins], axis=0) / diffener[i]
 
-    return fdfm
+    return sbrtfdfm
 
 
 def plot_matr(axis, xdat, ydat, labl, loc=1):
@@ -1392,7 +1274,7 @@ def plot_braz(axis, xdat, ydat, yerr=None, numbsampdraw=0, lcol='yellow', dcol='
         axis.fill_between(xdat, percentile(ydat, 16., 0), percentile(ydat, 84., 0), color=dcol, alpha=alpha)#, label='68% C.L.')
 
 
-def retr_fermpsfn(meanenerrofi, indxevttrofi, meanangl, reco=8):
+def retr_psfnferm(meanenerrofi, indxevttrofi, meanangl, reco=8):
    
     numbenerrofi = meanenerrofi.size
     indxenerrofi = arange(numbenerrofi)
@@ -1444,12 +1326,12 @@ def retr_fermpsfn(meanenerrofi, indxevttrofi, meanangl, reco=8):
     sigt = fermform[:, :, 3]
     gamt = fermform[:, :, 4]
    
-    fermpsfn = retr_doubking(scalangl, frac[:, None, :], sigc[:, None, :], gamc[:, None, :], sigt[:, None, :], gamt[:, None, :])
+    psfnferm = retr_doubking(scalangl, frac[:, None, :], sigc[:, None, :], gamc[:, None, :], sigt[:, None, :], gamt[:, None, :])
 
-    return fermpsfn
+    return psfnferm
 
 
-def retr_fermpsfn_depr(gdat):
+def retr_psfnferm_depr(gdat):
     
     irfn = pf.getdata(path, 1)
     minmener = irfn['energ_lo'].squeeze() * 1e-3 # [GeV]
@@ -1495,13 +1377,13 @@ def retr_fermpsfn_depr(gdat):
     gdat.fermscalfact = sqrt((fermscal[None, :, 0] * (10. * gdat.meanener[:, None])**fermscal[None, :, 2])**2 + fermscal[None, :, 1]**2)
     
     # evaluate the PSF
-    gdat.fermpsfn = retr_psfn(gdat, gdat.fermpsfipara, gdat.indxener, gdat.binsangl, 'doubking')
+    gdat.psfnferm = retr_psfn(gdat, gdat.fermpsfipara, gdat.indxener, gdat.binsangl, 'doubking')
 
 
 def retr_fwhmferm(meanener, evtt):
 
     meanangl = linspace(0., 20., 1000)
-    psfn = retr_fermpsfn(meanener, evtt, meanangl)
+    psfn = retr_psfnferm(meanener, evtt, meanangl)
     fwhm = retr_fwhm(psfn, meanangl) 
 
     return fwhm
@@ -1534,131 +1416,6 @@ def retr_doubking(scaldevi, frac, sigc, gamc, sigt, gamt):
         (1. - frac) / 2. / pi / sigt**2 * (1. - 1. / gamt) * (1. + scaldevi**2 / 2. / gamt / sigt**2)**(-gamt)
     
     return psfn
-
-
-def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False, evaltype='invt'):
-   
-    numbpixl = 12 * numbside**2
-    apix = 4. * pi / numbpixl
-
-    numbener = meanener.size
-    numbevtt = evtt.size
-
-    numbmpol = int(maxmmpol) + 1
-
-    # alm of the delta function at the North Pole
-    mapsinpt = zeros(numbpixl)
-    mapsinpt[:4] = 1.
-    mapsinpt /= sum(mapsinpt) * apix
-    almcinpt = real(hp.map2alm(mapsinpt, lmax=maxmmpol)[:maxmmpol+1])
-    
-    # alm of the point source at the North Pole
-    if evaltype != 'invt':
-        lgalgrid, bgalgrid, numbpixl, apix = retr_healgrid(numbside)
-        dir1 = array([lgalgrid, bgalgrid])
-        dir2 = array([0., 90.])
-        angl = hp.rotator.angdist(dir1, dir2, lonlat=True)
-    else:
-        angl = pi / linspace(1., maxmmpol, maxmmpol + 1)
-    mapsoutp = retr_fermpsfn(meanener, evtt, angl)
-    if evaltype != 'invt':
-        almcoutp = empty((numbener, maxmmpol+1, numbevtt))
-        for i in range(numbener):
-            for m in range(numbevtt):
-                almcoutp[i, :, m] = real(hp.map2alm(mapsoutp[i, :, m], lmax=maxmmpol)[:maxmmpol+1])
-        tranfunc = almcoutp / almcinpt[None, :, None]
-        # temp
-        tranfunc /= tranfunc[:, 0, :][:, None, :]
-    else:    
-        numbangl = angl.size
-        matrdesi = empty((numbmpol, numbener, numbangl, numbevtt))
-        tranfunc = empty((numbener, numbangl, numbevtt))
-        for n in range(numbmpol):
-            temp = 1. / sqrt(2. * n + 1.) * sqrt(4. * pi) / sp.special.lpmv(0, n, cos(angl))
-            matrdesi[n, :, :, :] = temp[None, :, None]
-            print 'n'
-            print n
-        for i in range(numbener):
-            for m in range(numbevtt):
-                print 'Inverting matrix for (i,m): ', i, m 
-                print 'matrdesi[:, i, :, m]'
-                summgene(matrdesi[:, i, :, m])
-                print 'linalg.inv(matrdesi[:, i, :, m])'
-                print linalg.inv(matrdesi[:, i, :, m])
-                print 'mapsoutp[i, :, m]'
-                summgene(mapsoutp[i, :, m])
-                print 'matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m])'
-                summgene(matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m]))
-                print
-                tranfunc[i, :, m] = matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m])
-        tranfunc = tranfunc**2
-        for i in range(numbener):
-            for m in range(numbevtt):
-                tranfunc[i, :, m] /= tranfunc[i, 0, m]
-
-    if fulloutp:
-        return tranfunc, almcinpt, almcoutp
-    else:
-        return tranfunc
-
-
-def make_maps_main(gdat, pathdata):
-    
-    numbproc = len(gdat.recotype)
-    
-    if not hasattr(gdat, 'timetype'):
-        gdat.timetype = ['tim0' for k in range(numbproc)]
-    if not hasattr(gdat, 'enertype'):
-        gdat.enertype = ['pnts' for k in range(numbproc)]
-    if not hasattr(gdat, 'strgtime'):
-        gdat.strgtime = ['tmin=INDEF tmax=INDEF' for k in range(numbproc)]
-    if not hasattr(gdat, 'timefrac'):
-        gdat.timefrac = [1. for k in range(numbproc)]
-    if not hasattr(gdat, 'numbside'):
-        gdat.numbside = [256 for k in range(numbproc)]
-    if not hasattr(gdat, 'test'):
-        gdat.test = False
-
-    gdat.evtc = []
-    gdat.photpath = []
-    gdat.strgtime = []
-    gdat.weekinit = []
-    gdat.weekfinl = []
-    for n in range(numbproc):
-        if gdat.recotype[n] == 'rec7':
-            gdat.evtc.append(2)
-            gdat.photpath.append('p7v6c')
-            gdat.strgtime.append('tmin=239155201 tmax=364953603')
-            gdat.weekinit.append(9)
-            gdat.weekfinl.append(218)
-        if gdat.recotype[n] == 'rec8':
-            gdat.evtc.append(128)
-            gdat.photpath.append('photon')
-            gdat.strgtime.append('tmin=INDEF tmax=INDEF')
-            gdat.weekinit.append(11)
-            gdat.weekfinl.append(420)
-    
-    gdat.strgener = ['gtbndefn_%s.fits' % gdat.enertype[k] for k in range(numbproc)]
-    
-    gdat.indxevtt = arange(4)
-
-    gdat.pathdata = pathdata
-    
-    gdat.evtt = [4, 8, 16, 32]
-
-    indxproc = arange(numbproc)
-    
-    if numbproc == 1:
-        make_maps_work(gdat, 0)
-    else:
-        # process pool
-        pool = mp.Pool(numbproc)
-
-        # spawn the processes
-        make_maps_part = functools.partial(make_maps_work, gdat)
-        pool.map(make_maps_part, indxproc)
-        pool.close()
-        pool.join()
 
 
 def retr_path(strg, pathextndata=None, pathextnimag=None, rtag=None, onlyimag=False, onlydata=False):
@@ -1695,110 +1452,45 @@ def conv_rascdecl(args):
     return rasc, decl
 
 
-def make_maps_work(gdat, indxprocwork):
+def smth(maps, scalsmth, mpol=False, retrfull=False, numbsideoutp=None, indxpixlmask=None):
 
-    rtag = '%s_%s_%04d_%s' % (gdat.recotype[indxprocwork], gdat.enertype[indxprocwork], gdat.numbside[indxprocwork], gdat.timetype[indxprocwork])
+    if mpol:
+        mpolsmth = scalsmth
+    else:
+        mpolsmth = 180. / scalsmth
+
+    numbpixl = maps.size
+    numbside = int(sqrt(numbpixl / 12))
+    numbmpol = 3 * numbside
+    maxmmpol = 3. * numbside - 1.
+    mpolgrid, temp = hp.Alm.getlm(lmax=maxmmpol)
+    mpol = arange(maxmmpol + 1.)
     
-    # make file lists
-    infl = gdat.pathdata + '/phot_%s.txt' % rtag
-    spac = gdat.pathdata + '/spac_%s.txt' % rtag
-        
-    numbweek = (gdat.weekfinl[indxprocwork] - gdat.weekinit[indxprocwork]) * gdat.timefrac[indxprocwork]
-    listweek = floor(linspace(gdat.weekinit[indxprocwork], gdat.weekfinl[indxprocwork] - 1, numbweek)).astype(int)
-    cmnd = 'rm -f ' + infl
-    os.system(cmnd)
-    cmnd = 'rm -f ' + spac
-    os.system(cmnd)
-    for week in listweek:
-        cmnd = 'ls -d -1 $FERMI_DATA/weekly/spacecraft/*_w%03d_* >> ' % week + spac
-        os.system(cmnd)
-        cmnd = 'ls -d -1 $FERMI_DATA/weekly/%s/*_w%03d_* >> ' % (gdat.photpath[indxprocwork], week) + infl
-        os.system(cmnd)
-    for m in gdat.indxevtt:
+    if numbsideoutp == None:
+        numbsideoutp = numbside
+    
+    if indxpixlmask != None:
+        mapsoutp = copy(maps)
+        mapsoutp[indxpixlmask] = hp.UNSEEN
+        mapsoutp = hp.ma(mapsoutp)
+        almctemp = hp.map2alm(maps)
+    else:
+        mapsoutp = maps
+    
+    almc = hp.map2alm(mapsoutp)
 
-        if gdat.recotype[indxprocwork] == 'rec7':
-            strgirfn = 'P7REP_SOURCE_V15'
-        if gdat.recotype[indxprocwork] == 'rec8':
-            strgirfn = 'P8R2_SOURCE_V6'
+    wght = exp(-0.5 * (mpolgrid / mpolsmth)**2)
+    almc *= wght
+    
+    mapsoutp = hp.alm2map(almc[where(mpolgrid < 3 * numbsideoutp)], numbsideoutp, verbose=False)
 
-        if gdat.recotype[indxprocwork] == 'rec7':
-            if m == 3:
-                thisevtt = 1
-                thisevttdepr = 0
-            elif m == 2:
-                thisevtt = 2
-                thisevttdepr = 1
-            else:
-                continue
-            strgpsfn = 'convtype=%d' % thisevttdepr
-
-        if gdat.recotype[indxprocwork] == 'rec8':
-            thisevtt = gdat.evtt[m]
-            strgpsfn = 'evtype=%d' % thisevtt
-         
-        sele = gdat.pathdata + '/fermsele_%04d_%s.fits' % (thisevtt, rtag)
-        filt = gdat.pathdata + '/fermfilt_%04d_%s.fits' % (thisevtt, rtag)
-        live = gdat.pathdata + '/fermlive_%04d_%s.fits' % (thisevtt, rtag)
-        cnts = gdat.pathdata + '/fermcnts_%04d_%s.fits' % (thisevtt, rtag)
-        expo = gdat.pathdata + '/fermexpo_%04d_%s.fits' % (thisevtt, rtag)
-        psfn = gdat.pathdata + '/fermpsfn_%04d_%s.fits' % (thisevtt, rtag)
-
-        cmnd = 'gtselect infile=' + infl + ' outfile=' + sele + ' ra=INDEF dec=INDEF rad=INDEF ' + \
-            gdat.strgtime[indxprocwork] + ' emin=100 emax=100000 zmax=90 evclass=%d %s' % (gdat.evtc[indxprocwork], strgpsfn)
-        
-        if os.path.isfile(cnts) and os.path.isfile(expo):
-            continue
-        
-        if gdat.test:
-            print cmnd
-            print ''
-        else:
-            os.system(cmnd)
-
-        cmnd = 'gtmktime evfile=' + sele + ' scfile=' + spac + ' filter="DATA_QUAL==1 && LAT_CONFIG==1"' + ' outfile=' + filt + ' roicut=no'
-        if gdat.test:
-            print cmnd
-            print ''
-        else:
-            os.system(cmnd)
-
-        cmnd = 'gtbin evfile=' + filt + ' scfile=NONE outfile=' + cnts + \
-            ' ebinalg=FILE ebinfile=$TDPY_DATA_PATH/%s ' % gdat.strgener[indxprocwork] + \
-            'algorithm=HEALPIX hpx_ordering_scheme=RING coordsys=GAL hpx_order=%d hpx_ebin=yes' % log2(gdat.numbside[indxprocwork])
-        if gdat.test:
-            print cmnd
-            print ''
-        else:
-            os.system(cmnd)
-
-        cmnd = 'gtltcube evfile=' + filt + ' scfile=' + spac + ' outfile=' + live + ' dcostheta=0.025 binsz=1'
-        if gdat.test:
-            print cmnd
-            print ''
-        else:
-            os.system(cmnd)
-
-        cmnd = 'gtexpcube2 infile=' + live + ' cmap=' + cnts + ' outfile=' + expo + ' irfs=CALDB evtype=%03d bincalc=CENTER' % thisevtt
-        if gdat.test:
-            print cmnd
-            print ''
-        else:
-            os.system(cmnd)
-
-        psfno = gdat.pathdata + '/fermpsfn_%04d_%s.fits' % (thisevtt, rtag)
-        cmnd = 'gtpsf %s %s %s %.4g %.4g ebinalg=FILE ebinfile=$TDPY_DATA_PATH/%s 10. 50' % (live, psfn, strgpsfn, rasc, decl) + \
-            ' ebinalg=FILE ebinfile=$TDPY_DATA_PATH/%s ' % gdat.strgener[indxprocwork]
-        if gdat.test:
-            print cmnd
-            print ''
-        else:
-            os.system(cmnd)
-
-    cmnd = 'rm %s %s %s %s %s' % (infl, spac, sele, filt, live)
-    os.system(cmnd)
+    if retrfull:
+        return mapsoutp, almc, mpol, exp(-0.5 * (mpol / mpolsmth)**2)
+    else:
+        return mapsoutp
 
 
-def smth_ferm(mapsinpt, meanener, evtt, maxmmpol=None, makeplot=False, gaus=False):
+def smth_ferm(mapsinpt, meanener, evtt, maxmmpol=None, makeplot=False, gaus=False, kerntype='ferm'):
 
     print 'smth_ferm()...'
 
@@ -1809,42 +1501,135 @@ def smth_ferm(mapsinpt, meanener, evtt, maxmmpol=None, makeplot=False, gaus=Fals
 
     numbener = meanener.size
     numbevtt = evtt.size
-    
-    numbalmc = (maxmmpol + 1) * (maxmmpol + 2) / 2
-    
-    # get the beam
-    beam = retr_beam(meanener, evtt, numbside, maxmmpol)
-    print 'beam'
-    print beam
-    # construct the transfer function
-    tranfunc = ones((numbener, numbalmc, numbevtt))
-    cntr = 0
-    for n in arange(maxmmpol+1)[::-1]:
-        tranfunc[:, cntr:cntr+n+1, :] = beam[:, maxmmpol-n:, :]
-        cntr += n + 1
-
-    mapsoutp = empty_like(mapsinpt)
-
     indxener = arange(numbener)
     indxevtt = arange(numbevtt)
-    print 'maxmmpol'
-    print maxmmpol
-    for i in indxener:
-        for m in indxevtt:
-            print 'Working on energy bin %d, event type %d...' % (i, m)
-            
-            # temp
-            #mapsoutp[i, :, m] = hp.smoothing(mapsinpt[i, :, m], fwhm=radians(1.))
-            #mapsoutp[i, :, m] = mapsinpt[i, :, m]
-            almc = hp.map2alm(mapsinpt[i, :, m], lmax=maxmmpol)
-            almc *= tranfunc[i, :, m]
-            print 'tranfunc[i, :, m]'
-            print tranfunc[i, :, m]
-            mapsoutp[i, :, m] = hp.alm2map(almc, numbside, lmax=maxmmpol)
+    numbalmc = (maxmmpol + 1) * (maxmmpol + 2) / 2
     
-    print
+    
+    mapsoutp = empty_like(mapsinpt)
+    if kerntype == 'gaus':
+        for i in indxener:
+            for m in indxevtt:
+                arry = array([0.1, 0.3, 1., 3., 10., 100.])
+                print sqrt(arry[:-1] * arry[1:])
+                if i == 0:
+                    sigm = 2.
+                if i == 1:
+                    sigm = 1.
+                if i == 2:
+                    sigm = 0.4
+                if i == 3:
+                    sigm = 0.09
+                if i == 4:
+                    sigm = 0.05
+                if m == 1:
+                    sigm *= 1.5
+                fwhm = 2.355 * sigm * pi / 180.
+                mapsoutp[i, :, m] = hp.smoothing(mapsinpt[i, :, m], fwhm=fwhm)
+    
+    if kerntype == 'ferm':
+        # get the beam
+        beam = retr_beam(meanener, evtt, numbside, maxmmpol)
+        print 'beam'
+        print beam
+        # construct the transfer function
+        tranfunc = ones((numbener, numbalmc, numbevtt))
+        cntr = 0
+        for n in arange(maxmmpol+1)[::-1]:
+            tranfunc[:, cntr:cntr+n+1, :] = beam[:, maxmmpol-n:, :]
+            cntr += n + 1
 
+
+        indxener = arange(numbener)
+        indxevtt = arange(numbevtt)
+        print 'maxmmpol'
+        print maxmmpol
+        for i in indxener:
+            for m in indxevtt:
+                
+                # temp
+                if i != 0 or m != 0:
+                    continue
+                print 'Working on energy bin %d, event type %d...' % (i, m)
+                # temp
+                #mapsoutp[i, :, m] = hp.smoothing(mapsinpt[i, :, m], fwhm=radians(1.))
+                #mapsoutp[i, :, m] = mapsinpt[i, :, m]
+                almc = hp.map2alm(mapsinpt[i, :, m], lmax=maxmmpol)
+                almc *= tranfunc[i, :, m]
+                print 'tranfunc[i, :, m]'
+                print tranfunc[i, :, m]
+                mapsoutp[i, :, m] = hp.alm2map(almc, numbside, lmax=maxmmpol)
+    
     return mapsoutp
+
+
+def retr_beam(meanener, evtt, numbside, maxmmpol, fulloutp=False, evaltype='invt'):
+    
+    print 'retr_beam()'
+
+    numbpixl = 12 * numbside**2
+    apix = 4. * pi / numbpixl
+
+    numbener = meanener.size
+    numbevtt = evtt.size
+
+    numbmpol = int(maxmmpol) + 1
+
+    # alm of the delta function at the North Pole
+    mapsinpt = zeros(numbpixl)
+    mapsinpt[:4] = 1.
+    mapsinpt /= sum(mapsinpt) * apix
+    almcinpt = real(hp.map2alm(mapsinpt, lmax=maxmmpol)[:maxmmpol+1])
+    
+    # alm of the point source at the North Pole
+    if evaltype != 'invt':
+        lgalgrid, bgalgrid, numbpixl, apix = retr_healgrid(numbside)
+        dir1 = array([lgalgrid, bgalgrid])
+        dir2 = array([0., 90.])
+        angl = hp.rotator.angdist(dir1, dir2, lonlat=True)
+    else:
+        angl = pi / linspace(1., maxmmpol, maxmmpol + 1)
+    mapsoutp = retr_psfnferm(meanener, evtt, angl)
+    if evaltype != 'invt':
+        almcoutp = empty((numbener, maxmmpol+1, numbevtt))
+        for i in range(numbener):
+            for m in range(numbevtt):
+                almcoutp[i, :, m] = real(hp.map2alm(mapsoutp[i, :, m], lmax=maxmmpol)[:maxmmpol+1])
+        tranfunc = almcoutp / almcinpt[None, :, None]
+        # temp
+        tranfunc /= tranfunc[:, 0, :][:, None, :]
+    else:    
+        numbangl = angl.size
+        matrdesi = empty((numbmpol, numbener, numbangl, numbevtt))
+        tranfunc = empty((numbener, numbangl, numbevtt))
+        for n in range(numbmpol):
+            temp = 1. / sqrt(2. * n + 1.) * sqrt(4. * pi) / sp.special.lpmv(0, n, cos(angl))
+            matrdesi[n, :, :, :] = temp[None, :, None]
+        for i in range(numbener):
+            for m in range(numbevtt):
+                # temp
+                if i != 0 or m != 0:
+                    continue
+                print 'Inverting matrix for (i,m): ', i, m 
+                print 'matrdesi[:, i, :, m]'
+                summgene(matrdesi[:, i, :, m])
+                print 'linalg.inv(matrdesi[:, i, :, m])'
+                print linalg.inv(matrdesi[:, i, :, m])
+                print 'mapsoutp[i, :, m]'
+                summgene(mapsoutp[i, :, m])
+                print 'matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m])'
+                summgene(matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m]))
+                print
+                tranfunc[i, :, m] = matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m])
+        tranfunc = tranfunc**2
+        for i in range(numbener):
+            for m in range(numbevtt):
+                tranfunc[i, :, m] /= tranfunc[i, 0, m]
+
+    if fulloutp:
+        return tranfunc, almcinpt, almcoutp
+    else:
+        return tranfunc
 
 
 def plot_fermsmth():
