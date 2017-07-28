@@ -884,6 +884,8 @@ def retr_evttferm(recotype):
         evtt = array([1, 2])
     if recotype == 'rec8':
         evtt = array([4, 8, 16, 32])
+    if recotype == 'manu':
+        evtt = array([0, 1])
     
     numbevtt = evtt.size
     indxevtt = arange(numbevtt)
@@ -1522,44 +1524,46 @@ def smth_ferm(mapsinpt, meanener, recotype, maxmmpol=None, makeplot=False, kernt
     if kerntype == 'gaus':
         angl = pi * linspace(0., 10., 100) / 180.
         
-        gdat = gdatstrt()
-        gdat.pathdata = os.environ["PCAT_DATA_PATH"] + '/data/'
-        gdat.numbener = numbener
-        gdat.indxener = indxener
-        gdat.numbevtt = numbevtt
-        gdat.indxevtt = indxevtt
-        gdat.meanener = meanener
-        gdat.recotype = recotype
-        retr_psfpferm(gdat)
-        gdat.exprtype = 'ferm'
-        gdat.fittnumbpsfpform = 5
-        gdat.fittnumbpsfptotl = 5
-        gdat.binsangl = angl
-        psfn = retr_psfn(gdat, gdat.psfpexpr, gdat.indxener, angl, 'doubking', None, False)
-        fwhm = retr_fwhm(psfn, angl) 
+        if recotype != 'manu':
+            gdat = gdatstrt()
+            gdat.pathdata = os.environ["PCAT_DATA_PATH"] + '/data/'
+            gdat.numbener = numbener
+            gdat.indxener = indxener
+            gdat.numbevtt = numbevtt
+            gdat.indxevtt = indxevtt
+            gdat.meanener = meanener
+            gdat.recotype = recotype
+            retr_psfpferm(gdat)
+            gdat.exprtype = 'ferm'
+            gdat.fittnumbpsfpform = 5
+            gdat.fittnumbpsfptotl = 5
+            gdat.binsangl = angl
+            psfn = retr_psfn(gdat, gdat.psfpexpr, gdat.indxener, angl, 'doubking', None, False)
+            fwhm = retr_fwhm(psfn, angl) 
         for i in indxener:
             for m in indxevtt:
+                if recotype == 'manu':
+                    if i == 0:
+                        sigm = 2.
+                    if i == 1:
+                        sigm = 1.
+                    if i == 2:
+                        sigm = 0.4
+                    if i == 3:
+                        sigm = 0.09
+                    if i == 4:
+                        sigm = 0.05
+                    if m == 1:
+                        sigm *= 1.5
+                    fwhmtemp = 2.355 * sigm * pi / 180.
+                else:
+                    fwhmtemp = fwhm[i, m]
                 print 'im'
                 print i, m
-                print 'fwhm[i, m]'
-                print fwhm[i, m] * 180. / pi
-                print 'psfn[i, :20, m]'
-                print psfn[i, :20, m]
+                print 'fwhm'
+                print fwhmtemp * 180. / pi
                 print
-                #if i == 0:
-                #    sigm = 2.
-                #if i == 1:
-                #    sigm = 1.
-                #if i == 2:
-                #    sigm = 0.4
-                #if i == 3:
-                #    sigm = 0.09
-                #if i == 4:
-                #    sigm = 0.05
-                #if m == 1:
-                #    sigm *= 1.5
-                #fwhm = 2.355 * sigm * pi / 180.
-                mapsoutp[i, :, m] = hp.smoothing(mapsinpt[i, :, m], fwhm=fwhm[i, m])
+                mapsoutp[i, :, m] = hp.smoothing(mapsinpt[i, :, m], fwhm=fwhmtemp)
     
     if kerntype == 'ferm':
         # get the beam
