@@ -1543,19 +1543,42 @@ def smth_ferm(mapsinpt, meanener, recotype, maxmmpol=None, makeplot=False, kernt
         for i in indxener:
             for m in indxevtt:
                 if recotype == 'manu':
-                    if i == 0:
-                        sigm = 2.
-                    if i == 1:
-                        sigm = 1.
-                    if i == 2:
-                        sigm = 0.4
-                    if i == 3:
-                        sigm = 0.09
-                    if i == 4:
-                        sigm = 0.05
-                    if m == 1:
-                        sigm *= 1.5
-                    fwhmtemp = 2.355 * sigm * pi / 180.
+                    fwhmfitt = array([ \
+                                      2.2591633256, \
+                                      1.71342705148, \
+                                      1.45102416042, \
+                                      1.10904308863, \
+                                      0.928844633041, \
+                                      0.621357720854, \
+                                      0.510777917886, \
+                                      0.500998238444, \
+                                      0.36102878406, \
+                                      0.246788005029, \
+                                      0.195373208584, \
+                                      0.192829849688, \
+                                      0.155934418827, \
+                                      0.123744918778, \
+                                      0.0889795596446, \
+                                      0.0739099177209, \
+                                      0.0777070595049, \
+                                      0.0590032526699, \
+                                      0.0570066113952, \
+                                      0.0522932064601, \
+                                     ])
+                    fwhmtemp = fwhmfitt[4*i+m]
+                    #if i == 0:
+                    #    sigm = 2.
+                    #if i == 1:
+                    #    sigm = 0.6
+                    #if i == 2:
+                    #    sigm = 0.25
+                    #if i == 3:
+                    #    sigm = 0.05
+                    #if i == 4:
+                    #    sigm = 0.04
+                    #if m == 1:
+                    #    sigm *= 1.5
+                    #fwhmtemp = 2.355 * sigm * pi / 180.
                 else:
                     fwhmtemp = fwhm[i, m]
                 print 'im'
