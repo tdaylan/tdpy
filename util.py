@@ -1573,9 +1573,9 @@ def smth_ferm(mapsinpt, meanener, recotype, maxmmpol=None, makeplot=False, kernt
                             sigm = 100.
                     if i == 1:
                         if m == 0:
-                            sigm = 1.
+                            sigm = 1.05
                         if m == 1:
-                            sigm = 0.65
+                            sigm = 0.7
                     if i == 2:
                         if m == 0:
                             sigm = 0.47
