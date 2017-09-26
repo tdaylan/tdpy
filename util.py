@@ -17,6 +17,8 @@ class gdatstrt(object):
         if hasattr(self, attr) and self.boollockmodi and attr != 'boollockmodi':
             raise KeyError('{} has already been set'.format(attr))
         
+        if len(attr) % 4 != 0:
+            raise Exception('')
         # temp
         #if type(valu).__name__ == 'gdatstrt':
         #    raise Exception('')
