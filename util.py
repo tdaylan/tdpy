@@ -874,6 +874,9 @@ def cart_heal(cart, minmlgal=-180., maxmlgal=180., minmbgal=-90., maxmbgal=90., 
 
 
 class cntr():
+    def gets(self):
+        return self.cntr
+
     def incr(self, valu=1):
         temp = self.cntr
         self.cntr += valu

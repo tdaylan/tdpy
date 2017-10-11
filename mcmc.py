@@ -550,17 +550,26 @@ def retr_timeatcr(listsamp, verbtype=1, atcrtype='maxm'):
 
     atcr = retr_atcr_neww(listsamp)
     indxatcr = where(atcr > 0.2)
-    
+     
     if indxatcr[0].size == 0:
         boolfail = True
         timeatcr = 0
     else:
+        if atcrtype == 'nomi':
+            timeatcr = argmax(indxatcr[0], axis=0)
         if atcrtype == 'maxm':
             indx = argmax(indxatcr[0])
             indxtimemaxm = indxatcr[0][indx]
             indxparamaxm = indxatcr[1][indx]
             atcr = atcr[:, indxparamaxm]
             timeatcr = indxtimemaxm
+   
+    print 'retr_timeatcr()'
+    print 'atcr'
+    print atcr
+    print 'timeatcr'
+    print timeatcr
+    print
 
     if boolfail:
         print 'Autocorrelation time could not be estimated.'
@@ -592,7 +601,7 @@ def plot_gmrb(path, gmrbstat):
     plt.close(figr)
 
 
-def plot_atcr(path, atcr, timeatcr):
+def plot_atcr(path, atcr, timeatcr, strgextn=''):
 
     numbsampatcr = atcr.size
     
@@ -603,7 +612,8 @@ def plot_atcr(path, atcr, timeatcr):
     axis.text(0.8, 0.8, r'$\tau_{exp} = %.3g$' % timeatcr, ha='center', va='center', transform=axis.transAxes)
     axis.axhline(0., ls='--', alpha=0.5)
     plt.tight_layout()
-    figr.savefig(path + 'atcr.pdf')
+    pathplot = path + 'atcr%s.pdf' % strgextn
+    figr.savefig(pathplot)
     plt.close(figr)
     
         
