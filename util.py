@@ -24,7 +24,54 @@ class gdatstrt(object):
         # temp
         #if type(valu).__name__ == 'gdatstrt':
         #    raise Exception('')
+        
+        # temp
+        #print 'attr'
+        #print attr
+        #print 'valu'
+        #print valu
+        #print
+        if attr == 'nextdeflhost' and isinstance(valu, ndarray):
+            print 'type(valu)'
+            print type(valu)
+            raise Exception('')
+
+        if hasattr(self, attr) and attr.startswith('this'):
+            if type(valu) != type(getattr(self, attr)) and attr != 'thisaccppsfn' and attr != 'thisaccpprio' and attr != 'thisindxproptype' and attr != 'thisaccpprop' \
+                             and attr != 'thislpritotl' and attr != 'thislliktotl' and attr != 'thisaccp' and attr != 'thislliktotlprev':
+                print 'attr'
+                print attr
+                print 'type(valu)'
+                print type(valu)
+                print 'type(getattr(self, attr))'
+                print type(getattr(self, attr))
+                raise Exception('Global object current state attribute changed type!')
+            booltemp = False
+            if isinstance(valu, ndarray):
+                if (getattr(self, attr) != valu).any():
+                    booltemp = True
+            elif isscalar(valu):
+                if isinstance(valu, list):
+                    print 'attr'
+                    print attr
+                    raise Exception('')
+                if getattr(self, attr) != valu:
+                    booltemp = True
             
+            if booltemp:    
+                print 'Changing the value of %s...' % attr
+                if isinstance(valu, ndarray):
+                    print 'getattr(self, attr)'
+                    summgene(getattr(self, attr))
+                    print 'valu'
+                    summgene(valu)
+                else:
+                    print 'getattr(self, attr)'
+                    print getattr(self, attr)
+                    print 'valu'
+                    print valu
+                print
+
         super(gdatstrt, self).__setattr__(attr, valu)
 
 
