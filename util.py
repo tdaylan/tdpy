@@ -45,7 +45,8 @@ class gdatstrt(object):
                 print type(valu)
                 print 'type(getattr(self, attr))'
                 print type(getattr(self, attr))
-                raise Exception('Global object current state attribute changed type!')
+                print 'Global object current state attribute changed type!'
+                #raise Exception('Global object current state attribute changed type!')
             booltemp = False
             if isinstance(valu, ndarray):
                 if (getattr(self, attr) != valu).any():
@@ -58,7 +59,7 @@ class gdatstrt(object):
                 if getattr(self, attr) != valu:
                     booltemp = True
             
-            if booltemp:    
+            if False and booltemp:    
                 print 'Changing the value of %s...' % attr
                 if isinstance(valu, ndarray):
                     print 'getattr(self, attr)'
