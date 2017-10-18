@@ -650,7 +650,15 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
         print 'path'
         print path
         return
-
+    
+    if not isfinite(listpara).all():
+        print 'labl'
+        print labl
+        print 'listpara'
+        print listpara
+        summgene(listpara)
+        raise Exception('')
+    
     if listpara.size == 0:
         return
 
