@@ -21,9 +21,6 @@ class gdatstrt(object):
             print 'attr'
             print attr
             raise Exception('')
-        # temp
-        #if type(valu).__name__ == 'gdatstrt':
-        #    raise Exception('')
         
         # temp
         #print 'attr'
@@ -31,6 +28,9 @@ class gdatstrt(object):
         #print 'valu'
         #print valu
         #print
+        if attr == 'thislliktotl' and hasattr(self, attr) and getattr(self, attr) - 100. > valu:
+            raise Exception('Trying to decrease lliktotl too much...')
+        
         if attr == 'nextdeflhost' and isinstance(valu, ndarray):
             print 'type(valu)'
             print type(valu)
