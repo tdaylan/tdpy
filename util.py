@@ -22,12 +22,6 @@ class gdatstrt(object):
             print attr
             raise Exception('')
         
-        # temp
-        #print 'attr'
-        #print attr
-        #print 'valu'
-        #print valu
-        #print
         if attr == 'thislliktotl' and hasattr(self, attr) and getattr(self, attr) - 100. > valu:
             raise Exception('Trying to decrease lliktotl too much...')
         
@@ -36,7 +30,12 @@ class gdatstrt(object):
             print type(valu)
             raise Exception('')
 
-        if hasattr(self, attr) and attr.startswith('this'):
+        # temp
+        #if attr == 'indxsampmodi':
+        #    if not isinstance(valu, int64) and len(valu) > 6:
+        #        raise Exception('Setting gdatmodi.indxsampmodi to an array!')
+        
+        if False and hasattr(self, attr) and attr.startswith('this'):
             if type(valu) != type(getattr(self, attr)) and attr != 'thisaccppsfn' and attr != 'thisaccpprio' and attr != 'thisindxproptype' and attr != 'thisaccpprop' \
                              and attr != 'thislpritotl' and attr != 'thislliktotl' and attr != 'thisaccp' and attr != 'thislliktotlprev':
                 print 'attr'
@@ -59,7 +58,12 @@ class gdatstrt(object):
                 if getattr(self, attr) != valu:
                     booltemp = True
             
-            if False and booltemp:    
+            if attr == 'thissampvarb':
+                print 'heeeeey'
+                print 'booltemp'
+                print booltemp
+                print 
+            if booltemp:    
                 print 'Changing the value of %s...' % attr
                 if isinstance(valu, ndarray):
                     print 'getattr(self, attr)'
@@ -72,7 +76,7 @@ class gdatstrt(object):
                     print 'valu'
                     print valu
                 print
-
+        
         super(gdatstrt, self).__setattr__(attr, valu)
 
 
