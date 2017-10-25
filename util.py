@@ -24,12 +24,7 @@ class gdatstrt(object):
         
         if attr == 'thislliktotl' and hasattr(self, attr) and getattr(self, attr) - 100. > valu:
             raise Exception('Trying to decrease lliktotl too much...')
-        
-        if attr == 'nextdeflhost' and isinstance(valu, ndarray):
-            print 'type(valu)'
-            print type(valu)
-            raise Exception('')
-
+       
         # temp
         #if attr == 'indxsampmodi':
         #    if not isinstance(valu, int64) and len(valu) > 6:
