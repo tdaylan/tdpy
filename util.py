@@ -937,7 +937,7 @@ def retr_evttferm(recotype):
     if recotype == 'rec7':
         evtt = array([1, 2])
     if recotype == 'rec8':
-        evtt = array([4, 8, 16, 32])
+        evtt = array([16, 32])
     if recotype == 'manu':
         evtt = array([0, 1])
     
