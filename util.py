@@ -30,7 +30,7 @@ class gdatstrt(object):
         #    if not isinstance(valu, int64) and len(valu) > 6:
         #        raise Exception('Setting gdatmodi.indxsampmodi to an array!')
         
-        if hasattr(self, attr) and attr.startswith('this'):
+        if False and hasattr(self, attr) and attr.startswith('this'):
             if type(valu) != type(getattr(self, attr)) and attr != 'thisaccppsfn' and attr != 'thisaccpprio' and attr != 'thisindxproptype' and attr != 'thisaccpprop' \
                              and attr != 'thislpritotl' and attr != 'thislliktotl' and attr != 'thisaccp' and attr != 'thislliktotlprev':
                 print 'attr'
