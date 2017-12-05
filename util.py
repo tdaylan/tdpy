@@ -1174,7 +1174,8 @@ def retr_healgrid(numbside):
     numbpixl = 12 * numbside**2
     apix = 4. * pi / numbpixl # [sr]
     thhp, phhp = hp.pixelfunc.pix2ang(numbside, arange(numbpixl), nest=False) # [rad]
-    lghp = ((rad2deg(phhp) - 180.) % 360.) - 180. # [deg]
+    lghp = rad2deg(phhp)
+    lghp = 180. - ((lghp - 180.) % 360.)# - 180. # [deg]
     bghp = 90. - rad2deg(thhp)
 
     return lghp, bghp, numbpixl, apix
@@ -1232,7 +1233,7 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
     
     lghp, bghp, numbpixl, apix = retr_healgrid(numbsideinpt)
 
-    bgcrmesh, lgcrmesh = meshgrid(bgcr, lgcr)
+    bgcrmesh, lgcrmesh = meshgrid(bgcr, lgcr, indexing='ij')
     
     indxpixlmesh = hp.ang2pix(numbsideinpt, pi / 2. - deg2rad(bgcrmesh), deg2rad(lgcrmesh))
     
@@ -1244,17 +1245,17 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
             pixlcnvt[indxpixlrofi[k]] = k
         indxpixltemp = pixlcnvt[indxpixlmesh]
     
-    indxbgcrgrid, indxlgcrgrid = meshgrid(indxbgcr, indxlgcr)
+    indxbgcrgrid, indxlgcrgrid = meshgrid(indxbgcr, indxlgcr, indexing='ij')
 
     if hmap.ndim == 2:
         hmapcart = empty((numbsidebgal, numbsidelgal, shap[1]))
         for k in range(shap[1]):
-            hmapcart[meshgrid(indxbgcr, indxlgcr, k)] = hmap[indxpixltemp, k][:, :, None]
+            hmapcart[meshgrid(indxbgcr, indxlgcr, k, indexing='ij')] = hmap[indxpixltemp, k][:, :, None]
     else:
         hmapcart = empty((numbsidebgal, numbsidelgal))
-        hmapcart[meshgrid(indxbgcr, indxlgcr)] = hmap[indxpixltemp]
+        hmapcart[meshgrid(indxbgcr, indxlgcr, indexing='ij')] = hmap[indxpixltemp]
 
-    return hmapcart
+    return fliplr(hmapcart).T
 
 
 def retr_sbrtfdfm(binsener, numbside=256, vfdm=7):                    
