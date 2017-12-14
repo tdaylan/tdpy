@@ -124,7 +124,7 @@ def time_func_verb(func, *args):
     print '%3g pm %3g ms' % (meantimediff * 1e3, stdvtimediff * 1e3)
     
 
-def retr_postvarb(listvarb):
+def retr_pctlvarb(listvarb):
 
     shap = zeros(len(listvarb.shape), dtype=int)
     shap[0] = 3
@@ -142,7 +142,7 @@ def retr_postvarb(listvarb):
 def retr_errrvarb(inpt, samp=False):
 
     if samp:
-        postvarb = retr_postvarb(inpt)
+        postvarb = retr_pctlvarb(inpt)
     else:
         postvarb = inpt
 
