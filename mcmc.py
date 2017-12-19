@@ -729,7 +729,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
     plt.close(figr)
 
 
-def plot_plot(path, xdat, ydat, lablxdat, lablydat, titl=None, linestyl=[None], colr=[None], legd=[None], **args):
+def plot_plot(path, xdat, ydat, lablxdat, lablydat, scalxaxi, titl=None, linestyl=[None], colr=[None], legd=[None], **args):
     
     if not isinstance(ydat, list):
         listydat = [ydat]
@@ -747,6 +747,8 @@ def plot_plot(path, xdat, ydat, lablxdat, lablydat, titl=None, linestyl=[None], 
         #axis.plot(xdat, ydat, ls=linestyl[k], color=colr[k], label=legd[k], **args)
     axis.set_ylabel(lablydat)
     axis.set_xlabel(lablxdat)
+    if scalxaxi == 'logt':
+        axis.set_xscale('log')
     if titl != None:
         axis.set_title(titl)
     plt.tight_layout()
