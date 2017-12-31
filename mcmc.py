@@ -662,13 +662,14 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, q
     if listpara.size == 0:
         return
 
-    minmpara = amin(listpara)
     maxmpara = amax(listpara)
-    limspara = array([minmpara, maxmpara])
     if scalpara == 'logt':
+        minmpara = amin(listpara[where(listpara > 0.)])
         bins = icdf_logt(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
     else:
+        minmpara = amin(listpara)
         bins = icdf_self(linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
+    limspara = array([minmpara, maxmpara])
         
     if quan:
         quanarry = sp.stats.mstats.mquantiles(listpara, prob=[0.025, 0.16, 0.84, 0.975])
@@ -919,6 +920,12 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                 if thisscalpara[l] == 'logt':
                     axis.set_xscale('log', basex=10)
                     arry = logspace(log10(thislims[0, l]), log10(thislims[1, l]), numbtickbins)
+                    if not isfinite(arry).all():
+                        print 'arry'
+                        print arry
+                        print 'thislims'
+                        print thislims
+                        raise Exception('')
                     strgarry = [util.mexp(arry[a]) for a in range(numbtickbins)]
                     axis.set_xticks(arry)
                     axis.set_xticklabels(strgarry)
