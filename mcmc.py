@@ -564,13 +564,6 @@ def retr_timeatcr(listsamp, verbtype=1, atcrtype='maxm'):
             atcr = atcr[:, indxparamaxm]
             timeatcr = indxtimemaxm
    
-    print 'retr_timeatcr()'
-    print 'atcr'
-    print atcr
-    print 'timeatcr'
-    print timeatcr
-    print
-
     if boolfail:
         print 'Autocorrelation time could not be estimated.'
         if atcrtype == 'maxm':
