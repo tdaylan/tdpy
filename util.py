@@ -200,9 +200,6 @@ def mexp(numb):
     if numb == 0.:
         strg = '0'
     else:
-        print 'numb'
-        print numb
-        print
         logn = log10(fabs(numb))
         expo = floor(logn)
         expo = int(expo)
