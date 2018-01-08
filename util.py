@@ -1326,9 +1326,22 @@ def plot_braz(axis, xdat, ydat, yerr=None, numbsampdraw=0, lcol='yellow', dcol='
 
     if yerr != None:
         axis.plot(xdat, ydat - yerr[0, :], color=dcol, alpha=alpha)
-        axis.plot(xdat, ydat, color=mcol, label=labl, alpha=alpha)
+        line, = axis.plot(xdat, ydat, color=mcol, label=labl, alpha=alpha)
         axis.plot(xdat, ydat + yerr[1, :], color=dcol, alpha=alpha)
+        ptch = mpl.patches.Patch(facecolor=dcol, alpha=alpha, linewidth=0)
+        #ax.legend([(p1,p2)],['points'],scatterpoints=2)
+        #plt.legend([(ptch, line)], ["Theory"], handler_map = {line : mpl.legend_handler.HandlerLine2D(marker_pad = 0)} )
+        
         axis.fill_between(xdat, ydat - yerr[0, :], ydat + yerr[1, :], color=dcol, alpha=alpha)
+        
+        print 'axis.get_legend_handles_labels()'
+        print axis.get_legend_handles_labels()
+        hand, labl = axis.get_legend_handles_labels()
+        print 'labl'
+        print labl
+        print
+
+        return ptch, line
     else:
         axis.plot(xdat, percentile(ydat, 2.5, 0), color=lcol, alpha=alpha)
         axis.plot(xdat, percentile(ydat, 16., 0), color=dcol, alpha=alpha)
