@@ -1337,8 +1337,9 @@ def plot_braz(axis, xdat, ydat, yerr=None, numbsampdraw=0, lcol='yellow', dcol='
         print 'axis.get_legend_handles_labels()'
         print axis.get_legend_handles_labels()
         hand, labl = axis.get_legend_handles_labels()
-        print 'labl'
-        print labl
+        hand[0] = [hand[0], ptch]
+        print 'axis.get_legend_handles_labels()'
+        print axis.get_legend_handles_labels()
         print
 
         return ptch, line
