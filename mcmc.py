@@ -810,13 +810,7 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
         lims = zeros((2, numbpara))
         lims[0, :] = amin(listsamp, 0)
         lims[1, :] = amax(listsamp, 0)
-        print 'lims[0, :]'
-        print lims[0, :]
-        print 'lims[1, :]'
-        print lims[1, :]
-
         for k in range(numbpara):
-            
             if truepara[k] != None:
                 if isfinite(truepara[k]):
                     print 'heeey'
@@ -828,10 +822,6 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
             if lims[0, k] == lims[1, k]:
                 lims[0, k] /= 2.
                 lims[1, k] *= 2.
-        print 'lims[0, :]'
-        print lims[0, :]
-        print 'lims[1, :]'
-        print lims[1, :]
     
     indxparagood = ones(numbpara, dtype=bool)
     indxparagood[where(lims[0, :] == lims[1, :])] = False
