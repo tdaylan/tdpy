@@ -810,17 +810,29 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
         lims = zeros((2, numbpara))
         lims[0, :] = amin(listsamp, 0)
         lims[1, :] = amax(listsamp, 0)
+        print 'lims[0, :]'
+        print lims[0, :]
+        print 'lims[1, :]'
+        print lims[1, :]
+
         for k in range(numbpara):
             
             if truepara[k] != None:
                 if isfinite(truepara[k]):
+                    print 'heeey'
+                    print 'k'
+                    print k
                     lims[0, k] = min(lims[0, k], truepara[k])
                     lims[1, k] = max(lims[1, k], truepara[k])
 
             if lims[0, k] == lims[1, k]:
                 lims[0, k] /= 2.
                 lims[1, k] *= 2.
-        
+        print 'lims[0, :]'
+        print lims[0, :]
+        print 'lims[1, :]'
+        print lims[1, :]
+    
     indxparagood = ones(numbpara, dtype=bool)
     indxparagood[where(lims[0, :] == lims[1, :])] = False
     
@@ -914,10 +926,21 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                     axis.set_xscale('log', basex=10)
                     arry = logspace(log10(thislims[0, l]), log10(thislims[1, l]), numbtickbins)
                     if not isfinite(arry).all():
-                        print 'arry'
-                        print arry
+                        print 'l'
+                        print l
+                        print 'listsamp'
+                        print listsamp
+                        util.summgene(listsamp)
+                        print 'strgpara'
+                        print strgpara
+                        print 'scalpara'
+                        print scalpara
+                        print 'lims'
+                        print lims
                         print 'thislims'
                         print thislims
+                        print 'arry'
+                        print arry
                         raise Exception('')
                     strgarry = [util.mexp(arry[a]) for a in range(numbtickbins)]
                     axis.set_xticks(arry)
