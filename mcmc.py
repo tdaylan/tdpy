@@ -813,9 +813,6 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
         for k in range(numbpara):
             if truepara[k] != None:
                 if isfinite(truepara[k]):
-                    print 'heeey'
-                    print 'k'
-                    print k
                     lims[0, k] = min(lims[0, k], truepara[k])
                     lims[1, k] = max(lims[1, k], truepara[k])
 
