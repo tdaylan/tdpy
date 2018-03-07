@@ -820,6 +820,11 @@ def plot_grid(path, listsamp, strgpara, join=False, lims=None, scalpara=None, pl
                 lims[0, k] /= 2.
                 lims[1, k] *= 2.
     
+    for k in range(numbpara):
+        if lims[0, k] == 0 and scalpara[k] == 'logt':
+            print 'Increasing the lower limit of the plotting region because the variable is log-stretched and has a minimum of 0...'
+            lims[0, k] = amin(listsamp[where(listsamp[:, k] > 0.), k])
+    
     indxparagood = ones(numbpara, dtype=bool)
     indxparagood[where(lims[0, :] == lims[1, :])] = False
     
