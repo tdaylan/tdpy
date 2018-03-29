@@ -1334,13 +1334,8 @@ def plot_braz(axis, xdat, ydat, yerr=None, numbsampdraw=0, lcol='yellow', dcol='
         
         axis.fill_between(xdat, ydat - yerr[0, :], ydat + yerr[1, :], color=dcol, alpha=alpha)
         
-        print 'axis.get_legend_handles_labels()'
-        print axis.get_legend_handles_labels()
         hand, labl = axis.get_legend_handles_labels()
         hand[0] = [hand[0], ptch]
-        print 'axis.get_legend_handles_labels()'
-        print axis.get_legend_handles_labels()
-        print
 
         return ptch, line
     else:
