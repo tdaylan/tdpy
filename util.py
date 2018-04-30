@@ -1057,7 +1057,6 @@ def read_fits(path, pathimag=None, full=False, verbtype=0):
                         plt.tight_layout()
                         path = pathimag + 'readfits_%s.pdf' % listtype[n]
                         cmnd += ' ' + path
-                        listpathimag.append(path)
                         figr.savefig(path)
                         plt.close(figr)
                     except:
