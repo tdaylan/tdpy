@@ -1065,8 +1065,6 @@ def read_fits(path, pathimag=None, full=False, verbtype=0):
                         print
         
     cmnd += ' ' + pathimag + 'merg.pdf'
-    print 'cmnd'
-    print cmnd
     os.system(cmnd)
 
     return listdata
