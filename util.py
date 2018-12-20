@@ -987,8 +987,6 @@ def read_fits(path, pathimag=None, full=False, verbtype=0):
     if pathimag != None:
         os.system('mkdir -p ' + pathimag)
     
-    cmnd = 'convert -density 300'
-    
     hdun = pf.open(path)
     numbhead = len(hdun)
     if verbtype > 0:
@@ -1044,6 +1042,8 @@ def read_fits(path, pathimag=None, full=False, verbtype=0):
                         print
 
         if pathimag != None:
+            cmnd = 'convert -density 300'
+    
             for n in range(len(listtype)):
                 if not listform[n].endswith('A') and isfinite(data[listtype[n]]).all():
                     figr, axis = plt.subplots()
@@ -1064,8 +1064,8 @@ def read_fits(path, pathimag=None, full=False, verbtype=0):
                         print 'Failed on %s' % listtype[n]
                         print
         
-    cmnd += ' ' + pathimag + 'merg.pdf'
-    os.system(cmnd)
+            cmnd += ' ' + pathimag + 'merg.pdf'
+            os.system(cmnd)
 
     return listdata
 

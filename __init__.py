@@ -17,9 +17,6 @@ mpl.rcParams['figure.figsize'] = (6., 5.)
 import seaborn as sns
 sns.set(context='poster', style='ticks', color_codes=True)
 
-# FITS
-import pyfits as pf
-
 # pixelization
 import healpy as hp
 from healpy.rotator import angdist
