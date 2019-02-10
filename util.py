@@ -268,10 +268,14 @@ class varb(object):
 
     
 def summgene(varb):
-    print amin(varb)
-    print amax(varb)
-    print mean(varb)
-    print varb.shape
+    
+    try:
+        print amin(varb)
+        print amax(varb)
+        print mean(varb)
+        print varb.shape
+    except:
+        print varb
 
 
 def retr_p4dm_spec(anch, part='el'):
