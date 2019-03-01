@@ -1,9 +1,5 @@
 # numerics
-from numpy import *
-from numpy.random import *
-from numpy.random import choice
-from scipy.integrate import *
-from scipy.interpolate import *
+import numpy as np
 import scipy as sp
 from scipy.special import erfi
 
@@ -22,7 +18,7 @@ import healpy as hp
 from healpy.rotator import angdist
 
 # utilities
-import psutil, sys, sh, os, functools, time, datetime, cPickle
+import psutil, sys, sh, os, functools, time, datetime, cPickle, fnmatch
 
 # multiprocessing
 import multiprocessing as mp
@@ -33,4 +29,4 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 # astropy
 import astropy.coordinates, astropy.units
-
+import astropy.io
