@@ -132,9 +132,9 @@ def retr_pctlvarb(listvarb):
     shap = list(shap)
     postvarb = np.zeros(shap)
     
-    postvarb[0, ...] = percentile(listvarb, 50., axis=0)
-    postvarb[1, ...] = percentile(listvarb, 16., axis=0)
-    postvarb[2, ...] = percentile(listvarb, 84., axis=0)
+    postvarb[0, ...] = np.percentile(listvarb, 50., axis=0)
+    postvarb[1, ...] = np.percentile(listvarb, 16., axis=0)
+    postvarb[2, ...] = np.percentile(listvarb, 84., axis=0)
 
     return postvarb
 
@@ -146,7 +146,7 @@ def retr_errrvarb(inpt, samp=False):
     else:
         postvarb = inpt
 
-    errr = fabs(postvarb[0, ...] - postvarb[1:3, ...])
+    errr = np.abs(postvarb[0, ...] - postvarb[1:3, ...])
 
     return errr
 
@@ -204,7 +204,7 @@ def retr_nfwp(nfwg, numbside, norm=None):
     nradi = 100
     minmradi = 1e-2
     maxmradi = 1e2
-    radi = np.logspace(log10(minmradi), log10(maxmradi), nradi)
+    radi = np.logspace(np.log10(minmradi), np.log10(maxmradi), nradi)
     
     nsadi = 100
     minmsadi = 0.
@@ -227,7 +227,7 @@ def retr_nfwp(nfwg, numbside, norm=None):
     edengridtotl = sum(edengrid**2, axis=0)
 
     if norm != None:
-        jgahp = argsort(gahp)
+        jgahp = np.argsort(gahp)
         edengridtotl /= interp1d(gahp[jgahp], edengridtotl[jgahp])(5.)
         
     return edengridtotl
@@ -237,12 +237,12 @@ def mexp(numb):
     if numb == 0.:
         strg = '0'
     else:
-        logn = log10(fabs(numb))
-        expo = floor(logn)
+        logn = np.log10(np.fabs(numb))
+        expo = np.floor(logn)
         expo = int(expo)
-        mant = 10**(logn - expo) * numb / fabs(numb)
+        mant = 10**(logn - expo) * numb / np.fabs(numb)
         
-        if fabs(numb) > 1e2 or fabs(numb) < 1e-2:
+        if np.fabs(numb) > 1e2 or np.fabs(numb) < 1e-2:
             if mant == 1. or mant == -1.:
                 strg = r'$10^{%d}$' % expo
             else:
@@ -293,7 +293,7 @@ class varb(object):
             numbtemp = self.numb
 
         if scal == 'logt':
-            arry = np.logspace(log10(minm), log10(maxm), numbtemp) 
+            arry = np.logspace(np.log10(minm), np.log10(maxm), numbtemp) 
         if scal == 'self':
             arry = np.linspace(minm, maxm, numbtemp) 
         
@@ -410,7 +410,7 @@ def corr_catl(lgalseco, bgalseco, lgalfrst, bgalfrst, anglassc=np.pi/180., verbt
         if thisindxfrst.size > 0:
             
             # if there are multiple associated true PS, sort them
-            indx = argsort(dist[thisindxfrst])
+            indx = np.argsort(dist[thisindxfrst])
             dist = dist[thisindxfrst][indx]
             thisindxfrst = thisindxfrst[indx]
                 
@@ -477,7 +477,7 @@ def retr_axis(minm=None, maxm=None, numb=None, bins=None, scal='self'):
             bins = np.linspace(minm, maxm, numb + 1)
             mean = (bins[1:] + bins[:-1]) / 2.
         else:
-            bins = np.logspace(log10(minm), log10(maxm), numb + 1)
+            bins = np.logspace(np.log10(minm), np.log10(maxm), numb + 1)
             mean = np.sqrt(bins[1:] * bins[:-1])
     else:
         if scal == 'self':
@@ -516,7 +516,7 @@ def show_memo(objt, name):
         print 'Total size: %.4g MB' % sizetotl
         
         # sort the sizes to get the largest tail
-        indxsizetemp = argsort(size)[::-1]
+        indxsizetemp = np.argsort(size)[::-1]
         size = size[indxsizetemp]
         attr = attr[indxsizetemp]
         print 'Largest 5:'
@@ -780,7 +780,7 @@ def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=2., gdat=None, 
         
         nextsampconv = randn(numbpara) * thisstdvpara + thissamp
         nextfuncconv = func(nextsampconv, gdat)
-        nexterrr = fabs(nextfuncconv / thisfunc - 1.)
+        nexterrr = np.fabs(nextfuncconv / thisfunc - 1.)
         if nexterrr < thiserrr:
             thiserrr = nexterrr
         nextbool[0] = nexterrr < tolrfunc
@@ -1147,7 +1147,7 @@ def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpix
         if not resi:
             satu = 0.1 * amax(maps)
         else:
-            satu = 0.1 * min(fabs(amin(maps)), amax(maps))
+            satu = 0.1 * min(np.fabs(amin(maps)), amax(maps))
             maps[np.where(maps < -satu)] = -satu
         maps[np.where(maps > satu)] = satu
 
@@ -1171,7 +1171,7 @@ def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpix
         factsrnk = 0.8
     figr, axis = plt.subplots(figsize=(sizefigr, asperati * sizefigr))
     if resi:
-        valu = max(fabs(amin(cart)), fabs(amax(cart)))
+        valu = max(np.fabs(amin(cart)), np.fabs(amax(cart)))
         imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none', vmin=-valu, vmax=valu)
     else:
         imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none')
@@ -1244,7 +1244,7 @@ def retr_isot(binsener, numbside=256):
     sbrtisottemp = isotdata[:, 1] * 1e3 # [1/cm^2/s/sr/GeV]
     
     # sampling energy grid
-    binsenersamp = np.logspace(log10(amin(binsener)), log10(amax(binsener)), numbsamp * numbener)
+    binsenersamp = np.logspace(np.log10(amin(binsener)), np.log10(amax(binsener)), numbsamp * numbener)
     
     # interpolate the surface brightness over the sampling energy grid
     sbrtisottemp = interp(binsenersamp, enerisot, sbrtisottemp)
@@ -1334,7 +1334,7 @@ def retr_sbrtfdfm(binsener, numbside=256, vfdm=7):
     
     sbrtfdfm = np.empty((numbener, numbpixl))
     numbsampbins = 10
-    enersamp = np.logspace(log10(amin(binsener)), log10(amax(binsener)), numbsampbins * numbener)
+    enersamp = np.logspace(np.log10(amin(binsener)), np.log10(amax(binsener)), numbsampbins * numbener)
     
     sbrtfdfmheal = interpolate.interp1d(enerfdfm, sbrtfdfmheal, axis=0)(enersamp)
     for i in range(numbener):
@@ -1386,13 +1386,13 @@ def plot_braz(axis, xdat, ydat, yerr=None, numbsampdraw=0, lcol='yellow', dcol='
 
         return ptch, line
     else:
-        axis.plot(xdat, percentile(ydat, 2.5, 0), color=lcol, alpha=alpha)
-        axis.plot(xdat, percentile(ydat, 16., 0), color=dcol, alpha=alpha)
-        axis.plot(xdat, percentile(ydat, 50., 0), color=mcol, label=labl, alpha=alpha)
-        axis.plot(xdat, percentile(ydat, 84., 0), color=dcol, alpha=alpha)
-        axis.plot(xdat, percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)
-        axis.fill_between(xdat, percentile(ydat, 2.5, 0), percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)#, label='95% C.L.')
-        axis.fill_between(xdat, percentile(ydat, 16., 0), percentile(ydat, 84., 0), color=dcol, alpha=alpha)#, label='68% C.L.')
+        axis.plot(xdat, np.percentile(ydat, 2.5, 0), color=lcol, alpha=alpha)
+        axis.plot(xdat, np.percentile(ydat, 16., 0), color=dcol, alpha=alpha)
+        axis.plot(xdat, np.percentile(ydat, 50., 0), color=mcol, label=labl, alpha=alpha)
+        axis.plot(xdat, np.percentile(ydat, 84., 0), color=dcol, alpha=alpha)
+        axis.plot(xdat, np.percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)
+        axis.fill_between(xdat, np.percentile(ydat, 2.5, 0), np.percentile(ydat, 97.5, 0), color=lcol, alpha=alpha)#, label='95% C.L.')
+        axis.fill_between(xdat, np.percentile(ydat, 16., 0), np.percentile(ydat, 84., 0), color=dcol, alpha=alpha)#, label='68% C.L.')
 
 
 def retr_psfn(gdat, psfp, indxenertemp, thisangl, psfntype, binsoaxi=None, oaxitype=None, strgmodl='fitt'):
@@ -1524,7 +1524,7 @@ def retr_fwhm(psfn, binsangl):
     wdth = np.zeros((numbener, numbevtt))
     for i in indxener:
         for m in indxevtt:
-            indxanglgood = argsort(psfn[i, :, m])
+            indxanglgood = np.argsort(psfn[i, :, m])
             intpwdth = max(0.5 * amax(psfn[i, :, m]), amin(psfn[i, :, m]))
             if intpwdth > amin(psfn[i, indxanglgood, m]) and intpwdth < amax(psfn[i, indxanglgood, m]):
                 wdth[i, m] = interp1d(psfn[i, indxanglgood, m], binsangl[indxanglgood])(intpwdth)
