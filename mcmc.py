@@ -95,251 +95,251 @@ def gmrb_test(griddata):
     return psrf
 
 
-def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=True, loadchan=False, loadvaripara=True, fracrand=0., \
-                            gdatextr=None, pathdata=None, pathimag=None, rtag='', numbburn=None, truepara=None, numbbinsplot=20, \
-                            numbplotside=None, factthin=None, verbtype=1, factpropeffi=1.2):
-  
-    timeinit = time.time()
-
-    if pathimag is None:
-        try:
-            pathimag = os.environ["TDPY_DATA_PATH"] + '/'
-        except:
-            pathimag = './'
-        pathimag += 'imag/'
-    
-    if pathdata is None:
-        try:
-            pathdata = os.environ["TDPY_DATA_PATH"] + '/'
-        except:
-            pathdata = './'
-        pathdata += 'data/'
-    
-    # construct the global object
-    gdat = util.gdatstrt()
-    gdat.numbproc = numbproc
-    gdat.numbswep = numbswep
-    gdat.llikfunc = llikfunc
-    gdat.datapara = datapara
-    gdat.initsamp = initsamp
-    gdat.optiprop = optiprop
-    gdat.pathimag = pathimag
-    gdat.pathdata = pathdata
-    gdat.rtag = rtag
-    gdat.numbburn = numbburn
-    gdat.numbplotside = numbplotside
-    gdat.factthin = factthin
-    gdat.verbtype = verbtype
-    gdat.factpropeffi = factpropeffi
-    gdat.gdatextr = gdatextr
-    gdat.loadvaripara = loadvaripara
-    gdat.fracrand = fracrand
-
-    if gdat.verbtype > 0:
-        print 'TDMC initialized.'
-    
-    if gdat.rtag == '':
-        strg = 'tdmcchan.p'
-    else:
-        strg = 'tdmcchan_%s.p' % gdat.rtag
-    pathchan = gdat.pathdata + strg
-    if os.path.isfile(pathchan) and loadchan:
-        if gdat.verbtype > 0:
-            print 'Reading the previously computed chain from %s...' % pathchan
-        fobj = open(pathchan, 'rb')
-        chan = cPickle.load(fobj)
-        fobj.close()
-        return chan
-        
-    gdat.numbpara = len(datapara.name)
-    gdat.indxpara = np.arange(gdat.numbpara)
-        
-    # Defaults
-    if truepara is None:
-        truepara = np.array([None] * gdat.numbpara)
-        
-    if numbplotside is None:
-        numbplotside = min(gdat.numbpara, 4)
-
-    # Sampler settings
-    if gdat.numbburn is None:
-        if gdat.optiprop:
-            gdat.numbburn = 0
-        else:
-            gdat.numbburn = int(np.floor(0.1 * gdat.numbswep))
-    if gdat.factthin is None:
-        gdat.factthin = min(gdat.numbswep - gdat.numbburn, 1000 * gdat.numbpara)
-   
-    gdat.indxproc = np.arange(gdat.numbproc)
-
-    # sweeps to be saved
-    gdat.boolsave = np.zeros(gdat.numbswep, dtype=bool)
-    gdat.indxswepsave = np.arange(gdat.numbburn, gdat.numbswep, gdat.factthin)
-    gdat.boolsave[gdat.indxswepsave] = True
-    
-    gdat.indxsampsave = np.zeros(gdat.numbswep, dtype=int)
-    gdat.numbsamp = retr_numbsamp(gdat.numbswep, gdat.numbburn, gdat.factthin)
-    gdat.indxsamp = np.arange(gdat.numbsamp)
-    gdat.numbsamptotl = gdat.numbsamp * gdat.numbproc
-    gdat.indxsamptotl = np.arange(gdat.numbsamptotl)
-    gdat.indxsampsave[gdat.indxswepsave] = np.arange(gdat.numbsamp)
-
-    # initialize the chain
-    if gdat.verbtype > 1:
-        print 'Forking the sampler...'
-        print 'datapara'
-        print datapara.indx
-        print datapara.minm
-        print datapara.maxm
-        print datapara.name
-        print datapara.scal
-        print datapara.labl
-        print datapara.unit
-        print datapara.vari
-
-    if numbproc == 1:
-        listchan = [work(gdat, 0)]
-    else:
-        pool = mp.Pool(numbproc)
-        workpart = functools.partial(work, gdat)
-        listchan = pool.map(workpart, gdat.indxproc)
-   
-        pool.close()
-        pool.join()
-
-    if gdat.verbtype > 0:
-        print 'Accumulating samples from all processes...'
-        timeinit = time.time()
-
-    # parse the sample chain
-    listsampvarb = np.zeros((gdat.numbsamp, gdat.numbproc, gdat.numbpara))
-    listsamp = np.zeros((gdat.numbsamp, gdat.numbproc, gdat.numbpara))
-    listsampcalc = []
-    gdat.numbsampcalc = len(listchan[0][2][0])
-    gdat.indxsampcalc = np.arange(gdat.numbsampcalc)
-    for n in gdat.indxsampcalc:
-        size = listchan[0][2][0][n].size
-        listsampcalc.append(empty((gdat.numbsamp, gdat.numbproc, size)))
-    listllik = np.zeros((gdat.numbsamp, gdat.numbproc))
-    listaccp = np.zeros((gdat.numbswep, gdat.numbproc))
-    listchro = np.zeros((gdat.numbswep, gdat.numbproc))
-    listindxparamodi = np.zeros((gdat.numbswep, gdat.numbproc))
-
-    for k in gdat.indxproc:
-        listsampvarb[:, k, :] = listchan[k][0]
-        listsamp[:, k, :] = listchan[k][1]
-        for j in gdat.indxsamp:
-            for n in gdat.indxsampcalc:
-                listsampcalc[n][j, k, :] = listchan[k][2][j][n]
-        listllik[:, k] = listchan[k][3]
-        listaccp[:, k] = listchan[k][4]
-        listchro[:, k] = listchan[k][5]
-        listindxparamodi[:, k] = listchan[k][6]
-
-    indxlistaccp = np.where(listaccp == True)[0]
-    propeffi = np.zeros(gdat.numbpara)
-    for k in gdat.indxpara:
-        indxlistpara = np.where(listindxparamodi == k)[0]
-        indxlistintc = intersect1d(indxlistaccp, indxlistpara, assume_unique=True)
-        if indxlistpara.size != 0:
-            propeffi[k] = float(indxlistintc.size) / indxlistpara.size    
-    
-    minmlistllik = np.amin(listllik)
-    levi = -np.log(np.mean(1. / np.exp(listllik - minmlistllik))) + minmlistllik
-    info = np.mean(listllik) - levi
-    
-    gdat.strgtimestmp = util.retr_strgtimestmp()
-
-    gdat.pathimag += '%s_%s/' % (gdat.strgtimestmp, gdat.rtag)
-       
-    os.system('mkdir -p %s' % gdat.pathimag)
-
-    gmrbstat = np.zeros(gdat.numbpara)
-    if gdat.numbsamp > 1:
-    
-        if gdat.verbtype > 1:
-            print 'Calculating autocorrelation...'
-            timeinit = time.time()
-        atcr, timeatcr = retr_timeatcr(listsamp, atcrtype='maxm')
-        if gdat.verbtype > 1:
-            timefinl = time.time()
-            print 'Done in %.3g seconds' % (timefinl - timeinit)
-        path = gdat.pathimag
-        plot_atcr(path, atcr, timeatcr)
-    
-        if gdat.numbproc > 1:
-            if gdat.verbtype > 1:
-                print 'Performing Gelman-Rubin convergence test...'
-                timeinit = time.time()
-            for k in gdat.indxpara:
-                gmrbstat[k] = gmrb_test(listsampvarb[:, :, k])
-            if gdat.verbtype > 1:
-                timefinl = time.time()
-                print 'Done in %.3g seconds' % (timefinl - timeinit)
-            path = gdat.pathimag
-            plot_gmrb(path, gmrbstat)
-
-    listsampvarb = listsampvarb.reshape((gdat.numbsamptotl, gdat.numbpara))
-    listsamp = listsamp.reshape((gdat.numbsamptotl, gdat.numbpara))
-    for n in gdat.indxsampcalc:
-        listsampcalc[n] = listsampcalc[n].reshape((gdat.numbsamptotl, -1))
-    listllik = listllik.flatten()
-    listaccp = listaccp.flatten()
-    listchro = listchro.flatten()
-    listindxparamodi = listindxparamodi.flatten()
-
-    if gdat.verbtype > 1:
-        print 'Making plots...'
-        timeinit = time.time()
-    
-    # make plots
-    ## proposal efficiency
-    path = gdat.pathimag
-    plot_propeffi(path, gdat.numbswep, gdat.numbpara, listaccp, listindxparamodi, gdat.datapara.strg)
-
-    ## processing time per sample
-    figr, axis = plt.subplots()
-    binstime = np.logspace(np.log10(np.amin(listchro * 1e3)), np.log10(np.amax(listchro * 1e3)), 50)
-    axis.hist(listchro * 1e3, binstime, log=True)
-    axis.set_ylabel('$N_{samp}$')
-    axis.set_xlabel('$t$ [ms]')
-    axis.set_xscale('log')
-    axis.set_xlim([np.amin(binstime), np.amax(binstime)])
-    axis.set_ylim([0.5, None])
-    plt.tight_layout()
-    path = gdat.pathimag + 'chro.pdf'
-    figr.savefig(gdat.pathimag + 'chro.pdf')
-    plt.close(figr)
-
-    ## likelihood
-    path = gdat.pathimag + 'llik'
-    plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
-    
-    if numbplotside != 0:
-        path = gdat.pathimag + 'fixp'
-        plot_grid(path, listsampvarb, gdat.datapara.strg, truepara=gdat.datapara.true, scalpara=gdat.datapara.scal, numbplotside=numbplotside, numbbinsplot=numbbinsplot)
-        
-    for k in gdat.indxpara:
-        path = gdat.pathimag + gdat.datapara.name[k]
-        plot_trac(path, listsampvarb[:, k], gdat.datapara.strg[k], scalpara=gdat.datapara.scal[k], truepara=gdat.datapara.true[k], numbbinsplot=numbbinsplot)
-        
-    if gdat.verbtype > 1:
-        timefinl = time.time()
-        print 'Done in %.3g seconds' % (timefinl - timeinit)
-
-    chan = [listsampvarb, listsamp, listsampcalc, listllik, listaccp, listchro, listindxparamodi, propeffi, levi, info, gmrbstat]
-    
-    # save the chain if the run was long enough
-    timefinl = time.time()
-    # temp
-    if timefinl - timeinit > 1.:
-        if not os.path.isfile(pathchan):
-            print 'Writing the chain to %s...' % pathchan
-            fobj = open(pathchan, 'wb')
-            cPickle.dump(chan, fobj, protocol=cPickle.HIGHEST_PROTOCOL)
-            fobj.close()
-        
-    return chan
+#def init(llikfunc, datapara, numbproc=1, numbswep=1000, initsamp=None, optiprop=True, loadchan=False, loadvaripara=True, fracrand=0., \
+#                            gdatextr=None, pathdata=None, pathimag=None, rtag='', numbburn=None, truepara=None, numbbinsplot=20, \
+#                            numbplotside=None, factthin=None, verbtype=1, factpropeffi=1.2):
+#  
+#    timeinit = time.time()
+#
+#    if pathimag is None:
+#        try:
+#            pathimag = os.environ["TDPY_DATA_PATH"] + '/'
+#        except:
+#            pathimag = './'
+#        pathimag += 'imag/'
+#    
+#    if pathdata is None:
+#        try:
+#            pathdata = os.environ["TDPY_DATA_PATH"] + '/'
+#        except:
+#            pathdata = './'
+#        pathdata += 'data/'
+#    
+#    # construct the global object
+#    gdat = util.gdatstrt()
+#    gdat.numbproc = numbproc
+#    gdat.numbswep = numbswep
+#    gdat.llikfunc = llikfunc
+#    gdat.datapara = datapara
+#    gdat.initsamp = initsamp
+#    gdat.optiprop = optiprop
+#    gdat.pathimag = pathimag
+#    gdat.pathdata = pathdata
+#    gdat.rtag = rtag
+#    gdat.numbburn = numbburn
+#    gdat.numbplotside = numbplotside
+#    gdat.factthin = factthin
+#    gdat.verbtype = verbtype
+#    gdat.factpropeffi = factpropeffi
+#    gdat.gdatextr = gdatextr
+#    gdat.loadvaripara = loadvaripara
+#    gdat.fracrand = fracrand
+#
+#    if gdat.verbtype > 0:
+#        print('TDMC initialized.')
+#    
+#    if gdat.rtag == '':
+#        strg = 'tdmcchan.p'
+#    else:
+#        strg = 'tdmcchan_%s.p' % gdat.rtag
+#    pathchan = gdat.pathdata + strg
+#    if os.path.isfile(pathchan) and loadchan:
+#        if gdat.verbtype > 0:
+#            print 'Reading the previously computed chain from %s...' % pathchan
+#        fobj = open(pathchan, 'rb')
+#        chan = cPickle.load(fobj)
+#        fobj.close()
+#        return chan
+#        
+#    gdat.numbpara = len(datapara.name)
+#    gdat.indxpara = np.arange(gdat.numbpara)
+#        
+#    # Defaults
+#    if truepara is None:
+#        truepara = np.array([None] * gdat.numbpara)
+#        
+#    if numbplotside is None:
+#        numbplotside = min(gdat.numbpara, 4)
+#
+#    # Sampler settings
+#    if gdat.numbburn is None:
+#        if gdat.optiprop:
+#            gdat.numbburn = 0
+#        else:
+#            gdat.numbburn = int(np.floor(0.1 * gdat.numbswep))
+#    if gdat.factthin is None:
+#        gdat.factthin = min(gdat.numbswep - gdat.numbburn, 1000 * gdat.numbpara)
+#   
+#    gdat.indxproc = np.arange(gdat.numbproc)
+#
+#    # sweeps to be saved
+#    gdat.boolsave = np.zeros(gdat.numbswep, dtype=bool)
+#    gdat.indxswepsave = np.arange(gdat.numbburn, gdat.numbswep, gdat.factthin)
+#    gdat.boolsave[gdat.indxswepsave] = True
+#    
+#    gdat.indxsampsave = np.zeros(gdat.numbswep, dtype=int)
+#    gdat.numbsamp = retr_numbsamp(gdat.numbswep, gdat.numbburn, gdat.factthin)
+#    gdat.indxsamp = np.arange(gdat.numbsamp)
+#    gdat.numbsamptotl = gdat.numbsamp * gdat.numbproc
+#    gdat.indxsamptotl = np.arange(gdat.numbsamptotl)
+#    gdat.indxsampsave[gdat.indxswepsave] = np.arange(gdat.numbsamp)
+#
+#    # initialize the chain
+#    if gdat.verbtype > 1:
+#        print 'Forking the sampler...'
+#        print 'datapara'
+#        print datapara.indx
+#        print datapara.minm
+#        print datapara.maxm
+#        print datapara.name
+#        print datapara.scal
+#        print datapara.labl
+#        print datapara.unit
+#        print datapara.vari
+#
+#    if numbproc == 1:
+#        listchan = [work(gdat, 0)]
+#    else:
+#        pool = mp.Pool(numbproc)
+#        workpart = functools.partial(work, gdat)
+#        listchan = pool.map(workpart, gdat.indxproc)
+#   
+#        pool.close()
+#        pool.join()
+#
+#    if gdat.verbtype > 0:
+#        print 'Accumulating samples from all processes...'
+#        timeinit = time.time()
+#
+#    # parse the sample chain
+#    listsampvarb = np.zeros((gdat.numbsamp, gdat.numbproc, gdat.numbpara))
+#    listsamp = np.zeros((gdat.numbsamp, gdat.numbproc, gdat.numbpara))
+#    listsampcalc = []
+#    gdat.numbsampcalc = len(listchan[0][2][0])
+#    gdat.indxsampcalc = np.arange(gdat.numbsampcalc)
+#    for n in gdat.indxsampcalc:
+#        size = listchan[0][2][0][n].size
+#        listsampcalc.append(empty((gdat.numbsamp, gdat.numbproc, size)))
+#    listllik = np.zeros((gdat.numbsamp, gdat.numbproc))
+#    listaccp = np.zeros((gdat.numbswep, gdat.numbproc))
+#    listchro = np.zeros((gdat.numbswep, gdat.numbproc))
+#    listindxparamodi = np.zeros((gdat.numbswep, gdat.numbproc))
+#
+#    for k in gdat.indxproc:
+#        listsampvarb[:, k, :] = listchan[k][0]
+#        listsamp[:, k, :] = listchan[k][1]
+#        for j in gdat.indxsamp:
+#            for n in gdat.indxsampcalc:
+#                listsampcalc[n][j, k, :] = listchan[k][2][j][n]
+#        listllik[:, k] = listchan[k][3]
+#        listaccp[:, k] = listchan[k][4]
+#        listchro[:, k] = listchan[k][5]
+#        listindxparamodi[:, k] = listchan[k][6]
+#
+#    indxlistaccp = np.where(listaccp == True)[0]
+#    propeffi = np.zeros(gdat.numbpara)
+#    for k in gdat.indxpara:
+#        indxlistpara = np.where(listindxparamodi == k)[0]
+#        indxlistintc = intersect1d(indxlistaccp, indxlistpara, assume_unique=True)
+#        if indxlistpara.size != 0:
+#            propeffi[k] = float(indxlistintc.size) / indxlistpara.size    
+#    
+#    minmlistllik = np.amin(listllik)
+#    levi = -np.log(np.mean(1. / np.exp(listllik - minmlistllik))) + minmlistllik
+#    info = np.mean(listllik) - levi
+#    
+#    gdat.strgtimestmp = util.retr_strgtimestmp()
+#
+#    gdat.pathimag += '%s_%s/' % (gdat.strgtimestmp, gdat.rtag)
+#       
+#    os.system('mkdir -p %s' % gdat.pathimag)
+#
+#    gmrbstat = np.zeros(gdat.numbpara)
+#    if gdat.numbsamp > 1:
+#    
+#        if gdat.verbtype > 1:
+#            print 'Calculating autocorrelation...'
+#            timeinit = time.time()
+#        atcr, timeatcr = retr_timeatcr(listsamp, atcrtype='maxm')
+#        if gdat.verbtype > 1:
+#            timefinl = time.time()
+#            print 'Done in %.3g seconds' % (timefinl - timeinit)
+#        path = gdat.pathimag
+#        plot_atcr(path, atcr, timeatcr)
+#    
+#        if gdat.numbproc > 1:
+#            if gdat.verbtype > 1:
+#                print 'Performing Gelman-Rubin convergence test...'
+#                timeinit = time.time()
+#            for k in gdat.indxpara:
+#                gmrbstat[k] = gmrb_test(listsampvarb[:, :, k])
+#            if gdat.verbtype > 1:
+#                timefinl = time.time()
+#                print 'Done in %.3g seconds' % (timefinl - timeinit)
+#            path = gdat.pathimag
+#            plot_gmrb(path, gmrbstat)
+#
+#    listsampvarb = listsampvarb.reshape((gdat.numbsamptotl, gdat.numbpara))
+#    listsamp = listsamp.reshape((gdat.numbsamptotl, gdat.numbpara))
+#    for n in gdat.indxsampcalc:
+#        listsampcalc[n] = listsampcalc[n].reshape((gdat.numbsamptotl, -1))
+#    listllik = listllik.flatten()
+#    listaccp = listaccp.flatten()
+#    listchro = listchro.flatten()
+#    listindxparamodi = listindxparamodi.flatten()
+#
+#    if gdat.verbtype > 1:
+#        print 'Making plots...'
+#        timeinit = time.time()
+#    
+#    # make plots
+#    ## proposal efficiency
+#    path = gdat.pathimag
+#    plot_propeffi(path, gdat.numbswep, gdat.numbpara, listaccp, listindxparamodi, gdat.datapara.strg)
+#
+#    ## processing time per sample
+#    figr, axis = plt.subplots()
+#    binstime = np.logspace(np.log10(np.amin(listchro * 1e3)), np.log10(np.amax(listchro * 1e3)), 50)
+#    axis.hist(listchro * 1e3, binstime, log=True)
+#    axis.set_ylabel('$N_{samp}$')
+#    axis.set_xlabel('$t$ [ms]')
+#    axis.set_xscale('log')
+#    axis.set_xlim([np.amin(binstime), np.amax(binstime)])
+#    axis.set_ylim([0.5, None])
+#    plt.tight_layout()
+#    path = gdat.pathimag + 'chro.pdf'
+#    figr.savefig(gdat.pathimag + 'chro.pdf')
+#    plt.close(figr)
+#
+#    ## likelihood
+#    path = gdat.pathimag + 'llik'
+#    plot_trac(path, listllik, '$P(D|y)$', titl='log P(D) = %.3g' % levi)
+#    
+#    if numbplotside != 0:
+#        path = gdat.pathimag + 'fixp'
+#        plot_grid(path, listsampvarb, gdat.datapara.strg, truepara=gdat.datapara.true, scalpara=gdat.datapara.scal, numbplotside=numbplotside, numbbinsplot=numbbinsplot)
+#        
+#    for k in gdat.indxpara:
+#        path = gdat.pathimag + gdat.datapara.name[k]
+#        plot_trac(path, listsampvarb[:, k], gdat.datapara.strg[k], scalpara=gdat.datapara.scal[k], truepara=gdat.datapara.true[k], numbbinsplot=numbbinsplot)
+#        
+#    if gdat.verbtype > 1:
+#        timefinl = time.time()
+#        print 'Done in %.3g seconds' % (timefinl - timeinit)
+#
+#    chan = [listsampvarb, listsamp, listsampcalc, listllik, listaccp, listchro, listindxparamodi, propeffi, levi, info, gmrbstat]
+#    
+#    # save the chain if the run was long enough
+#    timefinl = time.time()
+#    # temp
+#    if timefinl - timeinit > 1.:
+#        if not os.path.isfile(pathchan):
+#            print 'Writing the chain to %s...' % pathchan
+#            fobj = open(pathchan, 'wb')
+#            cPickle.dump(chan, fobj, protocol=cPickle.HIGHEST_PROTOCOL)
+#            fobj.close()
+#        
+#    return chan
 
 
 def work(gdat, indxprocwork):
@@ -645,7 +645,7 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, strgpara
 
 
 def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, \
-                        boolquan=True, listvarbdraw=None, labldraw=None, numbbinsplot=20, logthist=False, colrdraw=None):
+                        boolquan=True, listvarbdraw=None, listlabldraw=None, numbbinsplot=20, logthist=False, listcolrdraw=None):
     
     if not np.isfinite(listpara).all():
         print 'plot_trac encountered infinite input. Returning...'
@@ -698,7 +698,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, \
             axis.set_ylim(limspara)
             if listvarbdraw is not None:
                 for k in range(len(listvarbdraw)):
-                    axis.axhline(listvarbdraw[k], label=labldraw[k], color=colrdraw[k], lw=3)
+                    axis.axhline(listvarbdraw[k], label=listlabldraw[k], color=listcolrdraw[k], lw=3)
             if boolquan:
                 axis.axhline(quanarry[0], color='b', ls='--', lw=2)
                 axis.axhline(quanarry[1], color='b', ls='-.', lw=2)
@@ -719,7 +719,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, \
             axis.set_xlim(limspara)
             if listvarbdraw is not None:
                 for k in range(len(listvarbdraw)):
-                    axis.axvline(listvarbdraw[k], label=labldraw[k], color=colrdraw[k], lw=3)
+                    axis.axvline(listvarbdraw[k], label=listlabldraw[k], color=listcolrdraw[k], lw=3)
             if boolquan:
                 axis.axvline(quanarry[0], color='b', ls='--', lw=2)
                 axis.axvline(quanarry[1], color='b', ls='-.', lw=2)
@@ -759,7 +759,7 @@ def plot_plot(path, xdat, ydat, lablxdat, lablydat, scalxaxi, titl=None, linesty
     plt.close(figr)
 
 
-def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, boolquan=True, scalpara='self', listvarbdraw=None, labldraw=None, colrdraw=None):
+def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, boolquan=True, scalpara='self', listvarbdraw=None, listlabldraw=None, listcolrdraw=None):
 
     minmvarb = np.amin(listvarb)
     maxmvarb = np.amax(listvarb)
@@ -775,7 +775,7 @@ def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, boolq
         axis.axvline(truepara, color='g', lw=4)
     if listvarbdraw is not None:
         for k in range(len(listvarbdraw)):
-            axis.axvline(listvarbdraw[k], label=labldraw[k], color=colrdraw[k], lw=3)
+            axis.axvline(listvarbdraw[k], label=listlabldraw[k], color=listcolrdraw[k], lw=3)
     if boolquan:
         quanarry = sp.stats.mstats.mquantiles(listvarb, prob=[0.025, 0.16, 0.84, 0.975])
         axis.axvline(quanarry[0], color='b', ls='--', lw=2)
@@ -839,8 +839,20 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
             bins[:, k] = icdf_logt(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
         if scalpara[k] == 'atan':
             bins[:, k] = icdf_atan(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
-        if np.amin(bins[:, k]) == 0 and np.amax(bins[:, k]) == 0:
+        if not np.isfinite(bins[:, k]).all():
+            print 'k'
+            print k
+            print 'strgpara[k]'
+            print strgpara[k]
+            print 'limt[:, k]'
+            print limt[:, k]
+            print 'bins[:, k]'
+            print bins[:, k]
+            summgene(bins[:, k])
             raise Exception('')
+        if np.amin(bins[:, k]) == 0 and np.amax(bins[:, k]) == 0:
+            print 'plot_grid() found min=max=0. Returning...'
+            return
 
     figr, axgr = plt.subplots(numbpara, numbpara, figsize=(plotsize*numbpara, plotsize*numbpara))
     if numbpara == 1:
@@ -924,8 +936,6 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
                 if k != 0:
                     axis.set_yticklabels([])
     figr.tight_layout()
-    # temp
-    #figr.subplots_adjust(bottom=0.2)
     plt.subplots_adjust(wspace=0.05, hspace=0.05)
     figr.savefig(pathbase + 'pmar_' + strgplot + '.pdf')
     plt.close(figr)

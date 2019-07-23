@@ -1,6 +1,16 @@
 from __init__ import *
 
 class gdatstrt(object):
+
+    def __init__(self):
+        self.boollockmodi = False
+        pass
+    
+    def __setattr__(self, attr, valu):
+        super(gdatstrt, self).__setattr__(attr, valu)
+
+
+class gdatstrtpcat(object):
     
     def __init__(self):
         self.boollockmodi = False
@@ -149,6 +159,58 @@ def retr_errrvarb(inpt, samp=False):
     errr = np.abs(postvarb[0, ...] - postvarb[1:3, ...])
 
     return errr
+
+
+def prep_mask(data, epoc=None, peri=None, duramask=None, limttime=None):
+    '''
+    Read the data, mask out the transits
+    '''
+    
+    time = data[:, 0]
+    
+    if epoc is not None:
+        listindxtimethis = []
+        for n in range(-2000, 2000):
+            timeinit = epoc + n * peri - duramask / 24.
+            timefinl = epoc + n * peri + duramask / 24.
+            indxtimethis = np.where((time > timeinit) & (time < timefinl))[0]
+            listindxtimethis.append(indxtimethis)
+        indxtimethis = np.concatenate(listindxtimethis)
+    else:
+        indxtimethis = np.where((time < limttime[1]) & (time > limttime[0]))[0]
+
+    numbtime = time.size
+    indxtime = np.arange(numbtime)
+    
+    indxtimegood = np.setdiff1d(indxtime, indxtimethis)
+    
+    dataoutp = data[indxtimegood, :]
+    
+    return dataoutp
+
+
+def prep_mask_knwn(pathbase, epoc, peri, duramask, listindxtranmask=None, strgextn=None):
+    
+    '''
+    Read the TESS data, mask out the transits, write csv files to the allesfitter folders
+    '''
+    
+    pathdata = pathbase + 'data_preparation/'
+    pathinpt = '%sPDCSAP/TESS.csv' % pathbase
+    pathoutp = '%sallesfits/allesfit_TESS_oot/TESS.csv' % pathbase
+    pathorig = pathdata + 'original_data/'
+    pathtess = pathdata + 'PDCSAP/TESS.csv'
+    
+    print('Reading the TESS PDCSAP light curve and saving the transit-masked light curve to the OOT allesfit folder...')
+    
+    # read data
+    data = np.loadtxt(pathtess, delimiter=',')
+    
+    # mask out the transits
+    dataoutp = prep_mask(data, epoc, peri, duramask)
+
+    # save to CSV file
+    np.savetxt(pathoutp, dataoutp, delimiter=',')
 
 
 def read_tess(pathdata):

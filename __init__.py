@@ -3,6 +3,7 @@ import numpy as np
 import scipy as sp
 from scipy.special import erfi
 import scipy.fftpack
+import scipy.stats
 
 # plotting
 import matplotlib as mpl
@@ -20,7 +21,7 @@ import healpy as hp
 from healpy.rotator import angdist
 
 # utilities
-import psutil, sys, sh, os, functools, time, datetime, cPickle, fnmatch
+import psutil, sys, sh, os, functools, time, datetime, fnmatch
 
 # multiprocessing
 import multiprocessing as mp
