@@ -790,7 +790,7 @@ def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, boolq
 
 
 def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, scalpara=None, plotsize=3.5, \
-                                                truepara=None, numbtickbins=3, numbbinsplot=20, boolquan=True, listvarbdraw=None):
+                                    truepara=None, numbtickbins=3, numbbinsplot=20, boolquan=True, listvarbdraw=None):
 
     numbpara = listsamp.shape[1]
     
@@ -880,7 +880,8 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
                     axis.axvline(quan[1], color='b', ls='-.', lw=2)
                     axis.axvline(quan[2], color='b', ls='-.', lw=2)
                     axis.axvline(quan[3], color='b', ls='--', lw=2)
-                
+                    medivarb = np.median(listsamp[:, k])
+                axis.set_title(r'%.3g $\substack{+%.2g \\ -%.2g}$' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
             else:
                 if join:
                     k = 0
