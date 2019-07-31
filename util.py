@@ -1,4 +1,5 @@
 from __init__ import *
+import numpy as np
 
 class gdatstrt(object):
 
@@ -28,8 +29,6 @@ class gdatstrtpcat(object):
             raise KeyError('{} has already been set'.format(attr))
         
         if len(attr) % 4 != 0 and not attr.startswith('path'):
-            print 'attr'
-            print attr
             raise Exception('')
         
         #if attr == 'thislliktotl' and hasattr(self, attr) and getattr(self, attr) - 100. > valu:
@@ -39,43 +38,6 @@ class gdatstrtpcat(object):
         #if attr == 'indxsampmodi':
         #    if not isinstance(valu, int64) and len(valu) > 6:
         #        raise Exception('Setting gdatmodi.indxsampmodi to an array!')
-        
-        if False and hasattr(self, attr) and attr.startswith('this'):
-            if type(valu) != type(getattr(self, attr)) and attr != 'thisaccppsfn' and attr != 'thisaccpprio' and attr != 'thisindxproptype' and attr != 'thisaccpprop' \
-                             and attr != 'thislpritotl' and attr != 'thislliktotl' and attr != 'thisaccp' and attr != 'thislliktotlprev':
-                print 'attr'
-                print attr
-                print 'type(valu)'
-                print type(valu)
-                print 'type(getattr(self, attr))'
-                print type(getattr(self, attr))
-                print 'Global object current state attribute changed type!'
-                #raise Exception('Global object current state attribute changed type!')
-            booltemp = False
-            if isinstance(valu, ndarray):
-                if (getattr(self, attr) != valu).any():
-                    booltemp = True
-            elif isscalar(valu):
-                if isinstance(valu, list):
-                    print 'attr'
-                    print attr
-                    raise Exception('')
-                if getattr(self, attr) != valu:
-                    booltemp = True
-            
-            if booltemp:    
-                print 'Changing the value of %s...' % attr
-                if isinstance(valu, ndarray):
-                    print 'getattr(self, attr)'
-                    summgene(getattr(self, attr))
-                    print 'valu'
-                    summgene(valu)
-                else:
-                    print 'getattr(self, attr)'
-                    print getattr(self, attr)
-                    print 'valu'
-                    print valu
-                print
         
         super(gdatstrt, self).__setattr__(attr, valu)
 
@@ -129,9 +91,6 @@ def time_func(func, *args):
 def time_func_verb(func, *args):
     
     meantimediff, stdvtimediff = time_func(func, *args)
-    
-    print 'Calling %s' % func.__name__ 
-    print '%3g pm %3g ms' % (meantimediff * 1e3, stdvtimediff * 1e3)
     
 
 def retr_pctlvarb(listvarb):
@@ -315,25 +274,6 @@ def mexp(numb):
     return strg
 
 
-def show(varb):
-
-    print varb
-    print
-
-
-def summ(gdat, strg, k=None):
-    if k == None:
-        varb = getattr(gdat, strg)
-    else:
-        varb = getattr(gdat, strg)[k]
-    print strg
-    print amin(varb)
-    print amax(varb)
-    print mean(varb)
-    print varb.shape
-    print
-
-
 class varb(object):
     
     def __init__(self, numb=None):
@@ -369,12 +309,12 @@ class varb(object):
 def summgene(varb):
     
     try:
-        print np.amin(varb)
-        print np.amax(varb)
-        print np.mean(varb)
-        print varb.shape
+        print(np.amin(varb))
+        print(np.amax(varb))
+        print(np.mean(varb))
+        print(varb.shape)
     except:
-        print varb
+        print(varb)
 
 
 def retr_p4dm_spec(anch, part='el'):
@@ -416,12 +356,12 @@ def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None, showmemo=Fa
     nextcntr = int(nprog * float(cntr + 1) / maxmcntr) * 100 / nprog
     if nextcntr > thiscntr:
         if indxprocwork != None:
-            print 'Process %d is %3d%% completed.' % (indxprocwork, nextcntr)
+            print('Process %d is %3d%% completed.' % (indxprocwork, nextcntr))
         else:
-            print '%3d%% completed.' % nextcntr
+            print('%3d%% completed.' % nextcntr)
         if accp != None:
-            print 'Acceptance ratio: %.3g%%' % accp
-            print 'Acceptance through prior boundaries: %.3g%%' % accpprio
+            print('Acceptance ratio: %.3g%%' % accp)
+            print('Acceptance through prior boundaries: %.3g%%' % accpprio)
         thiscntr = nextcntr
         if showmemo:
             show_memo_simp()
@@ -485,7 +425,7 @@ def corr_catl(lgalseco, bgalseco, lgalfrst, bgalfrst, anglassc=np.pi/180., verbt
         nextfraccomp = int(100 * float(k) / numbseco)
         if verbtype > 1 and nextfraccomp > thisfraccomp:
             thisfraccomp = nextfraccomp
-            print '%02d%% completed.' % thisfraccomp
+            print('%02d%% completed.' % thisfraccomp)
 
     return indxsecoassc
 
@@ -511,7 +451,7 @@ def show_memo_simp():
 
     strgmemo = retr_strgmemo(memoresi)
 
-    print 'Resident memory: %s, %4.3g%%' % (strgmemo, memoresiperc)
+    print('Resident memory: %s, %4.3g%%' % (strgmemo, memoresiperc))
 
 
 def retr_strgmemo(memo):
@@ -574,16 +514,16 @@ def show_memo(objt, name):
         size = np.array(listsize)
         attr = np.array(listattr)
         sizetotl = sum(size) 
-        print 'Memory budget: %s' % name
-        print 'Total size: %.4g MB' % sizetotl
+        print('Memory budget: %s' % name)
+        print('Total size: %.4g MB' % sizetotl)
         
         # sort the sizes to get the largest tail
         indxsizetemp = np.argsort(size)[::-1]
         size = size[indxsizetemp]
         attr = attr[indxsizetemp]
-        print 'Largest 5:'
+        print('Largest 5:')
         for k in range(5):
-            print '%s: %.4g MB' % (attr[k], size[k])
+            print('%s: %.4g MB' % (attr[k], size[k]))
         print 
 
 
@@ -607,19 +547,7 @@ def retr_mapspnts(lgal, bgal, stdv, flux, numbside=256, verbtype=0):
         gridpnts = np.array([lgal[n], bgal[n]])
         angl = angdist(gridheal, gridpnts, lonlat=True)
         norm = retr_psfngausnorm(stdvradi)
-        print 'norm'
-        print norm
-        print 'angl'
-        print angl.shape
-        print 'flux'
-        print flux.shape
-        print 'stdvradi'
-        print stdvradi
-        print
-        
         mapspnts += apix * norm * flux[n] * exp(-0.5 * angl**2 / stdvradi**2)
-        if verbtype > 0:
-            print '%d out of %d' % (n, numbpnts)
 
     return mapspnts
 
@@ -647,15 +575,15 @@ def retr_mapsplnkfreq(indxpixloutprofi=None, numbsideoutp=256, indxfreqrofi=None
     pathsbrt = path + 'plnksbrt_%s.fits' % rtag
     pathsbrtstdv = path + 'plnksbrtstdv_%s.fits' % rtag
     if os.path.isfile(pathsbrt) and os.path.isfile(pathsbrtstdv):
-        print 'Reading %s...' % pathsbrt
+        print('Reading %s...' % pathsbrt)
         mapsplnkfreq = pf.getdata(pathsbrt)
-        print 'Reading %s...' % pathsbrtstdv
+        print('Reading %s...' % pathsbrtstdv)
         mapsplnkfreqstdv= pf.getdata(pathsbrtstdv)
     else:
         mapsplnkfreq = np.zeros((numbfreq, numbpixl))
         mapsplnkfreqstdv = np.zeros((numbfreq, numbpixl))
         for k in indxfreq:
-            print 'Processing Planck Map at %d GHz...' % (meanfreq[k])
+            print('Processing Planck Map at %d GHz...' % (meanfreq[k]))
             # read sky maps
             if strgfreq[k][1] == '0':
                 strgfrst = 'plnk/LFI_SkyMap_' 
@@ -677,7 +605,6 @@ def retr_mapsplnkfreq(indxpixloutprofi=None, numbsideoutp=256, indxfreqrofi=None
             mapsplnkfreq[k, :] = pf.getdata(path + strg, 1)[strgcols]
             mapsplnkfreq[k, :] = hp.reorder(mapsplnkfreq[k, :], n2r=True)
         
-            print 'Changing units...'
             # change units of the sky maps to Jy/sr
             if strgfreq[k] != '0545' and strgfreq[k] != '0857':
                 ## from Kcmb
@@ -738,161 +665,6 @@ def retr_indximagmaxm(data):
     return indxxdatmaxm, indxydatmaxm
 
 
-def minm(thissamp, func, verbtype=1, stdvpara=None, factcorrscal=2., gdat=None, maxmswep=None, limtpara=None, tolrfunc=1e-6, optiprop=True, pathbase='./', rtag=''):
-
-    print 'TDMN launched...'
-    numbpara = thissamp.size
-    indxpara = np.arange(numbpara)
-
-    if maxmswep == None:
-        maxmswep = 1000 * numbpara
-    if stdvpara == None:
-        stdvpara = ones(numbpara)
-
-    # matrices needed for computing the Hessian
-    matrhess = np.empty((numbpara, numbpara))
-    matriden = np.zeros((numbpara, numbpara))
-    matriden[indxpara, indxpara] = 1.
-
-    thisfunc = func(thissamp, gdat)
-    thisstdvpara = stdvpara
-
-    numbsccs = 100
-    nextbool = np.zeros(numbsccs, dtype=bool)
-
-    thiserrr = 1e10
-    cntrswep = 0
-    while True:
-        
-        #if verbtype == 1 and cntrswep % 1000 == 0:
-        #    print 'Sweep %d' % cntrswep
-
-        if verbtype > 1:
-            print
-            print '-' * 10
-            print 'Sweep %d' % cntrswep
-            print 'Current sample'
-            print thissamp
-            print 'Current variance'
-            print thisstdvpara
-            print
-            
-        # propose a sample
-        indxparamodi = cntrswep % numbpara
-        nextsamp = copy(thissamp)
-        nextsamp[indxparamodi] = randn() * thisstdvpara[indxparamodi] + thissamp[indxparamodi]
-        
-        if verbtype > 1:
-            print 'Index of the parameter to be modified'
-            print indxparamodi
-            print 'Next sample'
-            print nextsamp
-            print
-
-        # check if the new sample is within the allowed boundaries
-        if limtpara != None:
-            if nextsamp[indxparamodi] > limtpara[0, indxparamodi] and nextsamp[indxparamodi] < limtpara[1, indxparamodi]:
-                boollimt = True
-            else:
-                boollimt = False
-        else:
-            boollimt = True
-
-        # evaluate the function
-        if boollimt:
-            nextfunc = func(nextsamp, gdat)
-
-            if verbtype > 1:
-                print 'thisfunc: '
-                print thisfunc
-                print 'nextfunc: '
-                print nextfunc
-                print 
-            
-        # check if the new sample is better
-        if boollimt and nextfunc < thisfunc:
-            if verbtype > 1:
-                print 'Accepted.'
-            boolaccp = True
-            # update the minimizer state
-            thisfunc = nextfunc
-            thissamp[indxparamodi] = nextsamp[indxparamodi]
-        else:
-            if verbtype > 1:
-                print 'Rejected.'
-            boolaccp = False
-  
-        # update the proposal scale
-        if optiprop:
-            if boolaccp:
-                factcorr = factcorrscal
-            else:
-                factcorr = 1. / factcorrscal
-            thisstdvpara[indxparamodi] *= factcorr
-   
-        # check convergence
-        ## compute the Hessian
-        #diffpara = matriden * thissamp[:, None] + thisstdvpara[:, None]
-        #for k in indxpara:
-        #    funcplus = funcdiff(thissamp + diffpara[:, k]) / 2.
-        #    funcmins = funcdiff(thissamp - diffpara[:, k]) / 2.
-        #    matrinfo[:, k] = (funcplus - funcmins) / 2. / diffpara[k, k]
-        #    matrvari = invert(matrinfo)
-        #    detrvari = determinant(matrvari)
-        
-        nextsampconv = randn(numbpara) * thisstdvpara + thissamp
-        nextfuncconv = func(nextsampconv, gdat)
-        nexterrr = np.fabs(nextfuncconv / thisfunc - 1.)
-        if nexterrr < thiserrr:
-            thiserrr = nexterrr
-        nextbool[0] = nexterrr < tolrfunc
-
-        
-        if verbtype > 1:
-            print 'Checking convergence...'
-            print 'nextsampconv'
-            print nextsampconv
-            print 'nextfuncconv'
-            print nextfuncconv
-            print 'nexterrr'
-            print nexterrr
-
-        if nextbool.all() or cntrswep == maxmswep:
-            minmsamp = thissamp
-            minmfunc = thisfunc
-            break
-        else:
-            roll(nextbool, 1)
-            cntrswep += 1
-
-    if verbtype > 0:
-        print 'Parameter vector at the minimum'
-        print minmsamp
-        print 'Parameter proposal scale at the minimum'
-        print stdvpara
-        print 'Minimum value of the function'
-        print minmfunc
-        print 'Current error'
-        print thiserrr
-        print 'Total number of sweeps'
-        print cntrswep
-        print
-
-    return minmsamp, minmfunc
-
-
-def test_minm():
-
-    def func_test(samp, gdat=None):
-        
-        return sum((samp / 0.2 - 1.)**2)
-    
-    numbpara = 10
-    stdvpara = ones(numbpara)
-    thissamp = rand(numbpara)
-    minm(thissamp, func_test, verbtype=1, factcorrscal=100., stdvpara=stdvpara, maxmswep=None, limtpara=None, tolrfunc=1e-6, pathbase='./', rtag='')
-    
-
 def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, \
                                             lablxdat='', lablydat='', plottype=None, limtxdat=None, limtydat=None, colr=None, listlinestyl=None, \
                                             alph=None, listlegd=None, listvlinfrst=None, listvlinseco=None, listhlin=None, drawdiag=False):
@@ -930,18 +702,7 @@ def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, \
     figr, axis = plt.subplots(figsize=(6, 6))
     
     for k in range(numbelem):
-        try:
-            xdat = listxdat[k]
-        except:
-            print
-            print
-            print 'path'
-            print path
-            print 'listxdat'
-            print len(listxdat)
-            print 'listydat'
-            print len(listydat)
-            raise
+        xdat = listxdat[k]
         ydat = listydat[k]
         plottype = listplottype[k]
         legd = listlegd[k]
@@ -1084,65 +845,33 @@ def retr_strgtimestmp():
 
 def read_fits(path, pathimag=None, full=False, verbtype=0):
     
-    if verbtype > 0:
-        print 'Reading the header of %s...' % path
-        
     if pathimag != None:
         os.system('mkdir -p ' + pathimag)
     
     hdun = pf.open(path)
     numbhead = len(hdun)
-    if verbtype > 0:
-        print '%s extensions found.' % numbhead
     listdata = []
     for k in range(numbhead):
-        if verbtype > 0:
-            print 'Extension %d' % k
         head = hdun[k].header
         data = hdun[k].data
         
         listdata.append(data)
 
         if data == None:
-            if verbtype > 0:
-                print 'Data is None, skipping...'
             continue
-        else:
-            if verbtype > 0:
-                if isinstance(data, ndarray):
-                    print 'data is an ndarray'
-                    print data.shape
-                else:
-                    print 'data object has keys'
-                    print data.names
 
         arry = np.array(stack((head.keys(), head.values()), 1))
         listtype = []
         listform = []
         listunit = []
-        for n in range(arry.shape[0]):
-            if arry[n, 0] == 'EXTNAME':
-                if verbtype > 0:
-                    print 'Extension name: ', arry[n, 1]
        
-        if full:
-            if verbtype > 0:
-                print 'Header:'
-                print head
-        
         for n in range(arry.shape[0]):
-            if arry[n, 0].startswith('TTYPE') or arry[n, 0].startswith('TFORM') or arry[n, 0].startswith('TUNIT') and not full:
-                if verbtype > 0:
-                    print arry[n, 0], ': ', arry[n, 1]
             if arry[n, 0].startswith('TTYPE'):
                 listtype.append(arry[n, 1])
             if arry[n, 0].startswith('TFORM'):
                 listform.append(arry[n, 1])
             if arry[n, 0].startswith('TUNIT'):
                 listunit.append(arry[n, 1])
-                if verbtype > 0:
-                    if not full:
-                        print
 
         if pathimag != None:
             cmnd = 'convert -density 300'
@@ -1150,22 +879,17 @@ def read_fits(path, pathimag=None, full=False, verbtype=0):
             for n in range(len(listtype)):
                 if not listform[n].endswith('A') and isfinite(data[listtype[n]]).all():
                     figr, axis = plt.subplots()
-                    try:
-                        bins = np.linspace(amin(data[listtype[n]]), amax(data[listtype[n]]), 100)
-                        axis.hist(data[listtype[n]], bins=bins)
-                        #axis.set_xlabel('%s [%s]' % (listtype[n], listunit[n]))
-                        axis.set_yscale('log')
-                        
-                        axis.set_xlabel('%s' % (listtype[n]))
-                        plt.tight_layout()
-                        path = pathimag + 'readfits_%s.pdf' % listtype[n]
-                        cmnd += ' ' + path
-                        figr.savefig(path)
-                        plt.close(figr)
-                    except:
-                        raise
-                        print 'Failed on %s' % listtype[n]
-                        print
+                    bins = np.linspace(amin(data[listtype[n]]), amax(data[listtype[n]]), 100)
+                    axis.hist(data[listtype[n]], bins=bins)
+                    #axis.set_xlabel('%s [%s]' % (listtype[n], listunit[n]))
+                    axis.set_yscale('log')
+                    
+                    axis.set_xlabel('%s' % (listtype[n]))
+                    plt.tight_layout()
+                    path = pathimag + 'readfits_%s.pdf' % listtype[n]
+                    cmnd += ' ' + path
+                    figr.savefig(path)
+                    plt.close(figr)
         
             cmnd += ' ' + pathimag + 'merg.pdf'
             os.system(cmnd)
@@ -1675,8 +1399,6 @@ def smth(maps, scalsmth, mpol=False, retrfull=False, numbsideoutp=None, indxpixl
 
 def smth_ferm(mapsinpt, meanener, recotype, maxmmpol=None, makeplot=False, kerntype='ferm'):
 
-    print 'smth_ferm()...'
-
     numbpixl = mapsinpt.shape[1]
     numbside = int(np.sqrt(numbpixl / 12))
     if maxmmpol == None:
@@ -1762,18 +1484,11 @@ def smth_ferm(mapsinpt, meanener, recotype, maxmmpol=None, makeplot=False, kernt
                     fwhmtemp = 2.355 * sigm * np.pi / 180.
                 else:
                     fwhmtemp = fwhm[i, m]
-                print 'im'
-                print i, m
-                print 'fwhm'
-                print fwhmtemp * 180. / np.pi
-                print
                 mapsoutp[i, :, m] = hp.smoothing(mapsinpt[i, :, m], fwhm=fwhmtemp)
     
     if kerntype == 'ferm':
         # get the beam
         beam = retr_beam(meanener, evtt, numbside, maxmmpol, recotype)
-        print 'beam'
-        print beam
         # construct the transfer function
         tranfunc = ones((numbener, numbalmc, numbevtt))
         cntr = 0
@@ -1784,22 +1499,17 @@ def smth_ferm(mapsinpt, meanener, recotype, maxmmpol=None, makeplot=False, kernt
 
         indxener = np.arange(numbener)
         indxevtt = np.arange(numbevtt)
-        print 'maxmmpol'
-        print maxmmpol
         for i in indxener:
             for m in indxevtt:
                 
                 # temp
                 if i != 0 or m != 0:
                     continue
-                print 'Working on energy bin %d, event type %d...' % (i, m)
                 # temp
                 #mapsoutp[i, :, m] = hp.smoothing(mapsinpt[i, :, m], fwhm=radians(1.))
                 #mapsoutp[i, :, m] = mapsinpt[i, :, m]
                 almc = hp.map2alm(mapsinpt[i, :, m], lmax=maxmmpol)
                 almc *= tranfunc[i, :, m]
-                print 'tranfunc[i, :, m]'
-                print tranfunc[i, :, m]
                 mapsoutp[i, :, m] = hp.alm2map(almc, numbside, lmax=maxmmpol)
     
     return mapsoutp
@@ -1807,8 +1517,6 @@ def smth_ferm(mapsinpt, meanener, recotype, maxmmpol=None, makeplot=False, kernt
 
 def retr_beam(meanener, evtt, numbside, maxmmpol, recotype, fulloutp=False, evaltype='invt'):
     
-    print 'retr_beam()'
-
     numbpixl = 12 * numbside**2
     apix = 4. * np.pi / numbpixl
 
@@ -1852,16 +1560,6 @@ def retr_beam(meanener, evtt, numbside, maxmmpol, recotype, fulloutp=False, eval
                 # temp
                 if i != 0 or m != 0:
                     continue
-                print 'Inverting matrix for (i,m): ', i, m 
-                print 'matrdesi[:, i, :, m]'
-                summgene(matrdesi[:, i, :, m])
-                print 'linalg.inv(matrdesi[:, i, :, m])'
-                print linalg.inv(matrdesi[:, i, :, m])
-                print 'mapsoutp[i, :, m]'
-                summgene(mapsoutp[i, :, m])
-                print 'matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m])'
-                summgene(matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m]))
-                print
                 tranfunc[i, :, m] = matmul(linalg.inv(matrdesi[:, i, :, m]), mapsoutp[i, :, m])
         tranfunc = tranfunc**2
         for i in range(numbener):
