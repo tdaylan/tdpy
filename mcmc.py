@@ -383,6 +383,10 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
         if scalpara[k] == 'atan':
             bins[:, k] = icdf_atan(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
         if not np.isfinite(bins[:, k]).all():
+            print('k')
+            print(k)
+            print('listsamp[:, k]')
+            summgene(listsamp[:, k])
             raise Exception('')
         if np.amin(bins[:, k]) == 0 and np.amax(bins[:, k]) == 0:
             return
