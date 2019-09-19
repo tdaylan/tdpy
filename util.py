@@ -108,6 +108,14 @@ def retr_pctlvarb(listvarb):
     return postvarb
 
 
+def prnt_list(listvarb, strg):
+    
+    medi = np.median(listvarb)
+    lowr = np.percentile(listvarb, 16.)
+    uppr = np.percentile(listvarb, 84.)
+    print('%s: %.3g +%.3g -%.3g' % (strg, medi, medi - lowr, uppr - medi))
+
+
 def retr_errrvarb(inpt, samp=False):
 
     if samp:
