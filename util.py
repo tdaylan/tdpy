@@ -1,4 +1,3 @@
-from __init__ import *
 import numpy as np
 
 class gdatstrt(object):
