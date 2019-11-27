@@ -390,6 +390,7 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
     
     for k in range(numbpara):
         if limt[0, k] == limt[1, k]:
+            print('Lower and upper limits are the same. Grid plot failed.')
             return
     
     if truepara is not None:
@@ -422,6 +423,7 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
             summgene(listsamp[:, k])
             raise Exception('')
         if np.amin(bins[:, k]) == 0 and np.amax(bins[:, k]) == 0:
+            print('Lower and upper limits of the bins are the same. Grid plot failed.')
             return
 
     figr, axgr = plt.subplots(numbpara, numbpara, figsize=(plotsize*numbpara, plotsize*numbpara))
