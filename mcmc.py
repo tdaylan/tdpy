@@ -342,7 +342,8 @@ def plot_plot(path, xdat, ydat, lablxdat, lablydat, scalxaxi, titl=None, linesty
     plt.close(figr)
 
 
-def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, boolquan=True, scalpara='self', listvarbdraw=None, listlabldraw=None, listcolrdraw=None):
+def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, boolquan=True, strgplotextn='pdf', \
+                                            scalpara='self', listvarbdraw=None, listlabldraw=None, listcolrdraw=None):
 
     minmvarb = np.amin(listvarb)
     maxmvarb = np.amax(listvarb)
@@ -368,11 +369,11 @@ def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, boolq
     if titl is not None:
         axis.set_title(titl)
     plt.tight_layout()
-    figr.savefig(path + '_hist.pdf')
+    figr.savefig(path + '_hist.%s' % strgplotextn)
     plt.close(figr)
 
 
-def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, scalpara=None, plotsize=3.5, \
+def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, scalpara=None, plotsize=3.5, strgplotextn='pdf', \
                                     truepara=None, numbtickbins=3, numbbinsplot=20, boolquan=True, listvarbdraw=None):
 
     numbpara = listsamp.shape[1]
@@ -497,6 +498,6 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
                     axis.set_yticklabels([])
     figr.tight_layout()
     plt.subplots_adjust(wspace=0.05, hspace=0.05)
-    figr.savefig(pathbase + 'pmar_' + strgplot + '.pdf')
+    figr.savefig(pathbase + 'pmar_' + strgplot + '.%s' % strgplotextn)
     plt.close(figr)
     

@@ -1681,3 +1681,71 @@ def test_prca():
     plt.show()
 
 
+#def samp():
+#    
+#    #import dynesty
+#    #from dynesty import plotting as dyplot
+#    #from dynesty import utils as dyutils
+#
+#    # resample the nested posterior
+#    if samptype == 'nest':
+#        weights = np.exp(results['logwt'] - results['logz'][-1])
+#        samppara = dyutils.resample_equal(results.samples, weights)
+#        assert samppara.size == results.samples.size
+#    
+#        if samptype == 'nest':
+#            pass
+#            #numbsamp = objtsave['samples'].shape[0]
+#        
+#        # resample the nested posterior
+#        if samptype == 'nest':
+#            weights = np.exp(results['logwt'] - results['logz'][-1])
+#            samppara = dyutils.resample_equal(results.samples, weights)
+#            assert samppara.size == results.samples.size
+#        
+#        if samptype == 'emce':
+#            pass
+#        else:
+#            sampler = dynesty.NestedSampler(retr_llik, icdf, numbpara, logl_args=dictllik, ptform_args=dictllik, bound='single', dlogz=1000.)
+#            sampler.run_nested()
+#            results = sampler.results
+#            results.summary()
+#            objtsave = results
+#        
+#        if samptype == 'nest':
+#            for keys in objtsave:
+#                if isinstance(objtsave[keys], np.ndarray) and objtsave[keys].size == numbsamp:
+#                    figr, axis = plt.subplots()
+#                    axis.plot(indxsamp, objtsave[keys])
+#                    path = pathdata + '%s/%s_%s.pdf' % (samptype, keys, ttvrtype)
+#                    print('Writing to %s...' % path)
+#                    plt.savefig(path)
+#            
+#    if samptype == 'nest':
+#        for keys in objtsave:
+#            if isinstance(objtsave[keys], np.ndarray) and objtsave[keys].size == numbsamp:
+#                figr, axis = plt.subplots()
+#                axis.plot(indxsamp, objtsave[keys])
+#                path = gdat.pathimag + '%s/%s_%s.pdf' % (samptype, keys, ttvrtype)
+#                print('Writing to %s...' % path)
+#                plt.savefig(path)
+#    
+#        ### nested sampling specific
+#        rfig, raxes = dyplot.runplot(results)
+#        path = gdat.pathimag + '%s/dyne_runs_%s.pdf' % (samptype, ttvrtype)
+#        print('Writing to %s...' % path)
+#        plt.savefig(path)
+#        plt.close()
+#        
+#        tfig, taxes = dyplot.traceplot(results)
+#        path = gdat.pathimag + '%s/dyne_trac_%s.pdf' % (samptype, ttvrtype)
+#        print('Writing to %s...' % path)
+#        plt.savefig(path)
+#        plt.close()
+#        
+#        cfig, caxes = dyplot.cornerplot(results)
+#        path = gdat.pathimag + '%s/dyne_corn_%s.pdf' % (samptype, ttvrtype)
+#        print('Writing to %s...' % path)
+#        plt.savefig(path)
+#        plt.close()
+
