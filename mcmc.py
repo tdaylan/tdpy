@@ -4,21 +4,20 @@ import scipy as sp
 from scipy.special import erfi
 import scipy.fftpack
 import scipy.stats
-
 # plotting
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-mpl.rc('image', interpolation='none', origin='lower')
-mpl.rcParams['figure.figsize'] = (6., 5.)
-mpl.rcParams['text.usetex'] = True
-mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] #for \text command
+#mpl.rc('image', interpolation='none', origin='lower')
+#mpl.rcParams['figure.figsize'] = (6., 5.)
+#mpl.rcParams['text.usetex'] = True
+#mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] #for \text command
 
 #import seaborn as sns
 #sns.set(context='poster', style='ticks', color_codes=True)
 
 # pixelization
-import healpy as hp
-from healpy.rotator import angdist
+#import healpy as hp
+#from healpy.rotator import angdist
 
 # utilities
 import psutil, sys, sh, os, functools, time, datetime, fnmatch
