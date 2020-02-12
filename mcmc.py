@@ -4,16 +4,17 @@ import scipy as sp
 from scipy.special import erfi
 import scipy.fftpack
 import scipy.stats
+
 # plotting
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-#mpl.rc('image', interpolation='none', origin='lower')
-#mpl.rcParams['figure.figsize'] = (6., 5.)
-#mpl.rcParams['text.usetex'] = True
-#mpl.rcParams['text.latex.preamble'] = [r'\usepackage{amsmath}'] #for \text command
+
+import emcee
 
 #import seaborn as sns
 #sns.set(context='poster', style='ticks', color_codes=True)
+
+mpl.rc('text', usetex=True)
 
 # pixelization
 #import healpy as hp
@@ -32,6 +33,8 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 # astropy
 import astropy.coordinates, astropy.units
 import astropy.io
+
+from .util import summgene
 
 
 def icdf_self(paraunit, minmpara, maxmpara):
@@ -372,6 +375,232 @@ def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, boolq
     plt.close(figr)
 
 
+def retr_limtpara(scalpara, minmpara, maxmpara, meanpara, stdvpara):
+    
+    numbpara = len(scalpara)
+    limtpara = np.empty((2, numbpara))
+    indxpara = np.arange(numbpara)
+    for n in indxpara:
+        if scalpara[n] == 'self':
+            limtpara[0, n] = minmpara[n]
+            limtpara[1, n] = maxmpara[n]
+        if scalpara[n] == 'gaus':
+            limtpara[0, n] = meanpara[n] - 10 * stdvpara[n]
+            limtpara[1, n] = meanpara[n] + 10 * stdvpara[n]
+    
+    return limtpara
+
+
+def retr_lpos(para, *dictlpos):
+     
+    gdat, indxpara, scalpara, minmpara, maxmpara, meangauspara, stdvgauspara, retr_llik = dictlpos
+
+    for k in indxpara:
+        if scalpara[k] != 'gaus':
+            if para[k] < minmpara[k] or para[k] > maxmpara[k]:
+                lpos = -np.inf
+    else:
+        llik = retr_llik(gdat, para)
+        lpri = 0.
+        for k in indxpara:
+            if scalpara[k] == 'gaus':
+                lpri = (para[k] - meangauspara[k]) / stdvgauspara[k]**2
+        
+        lpos = llik + lpri
+
+    return lpos
+
+
+def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara, scalpara, \
+                                   minmpara, maxmpara, meangauspara, stdvgauspara, numbdata, diagmode=True, strgmodl=None, samptype='emce'):
+        
+    if strgmodl is None:
+        strgmodl = ''
+    else:
+        strgmodl = '_' + strgmodl
+
+    numbpara = len(listlablpara)
+    
+    indxpara = np.arange(numbpara)
+    numbdoff = numbdata - numbpara
+    
+    # plotting
+    ## plot limits 
+    limtpara = retr_limtpara(scalpara, minmpara, maxmpara, meangauspara, stdvgauspara)
+
+    ## plot bins
+    numbbins = 20
+    indxbins = np.arange(numbbins)
+    binspara = np.empty((numbbins + 1, numbpara)) 
+    for k in indxpara:
+        binspara[:, k] = np.linspace(limtpara[0, k], limtpara[1, k], numbbins + 1)
+    meanpara = (binspara[1:, :] + binspara[:-1, :]) / 2.
+    
+    dictlpos = [gdat, indxpara, scalpara, minmpara, maxmpara, meangauspara, stdvgauspara, retr_llik]
+    
+    # initialize
+    numbwalk = 2 * numbpara
+    indxwalk = np.arange(numbwalk)
+    parainit = [np.empty(numbpara) for k in indxwalk]
+    print('scalpara')
+    print(scalpara)
+    print('minmpara')
+    print(minmpara)
+    print('maxmpara')
+    print(maxmpara)
+    print('meangauspara')
+    print(meangauspara)
+    print('stdvgauspara')
+    print(stdvgauspara)
+    print('limtpara')
+    print(limtpara)
+    for k in indxwalk:
+        for m in indxpara:
+            if scalpara[m] == 'self':
+                parainit[k][m]  = scipy.stats.truncnorm.rvs(-100., 100.) * (limtpara[1, m] - limtpara[0, m]) + limtpara[0, m]
+            if scalpara[m] == 'gaus':
+                parainit[k][m]  = np.random.rand() * stdvpara[m] + meanpara[m]
+
+    numbsamp = numbsampwalk * numbwalk
+    indxsamp = np.arange(numbsamp)
+    numbsampburn = numbsampburnwalk * numbwalk
+    if diagmode:
+        if numbsampwalk == 0:
+            raise Exception('')
+    # temp
+    #objtsamp = emcee.EnsembleSampler(numbwalk, numbpara, retr_lpos, args=dictllik, pool=multiprocessing.Pool())
+    objtsamp = emcee.EnsembleSampler(numbwalk, numbpara, retr_lpos, args=dictlpos)
+    if numbsampburnwalk > 0:
+        parainitburn, prob, state = objtsamp.run_mcmc(parainit, numbsampburnwalk, progress=True)
+        objtsamp.reset()
+    else:
+        parainitburn = parainit
+    objtsamp.run_mcmc(parainitburn, numbsampwalk, progress=True)
+    objtsave = objtsamp
+    
+    parapost = objtsave.flatchain
+    indxsampwalk = np.arange(numbsampwalk)
+
+    if numbsamp != numbsampwalk * numbwalk:
+        raise Exception('')
+
+    listsamp = objtsave.flatchain
+    listllik = objtsave.flatlnprobability
+    
+    listlpos = objtsave.lnprobability
+    chi2 = -2. * listlpos
+    
+    # plot the posterior
+    ## parameter
+    ### trace
+    figr, axis = plt.subplots(numbpara + 1, 1, figsize=(12, (numbpara + 1) * 4))
+    print('numbwalk')
+    print(numbwalk)
+    print('objtsave.lnprobability')
+    summgene(objtsave.lnprobability)
+    print('indxsampwalk')
+    summgene(indxsampwalk)
+    for i in indxwalk:
+        axis[0].plot(indxsampwalk, objtsave.lnprobability[:, i])
+    axis[0].set_ylabel('logL')
+    listlablparafull = []
+    for k in indxpara:
+        for i in indxwalk:
+            axis[k+1].plot(indxsampwalk, objtsave.chain[i, :, k])
+        labl = listlablpara[k][0]
+        if listlablpara[k][1] != '':
+            labl += ' [%s]' % listlablpara[k][1]
+        listlablparafull.append(labl)
+        axis[k+1].set_ylabel(labl)
+    path = pathimag + 'trac%s.png' % (strgmodl)
+    print('Writing to %s...' % path)
+    plt.savefig(path)
+    plt.close()
+        
+    indxsampmlik = np.argmax(listllik)
+    listparamlik = listsamp[indxsampmlik, :]
+    #print('Saving the maximum likelihood to %s...' % pathmlik)
+    #np.savetxt(pathmlik, listparamlik, delimiter=',')
+    
+    strgplot = 'post' + strgmodl
+    print('path')
+    print(path)
+    plot_grid(pathimag, strgplot, listsamp, listlablparafull, listvarbdraw=[meanpara.flatten()], numbbinsplot=numbbins)
+    
+    print('Minimum chi2: ')
+    print(np.amin(chi2))
+    print('Minimum chi2 per dof: ')
+    print(np.amin(chi2) / numbdoff)
+    print('Maximum aposterior: ')
+    print(np.amax(listlpos))
+    
+    if samptype == 'nest':
+        import dynesty
+        from dynesty import plotting as dyplot
+        from dynesty import utils as dyutils
+        # resample the nested posterior
+
+        weights = np.exp(results['logwt'] - results['logz'][-1])
+        samppara = dyutils.resample_equal(results.samples, weights)
+        assert samppara.size == results.samples.size
+    
+        if samptype == 'nest':
+            pass
+            #numbsamp = objtsave['samples'].shape[0]
+        
+        # resample the nested posterior
+        if samptype == 'nest':
+            weights = np.exp(results['logwt'] - results['logz'][-1])
+            samppara = dyutils.resample_equal(results.samples, weights)
+            assert samppara.size == results.samples.size
+        
+        if samptype == 'emce':
+            pass
+        else:
+            sampler = dynesty.NestedSampler(retr_llik, icdf, numbpara, logl_args=dictllik, ptform_args=dictllik, bound='single', dlogz=1000.)
+            sampler.run_nested()
+            results = sampler.results
+            results.summary()
+            objtsave = results
+        
+            for keys in objtsave:
+                if isinstance(objtsave[keys], np.ndarray) and objtsave[keys].size == numbsamp:
+                    figr, axis = plt.subplots()
+                    axis.plot(indxsamp, objtsave[keys])
+                    path = pathdata + '%s/%s_%s.pdf' % (samptype, keys, ttvrtype)
+                    print('Writing to %s...' % path)
+                    plt.savefig(path)
+            
+        for keys in objtsave:
+            if isinstance(objtsave[keys], np.ndarray) and objtsave[keys].size == numbsamp:
+                figr, axis = plt.subplots()
+                axis.plot(indxsamp, objtsave[keys])
+                path = gdat.pathimag + '%s/%s_%s.pdf' % (samptype, keys, ttvrtype)
+                print('Writing to %s...' % path)
+                plt.savefig(path)
+    
+        ### nested sampling specific
+        rfig, raxes = dyplot.runplot(results)
+        path = gdat.pathimag + '%s/dyne_runs_%s.pdf' % (samptype, ttvrtype)
+        print('Writing to %s...' % path)
+        plt.savefig(path)
+        plt.close()
+        
+        tfig, taxes = dyplot.traceplot(results)
+        path = gdat.pathimag + '%s/dyne_trac_%s.pdf' % (samptype, ttvrtype)
+        print('Writing to %s...' % path)
+        plt.savefig(path)
+        plt.close()
+        
+        cfig, caxes = dyplot.cornerplot(results)
+        path = gdat.pathimag + '%s/dyne_corn_%s.pdf' % (samptype, ttvrtype)
+        print('Writing to %s...' % path)
+        plt.savefig(path)
+        plt.close()
+
+    return parapost
+
+
 def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, scalpara=None, plotsize=3.5, strgplotextn='pdf', \
                                     truepara=None, numbtickbins=3, numbbinsplot=20, boolquan=True, listvarbdraw=None):
 
@@ -453,7 +682,7 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
                     axis.axvline(quan[2], color='b', ls='-.', lw=2)
                     axis.axvline(quan[3], color='b', ls='--', lw=2)
                     medivarb = np.median(listsamp[:, k])
-                axis.set_title(r'%.3g $\substack{+%.2g \\ -%.2g}$' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
+                axis.set_title(r'%.3g $substack{+%.2g \\ -%.2g}$' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
             else:
                 if join:
                     k = 0
@@ -499,4 +728,4 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
     plt.subplots_adjust(wspace=0.05, hspace=0.05)
     figr.savefig(pathbase + 'pmar_' + strgplot + '.%s' % strgplotextn)
     plt.close(figr)
-    
+   

@@ -18,7 +18,7 @@ import datetime
 #sns.set(context='poster', style='ticks', color_codes=True)
 
 # pixelization
-import healpy as hp
+#import healpy as hp
 #from healpy.rotator import angdist
 
 # utilities
@@ -122,6 +122,14 @@ def time_func(func, *args):
     return mean(timediff), std(timediff)
 
 
+def retr_specbbod(tmpt, wlen):
+    
+    #0.0143877735e6 # [um K]
+    spec = 3.742e11 / wlen**5 / (np.exp(0.0143877735e6 / (wlen * tmpt)) - 1.)
+    
+    return spec
+
+
 def time_func_verb(func, *args):
     
     meantimediff, stdvtimediff = time_func(func, *args)
@@ -212,43 +220,6 @@ def prep_mask_knwn(pathbase, epoc, peri, duramask, listindxtranmask=None, strgex
 
     # save to CSV file
     np.savetxt(pathoutp, dataoutp, delimiter=',')
-
-
-def read_tess(pathdata):
-    
-    listpath = fnmatch.filter(os.listdir(pathdata), 'tess*')
-    
-    listarry = []
-    for path in listpath:
-        listhdun = astropy.io.fits.open(pathdata + path + '/' + path + '_lc.fits')
-        time = listhdun[1].data['TIME'] + 2457000
-        flux = listhdun[1].data['PDCSAP_FLUX']
-        stdv = listhdun[1].data['PDCSAP_FLUX_ERR']
-        indx = listhdun[1].data['QUALITY'] == 0
-        
-        # filtering
-        time = time[indx]
-        flux = flux[indx]
-        stdv = stdv[indx]
-        
-        numbtime = time.size
-        arry = np.np.empty((numbtime, 3))
-        arry[:, 0] = time
-        arry[:, 1] = flux
-        arry[:, 2] = stdv
-        arry = arry[~np.any(np.isnan(arry), axis=1)]
-        arry[:, 2] /= np.mean(arry[:, 1])
-        arry[:, 1] /= np.mean(arry[:, 1])
-        
-        listarry.append(arry)
-    # merge sectors
-    arry = np.concatenate(listarry, axis=0)
-    
-    # sort in time
-    indxsort = np.argsort(arry[:, 0])
-    arry = arry[indxsort, :]
-    
-    return arry
 
 
 def rbin(arry, shap):
@@ -1715,72 +1686,4 @@ def test_prca():
     plt.scatter(tranmatr[:, 0], tranmatr[:, 1])
     plt.show()
 
-
-#def samp():
-#    
-#    #import dynesty
-#    #from dynesty import plotting as dyplot
-#    #from dynesty import utils as dyutils
-#
-#    # resample the nested posterior
-#    if samptype == 'nest':
-#        weights = np.exp(results['logwt'] - results['logz'][-1])
-#        samppara = dyutils.resample_equal(results.samples, weights)
-#        assert samppara.size == results.samples.size
-#    
-#        if samptype == 'nest':
-#            pass
-#            #numbsamp = objtsave['samples'].shape[0]
-#        
-#        # resample the nested posterior
-#        if samptype == 'nest':
-#            weights = np.exp(results['logwt'] - results['logz'][-1])
-#            samppara = dyutils.resample_equal(results.samples, weights)
-#            assert samppara.size == results.samples.size
-#        
-#        if samptype == 'emce':
-#            pass
-#        else:
-#            sampler = dynesty.NestedSampler(retr_llik, icdf, numbpara, logl_args=dictllik, ptform_args=dictllik, bound='single', dlogz=1000.)
-#            sampler.run_nested()
-#            results = sampler.results
-#            results.summary()
-#            objtsave = results
-#        
-#        if samptype == 'nest':
-#            for keys in objtsave:
-#                if isinstance(objtsave[keys], np.ndarray) and objtsave[keys].size == numbsamp:
-#                    figr, axis = plt.subplots()
-#                    axis.plot(indxsamp, objtsave[keys])
-#                    path = pathdata + '%s/%s_%s.pdf' % (samptype, keys, ttvrtype)
-#                    print('Writing to %s...' % path)
-#                    plt.savefig(path)
-#            
-#    if samptype == 'nest':
-#        for keys in objtsave:
-#            if isinstance(objtsave[keys], np.ndarray) and objtsave[keys].size == numbsamp:
-#                figr, axis = plt.subplots()
-#                axis.plot(indxsamp, objtsave[keys])
-#                path = gdat.pathimag + '%s/%s_%s.pdf' % (samptype, keys, ttvrtype)
-#                print('Writing to %s...' % path)
-#                plt.savefig(path)
-#    
-#        ### nested sampling specific
-#        rfig, raxes = dyplot.runplot(results)
-#        path = gdat.pathimag + '%s/dyne_runs_%s.pdf' % (samptype, ttvrtype)
-#        print('Writing to %s...' % path)
-#        plt.savefig(path)
-#        plt.close()
-#        
-#        tfig, taxes = dyplot.traceplot(results)
-#        path = gdat.pathimag + '%s/dyne_trac_%s.pdf' % (samptype, ttvrtype)
-#        print('Writing to %s...' % path)
-#        plt.savefig(path)
-#        plt.close()
-#        
-#        cfig, caxes = dyplot.cornerplot(results)
-#        path = gdat.pathimag + '%s/dyne_corn_%s.pdf' % (samptype, ttvrtype)
-#        print('Writing to %s...' % path)
-#        plt.savefig(path)
-#        plt.close()
 
