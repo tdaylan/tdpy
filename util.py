@@ -18,7 +18,7 @@ import datetime
 #sns.set(context='poster', style='ticks', color_codes=True)
 
 # pixelization
-#import healpy as hp
+import healpy as hp
 #from healpy.rotator import angdist
 
 # utilities
@@ -521,7 +521,7 @@ def show_memo(objt, name):
     else:
         listsize = []
         listattr = []
-        for attr, valu in objt.__dict__.iteritems():
+        for attr, valu in objt.__dict__.items():
             listsize.append(sys.getsizeof(valu) / 2.**20)
             listattr.append(attr)
         size = np.array(listsize)

@@ -15,6 +15,7 @@ import emcee
 #sns.set(context='poster', style='ticks', color_codes=True)
 
 mpl.rc('text', usetex=True)
+mpl.rcParams['text.latex.preamble']=[r"\usepackage{amsmath}"]
 
 # pixelization
 #import healpy as hp
@@ -137,7 +138,7 @@ def retr_atcr_neww(listsamp):
     atcr = sp.fftpack.ifft(four * np.conjugate(four), axis=0).real
     atcr /= np.amax(atcr, 0)
     
-    return atcr[:numbsamp/2, ...]
+    return atcr[:int(numbsamp/2), ...]
 
 
 def retr_timeatcr(listsamp, verbtype=1, atcrtype='maxm'):
@@ -412,12 +413,12 @@ def retr_lpos(para, *dictlpos):
 
 
 def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara, scalpara, \
-                                   minmpara, maxmpara, meangauspara, stdvgauspara, numbdata, diagmode=True, strgmodl=None, samptype='emce'):
+                         minmpara, maxmpara, meangauspara, stdvgauspara, numbdata, diagmode=True, strgextn=None, samptype='emce', strgplotextn='pdf'):
         
-    if strgmodl is None:
-        strgmodl = ''
+    if strgextn is None:
+        strgextn = ''
     else:
-        strgmodl = '_' + strgmodl
+        strgextn = '_' + strgextn
 
     numbpara = len(listlablpara)
     
@@ -457,7 +458,10 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
     for k in indxwalk:
         for m in indxpara:
             if scalpara[m] == 'self':
-                parainit[k][m]  = scipy.stats.truncnorm.rvs(-100., 100.) * (limtpara[1, m] - limtpara[0, m]) + limtpara[0, m]
+                print('scipy.stats.truncnorm.rvs(-100., 100.)')
+                print(scipy.stats.truncnorm.rvs(-100., 100.))
+                parainit[k][m]  = scipy.stats.truncnorm.rvs(-10., 10.) * (limtpara[1, m] - limtpara[0, m]) * 0.05 * + limtpara[0, m] + \
+                                                                                                            0.5 * (limtpara[1, m] - limtpara[0, m])
             if scalpara[m] == 'gaus':
                 parainit[k][m]  = np.random.rand() * stdvpara[m] + meanpara[m]
 
@@ -501,7 +505,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
     print('indxsampwalk')
     summgene(indxsampwalk)
     for i in indxwalk:
-        axis[0].plot(indxsampwalk, objtsave.lnprobability[:, i])
+        axis[0].plot(indxsampwalk, objtsave.lnprobability[i, :])
     axis[0].set_ylabel('logL')
     listlablparafull = []
     for k in indxpara:
@@ -512,7 +516,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
             labl += ' [%s]' % listlablpara[k][1]
         listlablparafull.append(labl)
         axis[k+1].set_ylabel(labl)
-    path = pathimag + 'trac%s.png' % (strgmodl)
+    path = pathimag + 'trac%s.%s' % (strgextn, strgplotextn)
     print('Writing to %s...' % path)
     plt.savefig(path)
     plt.close()
@@ -522,7 +526,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
     #print('Saving the maximum likelihood to %s...' % pathmlik)
     #np.savetxt(pathmlik, listparamlik, delimiter=',')
     
-    strgplot = 'post' + strgmodl
+    strgplot = 'post' + strgextn
     print('path')
     print(path)
     plot_grid(pathimag, strgplot, listsamp, listlablparafull, listvarbdraw=[meanpara.flatten()], numbbinsplot=numbbins)
@@ -567,7 +571,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
                 if isinstance(objtsave[keys], np.ndarray) and objtsave[keys].size == numbsamp:
                     figr, axis = plt.subplots()
                     axis.plot(indxsamp, objtsave[keys])
-                    path = pathdata + '%s/%s_%s.pdf' % (samptype, keys, ttvrtype)
+                    path = pathdata + '%s/%s_%s.%s' % (samptype, keys, ttvrtype, strgplotextn)
                     print('Writing to %s...' % path)
                     plt.savefig(path)
             
@@ -575,25 +579,25 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
             if isinstance(objtsave[keys], np.ndarray) and objtsave[keys].size == numbsamp:
                 figr, axis = plt.subplots()
                 axis.plot(indxsamp, objtsave[keys])
-                path = gdat.pathimag + '%s/%s_%s.pdf' % (samptype, keys, ttvrtype)
+                path = gdat.pathimag + '%s/%s_%s.%s' % (samptype, keys, ttvrtype, strgplotextn)
                 print('Writing to %s...' % path)
                 plt.savefig(path)
     
         ### nested sampling specific
         rfig, raxes = dyplot.runplot(results)
-        path = gdat.pathimag + '%s/dyne_runs_%s.pdf' % (samptype, ttvrtype)
+        path = gdat.pathimag + '%s/dyne_runs_%s.%s' % (samptype, ttvrtype, strgplotextn)
         print('Writing to %s...' % path)
         plt.savefig(path)
         plt.close()
         
         tfig, taxes = dyplot.traceplot(results)
-        path = gdat.pathimag + '%s/dyne_trac_%s.pdf' % (samptype, ttvrtype)
+        path = gdat.pathimag + '%s/dyne_trac_%s.%s' % (samptype, ttvrtype, strgplotextn)
         print('Writing to %s...' % path)
         plt.savefig(path)
         plt.close()
         
         cfig, caxes = dyplot.cornerplot(results)
-        path = gdat.pathimag + '%s/dyne_corn_%s.pdf' % (samptype, ttvrtype)
+        path = gdat.pathimag + '%s/dyne_corn_%s.%s' % (samptype, ttvrtype, strgplotextn)
         print('Writing to %s...' % path)
         plt.savefig(path)
         plt.close()
@@ -682,7 +686,7 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
                     axis.axvline(quan[2], color='b', ls='-.', lw=2)
                     axis.axvline(quan[3], color='b', ls='--', lw=2)
                     medivarb = np.median(listsamp[:, k])
-                axis.set_title(r'%.3g $substack{+%.2g \\ -%.2g}$' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
+                axis.set_title(r'%.3g $\substack{+%.2g \\ -%.2g}$' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
             else:
                 if join:
                     k = 0
