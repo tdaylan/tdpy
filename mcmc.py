@@ -25,7 +25,7 @@ mpl.rcParams['text.latex.preamble']=[r"\usepackage{amsmath}"]
 import psutil, sys, sh, os, functools, time, datetime, fnmatch
 
 # multiprocessing
-import multiprocessing as mp
+import multiprocessing
 
 # warnings
 import warnings
@@ -395,20 +395,21 @@ def retr_limtpara(scalpara, minmpara, maxmpara, meanpara, stdvpara):
 def retr_lpos(para, *dictlpos):
      
     gdat, indxpara, scalpara, minmpara, maxmpara, meangauspara, stdvgauspara, retr_llik = dictlpos
-
+    
+    boolreje = False
     for k in indxpara:
         if scalpara[k] != 'gaus':
             if para[k] < minmpara[k] or para[k] > maxmpara[k]:
                 lpos = -np.inf
-    else:
+                boolreje = True
+    if not boolreje:
         llik = retr_llik(gdat, para)
         lpri = 0.
         for k in indxpara:
             if scalpara[k] == 'gaus':
-                lpri = (para[k] - meangauspara[k]) / stdvgauspara[k]**2
-        
+                lpri += (para[k] - meangauspara[k]) / stdvgauspara[k]**2
         lpos = llik + lpri
-
+    
     return lpos
 
 
@@ -421,7 +422,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
         strgextn = '_' + strgextn
 
     numbpara = len(listlablpara)
-    
+   
     indxpara = np.arange(numbpara)
     numbdoff = numbdata - numbpara
     
@@ -455,62 +456,57 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
     print(stdvgauspara)
     print('limtpara')
     print(limtpara)
-    for k in indxwalk:
-        for m in indxpara:
+    for m in indxpara:
+        for k in indxwalk:
             if scalpara[m] == 'self':
-                print('scipy.stats.truncnorm.rvs(-100., 100.)')
-                print(scipy.stats.truncnorm.rvs(-100., 100.))
-                parainit[k][m]  = scipy.stats.truncnorm.rvs(-10., 10.) * (limtpara[1, m] - limtpara[0, m]) * 0.05 * + limtpara[0, m] + \
+                parainit[k][m]  = 0.5 * scipy.stats.truncnorm.rvs(-1., 1.) * (limtpara[1, m] - limtpara[0, m]) + limtpara[0, m] + \
                                                                                                             0.5 * (limtpara[1, m] - limtpara[0, m])
             if scalpara[m] == 'gaus':
                 parainit[k][m]  = np.random.rand() * stdvpara[m] + meanpara[m]
-
     numbsamp = numbsampwalk * numbwalk
     indxsamp = np.arange(numbsamp)
     numbsampburn = numbsampburnwalk * numbwalk
     if diagmode:
         if numbsampwalk == 0:
             raise Exception('')
-    # temp
-    #objtsamp = emcee.EnsembleSampler(numbwalk, numbpara, retr_lpos, args=dictllik, pool=multiprocessing.Pool())
     objtsamp = emcee.EnsembleSampler(numbwalk, numbpara, retr_lpos, args=dictlpos)
     if numbsampburnwalk > 0:
         parainitburn, prob, state = objtsamp.run_mcmc(parainit, numbsampburnwalk, progress=True)
+        print('Parameter states from the burn-in:')
+        print('parainitburn')
+        print(parainitburn)
+        print('np.array(parainitburn)')
+        summgene(np.array(parainitburn))
+        parainit = np.array(parainitburn)
+        indxwalkmpos = np.argmax(objtsamp.lnprobability[:, -1], 0)
+        parainittemp = parainit[indxwalkmpos, :]
+        parainitburn = [[[] for m in indxpara] for k in indxwalk]
+        for m in indxpara:
+            for k in indxwalk:
+                parainitburn[k][m] = parainittemp[m] * (1. + 1e-2 * np.random.randn())
         objtsamp.reset()
     else:
         parainitburn = parainit
     objtsamp.run_mcmc(parainitburn, numbsampwalk, progress=True)
-    objtsave = objtsamp
     
-    parapost = objtsave.flatchain
+    parapost = objtsamp.flatchain
     indxsampwalk = np.arange(numbsampwalk)
 
     if numbsamp != numbsampwalk * numbwalk:
         raise Exception('')
 
-    listsamp = objtsave.flatchain
-    listllik = objtsave.flatlnprobability
-    
-    listlpos = objtsave.lnprobability
-    chi2 = -2. * listlpos
+    listsamp = objtsamp.flatchain
     
     # plot the posterior
-    ## parameter
     ### trace
     figr, axis = plt.subplots(numbpara + 1, 1, figsize=(12, (numbpara + 1) * 4))
-    print('numbwalk')
-    print(numbwalk)
-    print('objtsave.lnprobability')
-    summgene(objtsave.lnprobability)
-    print('indxsampwalk')
-    summgene(indxsampwalk)
     for i in indxwalk:
-        axis[0].plot(indxsampwalk, objtsave.lnprobability[i, :])
-    axis[0].set_ylabel('logL')
+        axis[0].plot(indxsampwalk, objtsamp.lnprobability[i, :])
+    axis[0].set_ylabel('log P')
     listlablparafull = []
     for k in indxpara:
         for i in indxwalk:
-            axis[k+1].plot(indxsampwalk, objtsave.chain[i, :, k])
+            axis[k+1].plot(indxsampwalk, objtsamp.chain[i, :, k])
         labl = listlablpara[k][0]
         if listlablpara[k][1] != '':
             labl += ' [%s]' % listlablpara[k][1]
@@ -520,23 +516,10 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
     print('Writing to %s...' % path)
     plt.savefig(path)
     plt.close()
-        
-    indxsampmlik = np.argmax(listllik)
-    listparamlik = listsamp[indxsampmlik, :]
-    #print('Saving the maximum likelihood to %s...' % pathmlik)
-    #np.savetxt(pathmlik, listparamlik, delimiter=',')
     
+    ## joint PDF
     strgplot = 'post' + strgextn
-    print('path')
-    print(path)
-    plot_grid(pathimag, strgplot, listsamp, listlablparafull, listvarbdraw=[meanpara.flatten()], numbbinsplot=numbbins)
-    
-    print('Minimum chi2: ')
-    print(np.amin(chi2))
-    print('Minimum chi2 per dof: ')
-    print(np.amin(chi2) / numbdoff)
-    print('Maximum aposterior: ')
-    print(np.amax(listlpos))
+    plot_grid(pathimag, strgplot, listsamp, listlablparafull, numbbinsplot=numbbins)
     
     if samptype == 'nest':
         import dynesty
@@ -550,7 +533,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
     
         if samptype == 'nest':
             pass
-            #numbsamp = objtsave['samples'].shape[0]
+            #numbsamp = objtsamp['samples'].shape[0]
         
         # resample the nested posterior
         if samptype == 'nest':
@@ -565,20 +548,20 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
             sampler.run_nested()
             results = sampler.results
             results.summary()
-            objtsave = results
+            objtsamp = results
         
-            for keys in objtsave:
-                if isinstance(objtsave[keys], np.ndarray) and objtsave[keys].size == numbsamp:
+            for keys in objtsamp:
+                if isinstance(objtsamp[keys], np.ndarray) and objtsamp[keys].size == numbsamp:
                     figr, axis = plt.subplots()
-                    axis.plot(indxsamp, objtsave[keys])
+                    axis.plot(indxsamp, objtsamp[keys])
                     path = pathdata + '%s/%s_%s.%s' % (samptype, keys, ttvrtype, strgplotextn)
                     print('Writing to %s...' % path)
                     plt.savefig(path)
             
-        for keys in objtsave:
-            if isinstance(objtsave[keys], np.ndarray) and objtsave[keys].size == numbsamp:
+        for keys in objtsamp:
+            if isinstance(objtsamp[keys], np.ndarray) and objtsamp[keys].size == numbsamp:
                 figr, axis = plt.subplots()
-                axis.plot(indxsamp, objtsave[keys])
+                axis.plot(indxsamp, objtsamp[keys])
                 path = gdat.pathimag + '%s/%s_%s.%s' % (samptype, keys, ttvrtype, strgplotextn)
                 print('Writing to %s...' % path)
                 plt.savefig(path)
@@ -686,7 +669,8 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
                     axis.axvline(quan[2], color='b', ls='-.', lw=2)
                     axis.axvline(quan[3], color='b', ls='--', lw=2)
                     medivarb = np.median(listsamp[:, k])
-                axis.set_title(r'%.3g $\substack{+%.2g \\ -%.2g}$' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
+                #axis.set_title(r'%.3g $\substack{+%.2g \\ -%.2g}$' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
+                axis.set_title(r'%.3g +%.2g -%.2g' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
             else:
                 if join:
                     k = 0

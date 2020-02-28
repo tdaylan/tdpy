@@ -14,9 +14,6 @@ import datetime
 #import matplotlib as mpl
 #mpl.rcParams['figure.figsize'] = (6., 5.)
 
-#import seaborn as sns
-#sns.set(context='poster', style='ticks', color_codes=True)
-
 # pixelization
 import healpy as hp
 #from healpy.rotator import angdist
