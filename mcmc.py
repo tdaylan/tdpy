@@ -413,8 +413,9 @@ def retr_lpos(para, *dictlpos):
     return lpos
 
 
-def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara, scalpara, \
-                         minmpara, maxmpara, meangauspara, stdvgauspara, numbdata, diagmode=True, strgextn=None, samptype='emce', strgplotextn='pdf'):
+def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, retr_llik, listlablpara, scalpara, \
+              minmpara, maxmpara, meangauspara, stdvgauspara, numbdata, \
+              diagmode=True, strgextn=None, samptype='emce', strgplotextn='pdf', verbtype=1, strgsaveextn=None):
         
     if strgextn is None:
         strgextn = ''
@@ -423,6 +424,11 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
 
     numbpara = len(listlablpara)
    
+    if numbpara != minmpara.size:
+        raise Exception('')
+    if numbpara != maxmpara.size:
+        raise Exception('')
+
     indxpara = np.arange(numbpara)
     numbdoff = numbdata - numbpara
     
@@ -438,31 +444,48 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
         binspara[:, k] = np.linspace(limtpara[0, k], limtpara[1, k], numbbins + 1)
     meanpara = (binspara[1:, :] + binspara[:-1, :]) / 2.
     
+    for k in indxpara:
+        if minmpara[k] >= maxmpara[k]:
+            raise Exception('')
+    
     dictlpos = [gdat, indxpara, scalpara, minmpara, maxmpara, meangauspara, stdvgauspara, retr_llik]
     
-    # initialize
     numbwalk = 2 * numbpara
     indxwalk = np.arange(numbwalk)
+    
+
+    if verbtype == 2:
+        print('scalpara')
+        print(scalpara)
+        print('minmpara')
+        print(minmpara)
+        print('maxmpara')
+        print(maxmpara)
+        print('meangauspara')
+        print(meangauspara)
+        print('stdvgauspara')
+        print(stdvgauspara)
+        print('limtpara')
+        print(limtpara)
+    
+    # initialize
+    if strgsaveextn is None or not os.path.exists(strgsaveextn):
+        parainitcent = np.empty(numbpara)
+        for m in indxpara:
+            if scalpara[m] == 'self':
+                parainitcent[m]  = limtpara[0, m] + 0.5 * (limtpara[1, m] - limtpara[0, m])
+    else:
+        print('Reading the initial state from %s...' % strgsaveextn)
+        parainitcent = np.loadtxt(strgsaveextn)
     parainit = [np.empty(numbpara) for k in indxwalk]
-    print('scalpara')
-    print(scalpara)
-    print('minmpara')
-    print(minmpara)
-    print('maxmpara')
-    print(maxmpara)
-    print('meangauspara')
-    print(meangauspara)
-    print('stdvgauspara')
-    print(stdvgauspara)
-    print('limtpara')
-    print(limtpara)
     for m in indxpara:
         for k in indxwalk:
             if scalpara[m] == 'self':
-                parainit[k][m]  = 0.5 * scipy.stats.truncnorm.rvs(-1., 1.) * (limtpara[1, m] - limtpara[0, m]) + limtpara[0, m] + \
-                                                                                                            0.5 * (limtpara[1, m] - limtpara[0, m])
+                stdvinit = 10.
+                parainit[k][m] = 0.5 / stdvinit * scipy.stats.truncnorm.rvs(-stdvinit, stdvinit) * (limtpara[1, m] - limtpara[0, m]) + parainitcent[m]
             if scalpara[m] == 'gaus':
-                parainit[k][m]  = np.random.rand() * stdvpara[m] + meanpara[m]
+                parainit[k][m] = np.random.rand() * stdvpara[m] + meanpara[m] + parainitcent[m]
+        
     numbsamp = numbsampwalk * numbwalk
     indxsamp = np.arange(numbsamp)
     numbsampburn = numbsampburnwalk * numbwalk
@@ -472,119 +495,131 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, retr_llik, listlablpara
     objtsamp = emcee.EnsembleSampler(numbwalk, numbpara, retr_lpos, args=dictlpos)
     if numbsampburnwalk > 0:
         parainitburn, prob, state = objtsamp.run_mcmc(parainit, numbsampburnwalk, progress=True)
-        print('Parameter states from the burn-in:')
-        print('parainitburn')
-        print(parainitburn)
-        print('np.array(parainitburn)')
-        summgene(np.array(parainitburn))
+        if verbtype == 1:
+            print('Parameter states from the burn-in:')
+            print('parainitburn')
+            print(parainitburn)
         parainit = np.array(parainitburn)
         indxwalkmpos = np.argmax(objtsamp.lnprobability[:, -1], 0)
         parainittemp = parainit[indxwalkmpos, :]
         parainitburn = [[[] for m in indxpara] for k in indxwalk]
         for m in indxpara:
             for k in indxwalk:
-                parainitburn[k][m] = parainittemp[m] * (1. + 1e-2 * np.random.randn())
+                parainitburn[k][m] = parainittemp[m] * (1. + 1e-5 * np.random.randn())
         objtsamp.reset()
     else:
         parainitburn = parainit
     objtsamp.run_mcmc(parainitburn, numbsampwalk, progress=True)
     
-    parapost = objtsamp.flatchain
+    # get rid of burn-in
+    listlpos = objtsamp.lnprobability
+    listsamp = objtsamp.chain
+    parapost = objtsamp.chain[:, numbsampburnwalkseco:, :].reshape((-1, numbpara))
     indxsampwalk = np.arange(numbsampwalk)
 
     if numbsamp != numbsampwalk * numbwalk:
         raise Exception('')
-
-    listsamp = objtsamp.flatchain
     
     # plot the posterior
     ### trace
     figr, axis = plt.subplots(numbpara + 1, 1, figsize=(12, (numbpara + 1) * 4))
     for i in indxwalk:
-        axis[0].plot(indxsampwalk, objtsamp.lnprobability[i, :])
+        axis[0].plot(indxsampwalk, listlpos[i, :])
+    axis[0].axvline(numbsampburnwalkseco, color='k')
     axis[0].set_ylabel('log P')
     listlablparafull = []
     for k in indxpara:
         for i in indxwalk:
-            axis[k+1].plot(indxsampwalk, objtsamp.chain[i, :, k])
+            axis[k+1].plot(indxsampwalk, listsamp[i, :, k])
         labl = listlablpara[k][0]
         if listlablpara[k][1] != '':
             labl += ' [%s]' % listlablpara[k][1]
         listlablparafull.append(labl)
+        axis[k+1].axvline(numbsampburnwalkseco, color='k')
         axis[k+1].set_ylabel(labl)
     path = pathimag + 'trac%s.%s' % (strgextn, strgplotextn)
-    print('Writing to %s...' % path)
+    if verbtype == 1:
+        print('Writing to %s...' % path)
     plt.savefig(path)
     plt.close()
     
+    # plot the posterior
+    ### trace
+    if numbsampburnwalkseco > 0:
+        figr, axis = plt.subplots(numbpara + 1, 1, figsize=(12, (numbpara + 1) * 4))
+        for i in indxwalk:
+            axis[0].plot(indxsampwalk[numbsampburnwalkseco:], listlpos[i, numbsampburnwalkseco:])
+        axis[0].set_ylabel('log P')
+        listlablparafull = []
+        for k in indxpara:
+            for i in indxwalk:
+                axis[k+1].plot(indxsampwalk[numbsampburnwalkseco:], listsamp[i, numbsampburnwalkseco:, k])
+            labl = listlablpara[k][0]
+            if listlablpara[k][1] != '':
+                labl += ' [%s]' % listlablpara[k][1]
+            listlablparafull.append(labl)
+            axis[k+1].set_ylabel(labl)
+        path = pathimag + 'tracgood%s.%s' % (strgextn, strgplotextn)
+        if verbtype == 1:
+            print('Writing to %s...' % path)
+        plt.savefig(path)
+        plt.close()
+    
     ## joint PDF
     strgplot = 'post' + strgextn
-    plot_grid(pathimag, strgplot, listsamp, listlablparafull, numbbinsplot=numbbins)
+    plot_grid(pathimag, strgplot, parapost, listlablparafull, numbbinsplot=numbbins)
     
     if samptype == 'nest':
         import dynesty
         from dynesty import plotting as dyplot
         from dynesty import utils as dyutils
-        # resample the nested posterior
 
+        sampler = dynesty.NestedSampler(retr_llik, icdf, numbpara, logl_args=dictllik, ptform_args=dictllik, bound='single', dlogz=1000.)
+        sampler.run_nested()
+        results = sampler.results
+        results.summary()
+        objtsamp = results
+        numbsamp = objtsamp['samples'].shape[0]
+        
+        # resample the nested posterior
         weights = np.exp(results['logwt'] - results['logz'][-1])
         samppara = dyutils.resample_equal(results.samples, weights)
         assert samppara.size == results.samples.size
-    
-        if samptype == 'nest':
-            pass
-            #numbsamp = objtsamp['samples'].shape[0]
         
-        # resample the nested posterior
-        if samptype == 'nest':
-            weights = np.exp(results['logwt'] - results['logz'][-1])
-            samppara = dyutils.resample_equal(results.samples, weights)
-            assert samppara.size == results.samples.size
-        
-        if samptype == 'emce':
-            pass
-        else:
-            sampler = dynesty.NestedSampler(retr_llik, icdf, numbpara, logl_args=dictllik, ptform_args=dictllik, bound='single', dlogz=1000.)
-            sampler.run_nested()
-            results = sampler.results
-            results.summary()
-            objtsamp = results
-        
-            for keys in objtsamp:
-                if isinstance(objtsamp[keys], np.ndarray) and objtsamp[keys].size == numbsamp:
-                    figr, axis = plt.subplots()
-                    axis.plot(indxsamp, objtsamp[keys])
-                    path = pathdata + '%s/%s_%s.%s' % (samptype, keys, ttvrtype, strgplotextn)
-                    print('Writing to %s...' % path)
-                    plt.savefig(path)
-            
         for keys in objtsamp:
             if isinstance(objtsamp[keys], np.ndarray) and objtsamp[keys].size == numbsamp:
                 figr, axis = plt.subplots()
                 axis.plot(indxsamp, objtsamp[keys])
                 path = gdat.pathimag + '%s/%s_%s.%s' % (samptype, keys, ttvrtype, strgplotextn)
-                print('Writing to %s...' % path)
+                if verbtype == 1:
+                    print('Writing to %s...' % path)
                 plt.savefig(path)
     
-        ### nested sampling specific
         rfig, raxes = dyplot.runplot(results)
         path = gdat.pathimag + '%s/dyne_runs_%s.%s' % (samptype, ttvrtype, strgplotextn)
-        print('Writing to %s...' % path)
+        if verbtype == 1:
+            print('Writing to %s...' % path)
         plt.savefig(path)
         plt.close()
         
         tfig, taxes = dyplot.traceplot(results)
         path = gdat.pathimag + '%s/dyne_trac_%s.%s' % (samptype, ttvrtype, strgplotextn)
-        print('Writing to %s...' % path)
+        if verbtype == 1:
+            print('Writing to %s...' % path)
         plt.savefig(path)
         plt.close()
         
         cfig, caxes = dyplot.cornerplot(results)
         path = gdat.pathimag + '%s/dyne_corn_%s.%s' % (samptype, ttvrtype, strgplotextn)
-        print('Writing to %s...' % path)
+        if verbtype == 1:
+            print('Writing to %s...' % path)
         plt.savefig(path)
         plt.close()
-
+    
+    if strgsaveextn is not None:
+        print('Writing to the initial state from %s...' % strgsaveextn)
+        np.savetxt(strgsaveextn, np.median(parapost, 0))
+    
     return parapost
 
 
@@ -669,7 +704,7 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
                     axis.axvline(quan[2], color='b', ls='-.', lw=2)
                     axis.axvline(quan[3], color='b', ls='--', lw=2)
                     medivarb = np.median(listsamp[:, k])
-                #axis.set_title(r'%.3g $\substack{+%.2g \\ -%.2g}$' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
+                #axis.set_title('%.3g $\substack{+%.2g \\\\ -%.2g}$' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
                 axis.set_title(r'%.3g +%.2g -%.2g' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
             else:
                 if join:
