@@ -16,6 +16,7 @@ import emcee
 
 mpl.rc('text', usetex=True)
 mpl.rcParams['text.latex.preamble']=[r"\usepackage{amsmath}"]
+mpl.rcParams['text.latex.preamble']=[r"\usepackage{amssymb}"]
 
 # pixelization
 #import healpy as hp
@@ -527,14 +528,12 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
         axis[0].plot(indxsampwalk, listlpos[i, :])
     axis[0].axvline(numbsampburnwalkseco, color='k')
     axis[0].set_ylabel('log P')
-    listlablparafull = []
     for k in indxpara:
         for i in indxwalk:
             axis[k+1].plot(indxsampwalk, listsamp[i, :, k])
         labl = listlablpara[k][0]
         if listlablpara[k][1] != '':
             labl += ' [%s]' % listlablpara[k][1]
-        listlablparafull.append(labl)
         axis[k+1].axvline(numbsampburnwalkseco, color='k')
         axis[k+1].set_ylabel(labl)
     path = pathimag + 'trac%s.%s' % (strgextn, strgplotextn)
@@ -550,14 +549,12 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
         for i in indxwalk:
             axis[0].plot(indxsampwalk[numbsampburnwalkseco:], listlpos[i, numbsampburnwalkseco:])
         axis[0].set_ylabel('log P')
-        listlablparafull = []
         for k in indxpara:
             for i in indxwalk:
                 axis[k+1].plot(indxsampwalk[numbsampburnwalkseco:], listsamp[i, numbsampburnwalkseco:, k])
             labl = listlablpara[k][0]
             if listlablpara[k][1] != '':
                 labl += ' [%s]' % listlablpara[k][1]
-            listlablparafull.append(labl)
             axis[k+1].set_ylabel(labl)
         path = pathimag + 'tracgood%s.%s' % (strgextn, strgplotextn)
         if verbtype == 1:
@@ -567,7 +564,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
     
     ## joint PDF
     strgplot = 'post' + strgextn
-    plot_grid(pathimag, strgplot, parapost, listlablparafull, numbbinsplot=numbbins)
+    plot_grid(pathimag, strgplot, parapost, listlablpara, numbbinsplot=numbbins)
     
     if samptype == 'nest':
         import dynesty
@@ -623,9 +620,16 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
     return parapost
 
 
-def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, scalpara=None, plotsize=3.5, strgplotextn='pdf', \
+def plot_grid(pathbase, strgplot, listsamp, listlablpara, join=False, limt=None, scalpara=None, plotsize=3.5, strgplotextn='pdf', \
                                     truepara=None, numbtickbins=3, numbbinsplot=20, boolquan=True, listvarbdraw=None):
 
+    listlablparaaugm = []
+    for lablpara in listlablpara:
+        if lablpara[1] != '':
+            listlablparaaugm.append('%s [%s]' % (lablpara[0], lablpara[1]))
+        else:
+            listlablparaaugm.append('%s' % lablpara[0])
+    
     numbpara = listsamp.shape[1]
     
     if numbpara != 2 and join:
@@ -739,11 +743,11 @@ def plot_grid(pathbase, strgplot, listsamp, strgpara, join=False, limt=None, sca
                 axis.set_xticklabels(strgarry)
             axis.set_xlim(limt[:, l])
             if k == numbpara - 1:
-                axis.set_xlabel(strgpara[l])
+                axis.set_xlabel(listlablparaaugm[l])
             else:
                 axis.set_xticklabels([])
             if l == 0 and k != 0 or join:
-                axis.set_ylabel(strgpara[k])
+                axis.set_ylabel(listlablparaaugm[k])
             else:
                 if k != 0:
                     axis.set_yticklabels([])
