@@ -110,6 +110,20 @@ def retr_specbbod(tmpt, wlen):
     return spec
 
 
+def icdf_self(unit, minm, maxm):
+    
+    para = unit * (maxm - minm) + minm
+    
+    return para
+
+
+def icdf_powr(unit, minm, maxm, slop):
+    
+    para = (unit * (maxm**(1. - slop) - minm**(1. - slop)) + minm**(1. - slop))**(1. / (1. - slop))
+    
+    return para
+
+
 def time_func_verb(func, *args):
     
     meantimediff, stdvtimediff = time_func(func, *args)
@@ -428,9 +442,12 @@ class varb(object):
 def summgene(varb):
     
     try:
-        print(np.amin(varb))
-        print(np.amax(varb))
-        print(np.mean(varb))
+        if not np.isfinite(varb).all():
+            indx = np.where(~np.isfinite(varb))[0]
+            print('%d elements are not finite!' % indx.size)
+        print(np.nanmin(varb))
+        print(np.nanmax(varb))
+        print(np.nanmean(varb))
         print(varb.shape)
     except:
         print(varb)
