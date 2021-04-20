@@ -813,6 +813,12 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, liststrgvarb=None, joi
     if len(listscalpara) != len(listlablpara):
         raise Exception('')
     if len(listscalpara) != numbpara:
+        print('listscalpara')
+        print(listscalpara)
+        print('listpara')
+        summgene(listpara)
+        print('numbpara')
+        print(numbpara)
         raise Exception('')
 
     if limt is None:

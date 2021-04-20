@@ -1,14 +1,15 @@
+# utilities
+import os, time, datetime
+
 ## numerics
 import numpy as np
 import scipy as sp
 from scipy.special import erfi
 import scipy.fftpack
 import scipy.stats
+import healpy as hp
 
 import matplotlib.pyplot as plt
-
-# utilities
-import os, time, datetime
 
 # astropy
 import astropy.coordinates, astropy.units
@@ -196,12 +197,44 @@ def retr_listlablparaaugm(listlablpara):
     return listlablparaaugm
 
 
+def retr_recaprec():
+
+    listlcur = np.empty((numbsamp, numbtime))
+    listnumbplan = np.random.random_integers(1, 10, size=numbsamp)
+    for n in indxsamp:
+        print('listnumbplan')
+        print(listnumbplan)
+        listperi = tdpy.icdf_powr(np.random.rand(listnumbplan[n]), 1., 20., -2.)
+        listepoc = tdpy.icdf_self(np.random.rand(listnumbplan[n]), minmtime, maxmtime)
+        listincl = tdpy.icdf_self(np.random.rand(listnumbplan[n]), 89., 90.)
+        listradiplan = tdpy.icdf_powr(np.random.rand(listnumbplan[n]), 0.5, 23., -2.) # R_E
+        listmassplan = ephesus.retr_massfromradi(listradiplan / factrjre, boolinptsamp=False)
+        listmasstotl = listmassplan + listmassstar[n]
+        listsmax = ephesus.retr_smaxkepl(listperi, listmasstotl) * factaurs # [R_S]
+        listrsma = (listradiplan + listradistar[n]) / listsmax
+        listcosi = np.cos(np.pi * listincl / 180.)
+        listlcur[n, :] = ephesus.retr_rflxtranmodl(time, listperi, listepoc, listradiplan, listradistar[n], listrsma, listcosi) - 1.
+        numbtime = int((maxmtime - minmtime) / cade)
+        time = np.linspace(minmtime, maxmtime, numbtime)
+        
+    listlcur[n, :] += 1e-6 * np.random.randn(numbtime)
+
+    for n in indxsamp:
+        ephesus.plot_lcur(pathimag, strgextn, timedata=time, lcurdata=listlcur[n, :])
+
+
 def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
                                    liststrgvarbreca, liststrgvarbprec, listlablvarbreca, listlablvarbprec, \
-                                                    boolposirele, boolreleposi, strgplotextn='pdf', verbtype=2, numbbins=10):
+                                                    boolposirele, boolreleposi, strgplotextn='pdf', verbtype=1, numbbins=10):
     
-    verbtype = 2
+    if isinstance(boolreleposi, list):
+        boolreleposi = np.array(boolreleposi)
 
+    print('boolposirele')
+    summgene(boolposirele)
+    print('boolreleposi')
+    summgene(boolreleposi)
+    
     listlablvarbrecaaugm = retr_listlablparaaugm(listlablvarbreca)
     listlablvarbprecaugm = retr_listlablparaaugm(listlablvarbprec)
     
@@ -212,18 +245,30 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
     if isinstance(boolposirele, list):
         raise Exception('')
 
+    for k in range(len(listvarbreca)):
+        print('listlablvarbreca[k]')
+        print(listlablvarbreca[k])
+        print('listvarbreca[k]')
+        summgene(listvarbreca[k])
+    for k in range(len(listvarbprec)):
+        print('listlablvarbprec[k]')
+        print(listlablvarbprec[k])
+        print('listvarbprec[k]')
+        summgene(listvarbprec[k])
+    
     indxbins = np.arange(numbbins)
     for c in range(2):
         if verbtype > 1:
             print('c')
             print(c)
         if c == 0:
-            if boolposirele.size != listvarbreca.shape[0]:
-                print('listvarbreca')
-                summgene(listvarbreca)
-                print('boolposirele')
-                summgene(boolposirele)
-                raise Exception('')
+            for k in range(len(listvarbreca)):
+                if boolposirele.size != listvarbreca[k].size:
+                    print('listvarbreca')
+                    summgene(listvarbreca)
+                    print('boolposirele')
+                    summgene(boolposirele)
+                    raise Exception('')
             listvarb = listvarbreca
             liststrgvarb = liststrgvarbreca
             listlablvarbtemp = listlablvarbrecaaugm
@@ -244,13 +289,13 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
                 print(k)
                 print('strgvarb')
                 print(strgvarb)
-                print('listvarb[:, k]')
-                summgene(listvarb[:, k])
-            bins = np.linspace(np.amin(listvarb[:, k]), np.amax(listvarb[:, k]), numbbins + 1)
+                print('listvarb[k]')
+                summgene(listvarb[k])
+            bins = np.linspace(np.amin(listvarb[k]), np.amax(listvarb[k]), numbbins + 1)
             meanvarb = (bins[1:] + bins[:-1]) / 2.
             metr = np.zeros(numbbins) + np.nan
             for a in indxbins:
-                indx = np.where((bins[a] < listvarb[:, k]) & (listvarb[:, k] < bins[a+1]))[0]
+                indx = np.where((bins[a] < listvarb[k]) & (listvarb[k] < bins[a+1]))[0]
                 numb = indx.size
                 if verbtype > 1:
                     print('a')
@@ -268,14 +313,10 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
                     if c == 1:
                         if verbtype > 1:
                             print('boolreleposi')
-                            print(type(boolreleposi))
+                            print(boolreleposi)
                             summgene(boolreleposi)
                             print('indx')
                             summgene(indx)
-                        print('boolreleposi')
-                        summgene(boolreleposi)
-                        print('indx')
-                        summgene(indx)
                         metr[a] = float(np.sum(boolreleposi[indx].astype(float))) / numb
                     if metr[a] < 0:
                         raise Exception('')
