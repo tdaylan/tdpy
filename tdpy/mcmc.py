@@ -11,9 +11,8 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 import multiprocessing
 
-mpl.rc('text', usetex=True)
-mpl.rcParams['text.latex.preamble']=[r"\usepackage{amsmath}"]
-mpl.rcParams['text.latex.preamble']=[r"\usepackage{amssymb}"]
+plt.rc('text', usetex=True)
+plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
 
 # utilities
 import os
@@ -331,7 +330,7 @@ def plot_plot(path, xdat, ydat, lablxdat, lablydat, scalxaxi, titl=None, linesty
     plt.close(figr)
 
 
-def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, boolquan=True, strgplotextn='pdf', \
+def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, boolquan=True, typefileplot='pdf', \
                                             scalpara='self', listvarbdraw=None, listlabldraw=None, listcolrdraw=None):
 
     minmvarb = np.amin(listvarb)
@@ -358,7 +357,7 @@ def plot_hist(path, listvarb, strg, titl=None, numbbins=20, truepara=None, boolq
     if titl is not None:
         axis.set_title(titl)
     plt.tight_layout()
-    figr.savefig(path + '_hist.%s' % strgplotextn)
+    figr.savefig(path + '_hist.%s' % typefileplot)
     plt.close(figr)
 
 
@@ -533,7 +532,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
               minmpara, maxmpara, meangauspara, stdvgauspara, numbdata, retr_lpri=None, boolpool=True, \
               retr_dictderi=None, listlablparaderi=None, \
               numbsamp=None, \
-              diagmode=True, strgextn='', samptype='emce', strgplotextn='pdf', verbtype=1, strgsaveextn=None):
+              diagmode=True, strgextn='', samptype='emce', typefileplot='pdf', verbtype=1, strgsaveextn=None):
         
     numbpara = len(listlablpara)
    
@@ -688,7 +687,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
                 labl += ' [%s]' % listlablpara[k][1]
             axis[k+1].axvline(numbsampburnwalkseco, color='k')
             axis[k+1].set_ylabel(labl)
-        path = pathimag + 'trac%s.%s' % (strgextn, strgplotextn)
+        path = pathimag + 'trac%s.%s' % (strgextn, typefileplot)
         if verbtype == 1:
             print('Writing to %s...' % path)
         plt.savefig(path)
@@ -708,7 +707,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
                 if listlablpara[k][1] != '':
                     labl += ' [%s]' % listlablpara[k][1]
                 axis[k+1].set_ylabel(labl)
-            path = pathimag + 'tracgood%s.%s' % (strgextn, strgplotextn)
+            path = pathimag + 'tracgood%s.%s' % (strgextn, typefileplot)
             if verbtype == 1:
                 print('Writing to %s...' % path)
             plt.savefig(path)
@@ -748,27 +747,27 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
             if isinstance(objtsamp[keys], np.ndarray) and objtsamp[keys].size == numbsamp:
                 figr, axis = plt.subplots()
                 axis.plot(indxsamp, objtsamp[keys])
-                path = pathimag + '%s/%s%s.%s' % (samptype, keys, strgextn, strgplotextn)
+                path = pathimag + '%s/%s%s.%s' % (samptype, keys, strgextn, typefileplot)
                 if verbtype == 1:
                     print('Writing to %s...' % path)
                 plt.savefig(path)
     
         rfig, raxes = dyplot.runplot(results)
-        path = pathimag + '%s/dyne_runs%s.%s' % (samptype, strgextn, strgplotextn)
+        path = pathimag + '%s/dyne_runs%s.%s' % (samptype, strgextn, typefileplot)
         if verbtype == 1:
             print('Writing to %s...' % path)
         plt.savefig(path)
         plt.close()
         
         tfig, taxes = dyplot.traceplot(results)
-        path = pathimag + '%s/dyne_trac%s.%s' % (samptype, strgextn, strgplotextn)
+        path = pathimag + '%s/dyne_trac%s.%s' % (samptype, strgextn, typefileplot)
         if verbtype == 1:
             print('Writing to %s...' % path)
         plt.savefig(path)
         plt.close()
         
         cfig, caxes = dyplot.cornerplot(results)
-        path = pathimag + '%s/dyne_corn%s.%s' % (samptype, strgextn, strgplotextn)
+        path = pathimag + '%s/dyne_corn%s.%s' % (samptype, strgextn, typefileplot)
         if verbtype == 1:
             print('Writing to %s...' % path)
         plt.savefig(path)
@@ -794,10 +793,20 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
     return listparafitt, listparaderi
 
 
-def plot_grid(pathbase, strgplot, listpara, listlablpara, liststrgvarb=None, join=False, limt=None, listscalpara=None, plotsize=7.5, strgplotextn='pdf', \
-                         boolplotindi=False, truepara=None, numbtickbins=3, numbbinsplot=20, boolquan=True, listvarbdraw=None, verbtype=0, boolscat=False):
+def plot_grid(pathbase, strgplot, listpara, listlablpara, \
+                       limt=None, listscalpara=None, plotsize=2.5, typefileplot='pdf', \
+                       
+                       # Boolean flag to generate pair-wise correlation plots
+                       booljoin=False, \
+                       
+                       # Boolean flag to generate individual histograms
+                       boolplotindi=False, \
+                       # list of base file names for the individual histograms
+                       liststrgvarb=None, \
 
-    if join:
+                       truepara=None, numbtickbins=3, numbbinsplot=20, boolquan=True, listvarbdraw=None, verbtype=0, boolscat=False):
+
+    if booljoin:
         numbpara = 2
     else:
         numbpara = listpara.shape[1]
@@ -819,20 +828,22 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, liststrgvarb=None, joi
         summgene(listpara)
         print('numbpara')
         print(numbpara)
-        raise Exception('')
+        raise Exception('len(listscalpara) != numbpara')
 
     if limt is None:
         limt = np.zeros((2, numbpara))
-        limt[0, :] = np.amin(listpara, 0)
-        limt[1, :] = np.amax(listpara, 0)
+        limt[0, :] = np.nanmin(listpara, 0)
+        limt[1, :] = np.nanmax(listpara, 0)
+        for k in range(numbpara):
+            if not np.isfinite(listpara[:, k]).all():
+                print('Warning! Parameter %d (%s) is not all finite.' % (k, listlablpara[k][0]))
+                summgene(listpara[:, k])
     
     for k in range(numbpara):
         if limt[0, k] == limt[1, k]:
-            print('WARNING! Lower and upper limits are the same.)')
+            print('WARNING! Lower and upper limits are the same for the following parameter.')
             print('k')
             print(k)
-            print('listlablpara')
-            print(listlablpara)
             print('listlablpara[k]')
             print(listlablpara[k])
             #return
@@ -857,15 +868,21 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, liststrgvarb=None, joi
         for k in range(numbpara):
             if listscalpara[k] == 'self' or listscalpara[k] == 'gaus':
                 bins[:, k] = icdf_self(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
-            if listscalpara[k] == 'logt':
+            elif listscalpara[k] == 'logt':
                 bins[:, k] = icdf_logt(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
-            if listscalpara[k] == 'atan':
+            elif listscalpara[k] == 'atan':
                 bins[:, k] = icdf_atan(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
+            else:
+                raise Exception('Unrecognized scaling: %s' % listscalpara[k])
             if not np.isfinite(bins[:, k]).all():
                 print('k')
                 print(k)
+                print('numbbinsplot')
+                print(numbbinsplot)
                 print('listlablpara[k]')
                 print(listlablpara[k])
+                print('listscalpara[k]')
+                print(listscalpara[k])
                 print('limt[:, k]')
                 print(limt[:, k])
                 print('bins[:, k]')
@@ -874,9 +891,15 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, liststrgvarb=None, joi
                 summgene(listpara[:, k])
                 raise Exception('')
             if np.amin(bins[:, k]) == 0 and np.amax(bins[:, k]) == 0:
-                print('Lower and upper limits of the bins are the same. Grid plot failed.')
+                print('Lower and upper limits of the bins are the same for %s. Grid plot failed.' % listlablpara[k][0])
                 print('k')
                 print(k)
+                print('bins[:, k]')
+                print(bins[:, k])
+                print('limt[:, k]')
+                print(limt[:, k])
+                print('listscalpara[k]')
+                print(listscalpara[k])
                 print('listlablpara[k]')
                 print(listlablpara[k])
                 #return
@@ -888,15 +911,15 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, liststrgvarb=None, joi
             axis.hist(listpara[:, k])
             if listvarbdraw is not None:
                 for m in indxdraw:
-                    axis.axvline(listvarbdraw[m][k], color='r', lw=3)
+                    axis.axvline(listvarbdraw[m][k], color='orange', lw=3)
             axis.set_xlabel(listlablvarb[k])
             axis.set_ylabel('N')
-            path = pathimag + 'histgridindi_%s.%s' % (liststrgvarb[k], strgplotextn) 
+            path = pathimag + 'histgridindi_%s.%s' % (liststrgvarb[k], typefileplot) 
             print('Writing to %s...' % path)
             plt.savefig(path)
             plt.close()
 
-    if join:
+    if booljoin:
         numbfram = 1
         numbiter = 1
     else:
@@ -914,7 +937,7 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, liststrgvarb=None, joi
                     axis.axis('off')
                     continue
 
-                if k == l and not join:
+                if k == l and not booljoin:
                     try:
                         axis.hist(listpara[:, k], bins=bins[:, k])
                     except:
@@ -926,16 +949,26 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, liststrgvarb=None, joi
                         for m in indxdraw:
                             axis.axvline(listvarbdraw[m][k], color='r', lw=3)
                     if boolquan:
-                        quan = sp.stats.mstats.mquantiles(listpara[:, k], prob=[0.025, 0.16, 0.84, 0.975])
-                        axis.axvline(quan[0], color='b', ls='--', lw=2)
-                        axis.axvline(quan[1], color='b', ls='-.', lw=2)
-                        axis.axvline(quan[2], color='b', ls='-.', lw=2)
-                        axis.axvline(quan[3], color='b', ls='--', lw=2)
-                        medivarb = np.median(listpara[:, k])
-                    #axis.set_title('%.3g $\substack{+%.2g \\\\ -%.2g}$' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
-                    axis.set_title(r'%.3g +%.2g -%.2g' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
+                        #quan = sp.stats.mstats.mquantiles(listpara[:, k], prob=[0.025, 0.16, 0.84, 0.975])
+                        quan = np.empty(4)
+                        quan[0] = np.nanpercentile(listpara[:, k], 2.5)
+                        quan[1] = np.nanpercentile(listpara[:, k], 16.)
+                        quan[2] = np.nanpercentile(listpara[:, k], 84.)
+                        quan[3] = np.nanpercentile(listpara[:, k], 97.5)
+                        axis.axvline(quan[0], color='r', ls='--', lw=2)
+                        axis.axvline(quan[1], color='r', ls='-.', lw=2)
+                        axis.axvline(quan[2], color='r', ls='-.', lw=2)
+                        axis.axvline(quan[3], color='r', ls='--', lw=2)
+                        medivarb = np.nanmedian(listpara[:, k])
+                    if listlablpara[k][1] != '':
+                        strgunit = ' ' + listlablpara[k][1]
+                    else:
+                        strgunit = ''
+                    axis.set_title(r'%s = %.3g $\substack{+%.2g \\\\ -%.2g}$ %s' % (listlablpara[k][0], medivarb, \
+                                                                                    quan[2] - medivarb, medivarb - quan[1], strgunit))
+                    #axis.set_title(r'%.3g +%.2g -%.2g' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
                 else:
-                    if join:
+                    if booljoin:
                         k = 0
                         l = 1
                     
@@ -966,18 +999,18 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, liststrgvarb=None, joi
                     axis.set_xticks(arry)
                     axis.set_xticklabels(strgarry)
                 axis.set_xlim(limt[:, l])
-                if True or k == numbpara - 1:
+                if k == numbpara - 1:
                     axis.set_xlabel(listlablparaaugm[l])
                 else:
                     axis.set_xticklabels([])
-                if True or (l == 0 and k != 0 or join):
+                if (l == 0 and k != 0 or booljoin):
                     axis.set_ylabel(listlablparaaugm[k])
                 else:
                     if k != 0:
                         axis.set_yticklabels([])
         figr.tight_layout()
-        plt.subplots_adjust(wspace=0.2, hspace=0.2)
-        path = pathbase + 'pmar_' + strgplot + '.%s' % strgplotextn
+        plt.subplots_adjust(wspace=0.05, hspace=0.05)
+        path = pathbase + 'pmar_' + strgplot + '.%s' % typefileplot
         print('Writing to %s...' % path)
         figr.savefig(path)
         plt.close(figr)

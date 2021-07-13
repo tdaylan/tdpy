@@ -19,7 +19,7 @@ import astropy.io
 class gdatstrt(object):
 
     def __init__(self):
-        self.boollockmodi = False
+        #self.boollockmodi = False
         pass
     
     def __setattr__(self, attr, valu):
@@ -235,6 +235,33 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
     print('boolreleposi')
     summgene(boolreleposi)
     
+    # sanity checks
+    if np.sum(boolposirele) != boolreleposi.size:
+        raise Exception('')
+
+    if isinstance(listvarbreca, list):
+        print('listvarbreca')
+        summgene(listvarbreca)
+        raise Exception('')
+
+    if len(listlablvarbreca) != listvarbreca.shape[1]:
+        print('listlablvarbreca')
+        print(listlablvarbreca)
+        print('len(listlablvarbreca)')
+        print(len(listlablvarbreca))
+        print('listvarbreca')
+        summgene(listvarbreca)
+        raise Exception('')
+
+    if len(listlablvarbprec) != listvarbprec.shape[1]:
+        raise Exception('')
+    
+    numbvarbreca = listvarbreca.shape[1]
+    indxvarbreca = np.arange(numbvarbreca)
+
+    numbvarbprec = listvarbprec.shape[1]
+    indxvarbprec = np.arange(numbvarbprec)
+
     listlablvarbrecaaugm = retr_listlablparaaugm(listlablvarbreca)
     listlablvarbprecaugm = retr_listlablparaaugm(listlablvarbprec)
     
@@ -245,25 +272,29 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
     if isinstance(boolposirele, list):
         raise Exception('')
 
-    for k in range(len(listvarbreca)):
+    for k in indxvarbreca:
         print('listlablvarbreca[k]')
         print(listlablvarbreca[k])
-        print('listvarbreca[k]')
-        summgene(listvarbreca[k])
-    for k in range(len(listvarbprec)):
+        print('listvarbreca[:, k]')
+        summgene(listvarbreca[:, k])
+    
+    for k in indxvarbprec:
         print('listlablvarbprec[k]')
         print(listlablvarbprec[k])
-        print('listvarbprec[k]')
-        summgene(listvarbprec[k])
+        print('listvarbprec[:, k]')
+        summgene(listvarbprec[:, k])
     
     indxbins = np.arange(numbbins)
     for c in range(2):
-        if verbtype > 1:
-            print('c')
-            print(c)
+        
+        
         if c == 0:
-            for k in range(len(listvarbreca)):
-                if boolposirele.size != listvarbreca[k].size:
+            
+            if boolposirele.size == 0:
+                continue
+
+            for k in indxvarbreca:
+                if boolposirele.size != listvarbreca[:, k].size:
                     print('listvarbreca')
                     summgene(listvarbreca)
                     print('boolposirele')
@@ -275,6 +306,10 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
             strgmetr = 'reca'
             strgyaxi = 'Recall'
         else:
+            
+            if boolreleposi.size == 0:
+                continue
+
             listvarb = listvarbprec
             liststrgvarb = liststrgvarbprec
             listlablvarbtemp = listlablvarbprecaugm
@@ -284,24 +319,21 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
         k = 0
         for k, strgvarb in enumerate(liststrgvarb):
         
+            bins = np.linspace(np.amin(listvarb[:, k]), np.amax(listvarb[:, k]), numbbins + 1)
             if verbtype > 1:
                 print('k')
                 print(k)
                 print('strgvarb')
                 print(strgvarb)
-                print('listvarb[k]')
-                summgene(listvarb[k])
-            bins = np.linspace(np.amin(listvarb[k]), np.amax(listvarb[k]), numbbins + 1)
+                print('listvarb[:, k]')
+                summgene(listvarb[:, k])
+                print('bins')
+                summgene(bins)
             meanvarb = (bins[1:] + bins[:-1]) / 2.
             metr = np.zeros(numbbins) + np.nan
             for a in indxbins:
-                indx = np.where((bins[a] < listvarb[k]) & (listvarb[k] < bins[a+1]))[0]
+                indx = np.where((bins[a] < listvarb[:, k]) & (listvarb[:, k] < bins[a+1]))[0]
                 numb = indx.size
-                if verbtype > 1:
-                    print('a')
-                    print(a)
-                    print('indx')
-                    summgene(indx)
                 if numb > 0:
                     # recall
                     if c == 0:
@@ -311,15 +343,11 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
                         metr[a] = float(np.sum(boolposirele[indx].astype(float))) / numb
                     # precision
                     if c == 1:
-                        if verbtype > 1:
-                            print('boolreleposi')
-                            print(boolreleposi)
-                            summgene(boolreleposi)
-                            print('indx')
-                            summgene(indx)
                         metr[a] = float(np.sum(boolreleposi[indx].astype(float))) / numb
+                    
                     if metr[a] < 0:
                         raise Exception('')
+            
             figr, axis = plt.subplots(figsize=(6, 4))
             axis.plot(meanvarb, metr)
             axis.set_xlabel(listlablvarbtemp[k])
@@ -480,12 +508,144 @@ class varb(object):
         self.size = len(self.para)
 
     
-def summgene(varb):
+def retr_listscalpara(listnamepara):
     
+    numbpara = len(listnamepara)
+    indxpara = np.arange(numbpara)
+    listscalpara = ['self' for k in indxpara]
+    
+    return listscalpara
+
+
+def retr_listlablscalpara(listnamepara):
+    
+    numbpara = len(listnamepara)
+    indxpara = np.arange(numbpara)
+    listlablpara = [[] for k in indxpara]
+    listscalpara = [[] for k in indxpara]
+    for k in indxpara:
+        if listnamepara[k] == 'rasc':
+            listlablpara[k] = ['RA', 'deg']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'decl':
+            listlablpara[k] = ['Dec', 'deg']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'radiplan':
+            listlablpara[k] = ['$R_p$', '$R_\oplus$']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'radistar':
+            listlablpara[k] = ['$R_\star$', '$R_\odot$']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'massplan':
+            listlablpara[k] = ['$M_p$', '$M_\oplus$']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'massstar':
+            listlablpara[k] = ['$M_\star$', '$M_\odot$']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'tmptplan':
+            listlablpara[k] = ['$T_p$', 'K']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'tmptstar':
+            listlablpara[k] = ['$T_\star$', 'K']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'loggstar':
+            listlablpara[k] = ['$\log g$', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'metastar':
+            listlablpara[k] = ['[M/H]', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'tmag':
+            listlablpara[k] = ['T', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'nois':
+            listlablpara[k] = ['$\sigma$', 'ppt']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'probexop':
+            listlablpara[k] = ['$P_{exo}$', '']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'boolexop':
+            listlablpara[k] = ['$B_{host}$', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'numbtsec':
+            listlablpara[k] = ['$N_{sector}$', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'numbtran':
+            listlablpara[k] = ['$N_{tr}$', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'incl':
+            listlablpara[k] = ['$i$', 'deg']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'cosi':
+            listlablpara[k] = ['$\cos i$', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'peri':
+            listlablpara[k] = ['$P$', 'days']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'masscomp':
+            listlablpara[k] = ['$M_{comp}$', '$M_\odot$']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'masstotl':
+            listlablpara[k] = ['$M_{tot}$', '$M_\odot$']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'smax':
+            listlablpara[k] = ['$a$', 'AU']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'rsma':
+            listlablpara[k] = ['$(R_\star+R_p)/a$', '']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'duratran':
+            listlablpara[k] = ['$D_{tr}$', 'hours']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'rrat':
+            listlablpara[k] = ['$R_p/R_\star$', '']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'dept':
+            listlablpara[k] = ['$\delta$', 'ppt']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 's2nr':
+            listlablpara[k] = ['S/N', '']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 's2nrblss':
+            listlablpara[k] = ['S/N$_{BLS}$', '']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'booldete':
+            listlablpara[k] = ['$B_{det}$', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'duraslen':
+            listlablpara[k] = ['$D_{sl}$', 'hours']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'tici':
+            listlablpara[k] = ['TIC ID', '']
+            listscalpara[k] = 'self'
+        else:
+            listlablpara[k] = [listnamepara[k], '']
+            listscalpara[k] = 'logt'
+            print('Warning! Unrecognized parameter name.')
+            print('listnamepara[k]')
+            print(listnamepara[k])
+            #raise Exception('')
+
+    return listlablpara, listscalpara
+
+
+def summgene(varb, boolfull=False):
+    
+    if isinstance(varb, list):
+        print('Not a numpy array. Type is list')
     try:
         if not np.isfinite(varb).all():
             indx = np.where(~np.isfinite(varb))[0]
             print('%d elements are not finite!' % indx.size)
+        if boolfull:
+            medi = np.nanpercentile(varb, 50)
+            lowr = np.nanpercentile(varb, 16)
+            uppr = np.nanpercentile(varb, 84)
+            #print('p2.5:%g ' % np.nanpercentile(varb, 2.5))
+            #print('p16: %g' % np.nanpercentile(varb, 16))
+            #print('p50: %g' % np.nanpercentile(varb, 50))
+            #print('p84: %g' % np.nanpercentile(varb, 84))
+            #print('p97.5: %g' % np.nanpercentile(varb, 97.5))
+            print('p50 +- 1sig: %.3g +%.3g -%.3g' % (medi, uppr - medi, medi - lowr))
         print(np.nanmin(varb))
         print(np.nanmax(varb))
         print(np.nanmean(varb))
