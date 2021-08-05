@@ -225,45 +225,43 @@ def retr_recaprec():
 
 def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
                                    liststrgvarbreca, liststrgvarbprec, listlablvarbreca, listlablvarbprec, \
-                                                    boolposirele, boolreleposi, strgplotextn='pdf', verbtype=1, numbbins=10):
+                                                    boolposirele, boolreleposi, strgplotextn='pdf', verbtype=1, numbbins=10, strgreca='Recall', listvarbdete=None):
     
     if isinstance(boolreleposi, list):
         boolreleposi = np.array(boolreleposi)
 
-    print('boolposirele')
-    summgene(boolposirele)
-    print('boolreleposi')
-    summgene(boolreleposi)
+    if isinstance(boolposirele, list):
+        boolposirele = np.array(boolposirele)
     
     # sanity checks
-    if np.sum(boolposirele) != boolreleposi.size:
-        raise Exception('')
-
-    if isinstance(listvarbreca, list):
+    if np.sum(boolposirele) != boolreleposi.size or \
+                                isinstance(listvarbreca, list) or len(listlablvarbreca) != listvarbreca.shape[1] or \
+                                 listlablvarbprec is not None and len(listlablvarbprec) != listvarbprec.shape[1]:
         print('listvarbreca')
+        print(listvarbreca)
         summgene(listvarbreca)
+        print('listvarbprec')
+        print(listvarbprec)
+        summgene(listvarbprec)
+        print('boolposirele')
+        print(boolposirele)
+        summgene(boolposirele)
+        print('boolreleposi')
+        print(boolreleposi)
+        summgene(boolreleposi)
+        print('np.sum(boolposirele)')
+        print(np.sum(boolposirele))
+        print()
         raise Exception('')
 
-    if len(listlablvarbreca) != listvarbreca.shape[1]:
-        print('listlablvarbreca')
-        print(listlablvarbreca)
-        print('len(listlablvarbreca)')
-        print(len(listlablvarbreca))
-        print('listvarbreca')
-        summgene(listvarbreca)
-        raise Exception('')
-
-    if len(listlablvarbprec) != listvarbprec.shape[1]:
-        raise Exception('')
-    
     numbvarbreca = listvarbreca.shape[1]
     indxvarbreca = np.arange(numbvarbreca)
-
-    numbvarbprec = listvarbprec.shape[1]
-    indxvarbprec = np.arange(numbvarbprec)
-
     listlablvarbrecaaugm = retr_listlablparaaugm(listlablvarbreca)
-    listlablvarbprecaugm = retr_listlablparaaugm(listlablvarbprec)
+    
+    if listvarbprec is not None:
+        numbvarbprec = listvarbprec.shape[1]
+        indxvarbprec = np.arange(numbvarbprec)
+        listlablvarbprecaugm = retr_listlablparaaugm(listlablvarbprec)
     
     if verbtype > 1:
         print('numbbins')
@@ -272,91 +270,125 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
     if isinstance(boolposirele, list):
         raise Exception('')
 
-    for k in indxvarbreca:
-        print('listlablvarbreca[k]')
-        print(listlablvarbreca[k])
-        print('listvarbreca[:, k]')
-        summgene(listvarbreca[:, k])
-    
-    for k in indxvarbprec:
-        print('listlablvarbprec[k]')
-        print(listlablvarbprec[k])
-        print('listvarbprec[:, k]')
-        summgene(listvarbprec[:, k])
-    
     indxbins = np.arange(numbbins)
-    for c in range(2):
+    if listvarbdete is not None:
+        indx = range(3)
+    else:
+        indx = range(2)
+    
+    metr = np.zeros((3, numbbins)) + np.nan
+    for c in indx:
         
+        print('c')
+        print(c)
+        if listvarbprec is None and c == 1:
+            continue
         
         if c == 0:
-            
             if boolposirele.size == 0:
                 continue
-
-            for k in indxvarbreca:
-                if boolposirele.size != listvarbreca[:, k].size:
-                    print('listvarbreca')
-                    summgene(listvarbreca)
-                    print('boolposirele')
-                    summgene(boolposirele)
-                    raise Exception('')
             listvarb = listvarbreca
             liststrgvarb = liststrgvarbreca
             listlablvarbtemp = listlablvarbrecaaugm
             strgmetr = 'reca'
-            strgyaxi = 'Recall'
-        else:
-            
+            lablyaxi = strgreca + ' [\%]'
+        if c == 1:
             if boolreleposi.size == 0:
                 continue
-
             listvarb = listvarbprec
             liststrgvarb = liststrgvarbprec
             listlablvarbtemp = listlablvarbprecaugm
             strgmetr = 'prec'
-            strgyaxi = 'Precision'
+            lablyaxi = 'Precision [\%]'
+        if c == 2:
+            listvarb = listvarbreca
+            liststrgvarb = liststrgvarbreca
+            listlablvarbtemp = listlablvarbrecaaugm
+            strgmetr = 'occu'
+            lablyaxi = 'Occurence rate'
             
-        k = 0
         for k, strgvarb in enumerate(liststrgvarb):
         
             bins = np.linspace(np.amin(listvarb[:, k]), np.amax(listvarb[:, k]), numbbins + 1)
-            if verbtype > 1:
-                print('k')
-                print(k)
-                print('strgvarb')
-                print(strgvarb)
-                print('listvarb[:, k]')
-                summgene(listvarb[:, k])
-                print('bins')
-                summgene(bins)
             meanvarb = (bins[1:] + bins[:-1]) / 2.
-            metr = np.zeros(numbbins) + np.nan
+            
+            print('k')
+            print(k)
+            print('listvarb[:, k]')
+            summgene(listvarb[:, k])
+            print('bins')
+            print(bins)
+            print('meanvarb')
+            summgene(meanvarb)
+            if not np.isfinite(bins).all():
+                raise Exception('')
+
+            if c == 2 and listvarbdete is not None:
+                boolupprlimt = np.zeros(numbbins, dtype=bool)
+            
             for a in indxbins:
-                indx = np.where((bins[a] < listvarb[:, k]) & (listvarb[:, k] < bins[a+1]))[0]
-                numb = indx.size
-                if numb > 0:
-                    # recall
-                    if c == 0:
-                        if verbtype > 1:
+                print('a')
+                print(a)
+                if c == 0 or c == 1:
+                    indx = np.where((bins[a] < listvarb[:, k]) & (listvarb[:, k] < bins[a+1]))[0]
+                    numb = indx.size
+                    print('numb')
+                    print(numb)
+                    if numb > 0:
+                        # recall
+                        if c == 0:
                             print('boolposirele')
                             summgene(boolposirele)
-                        metr[a] = float(np.sum(boolposirele[indx].astype(float))) / numb
-                    # precision
-                    if c == 1:
-                        metr[a] = float(np.sum(boolreleposi[indx].astype(float))) / numb
+                            metr[c, a] = float(np.sum(boolposirele[indx].astype(float))) / numb
+                        # precision
+                        if c == 1:
+                            metr[c, a] = float(np.sum(boolreleposi[indx].astype(float))) / numb
                     
-                    if metr[a] < 0:
-                        raise Exception('')
+                if c == 2 and listvarbdete is not None:
+                    if len(listvarbdete) == 0:
+                        numb = 0
+                    else:
+                        indx = np.where((bins[a] < listvarbdete[:, k]) & (listvarbdete[:, k] < bins[a+1]))[0]
+                        numb = indx.size
+                    print('numb')
+                    print(numb)
+                    if numb > 0:
+                        boolupprlimt[a] = False
+                        metr[c, a] = numb / listvarbreca[k].size * metr[1, a] / metr[0, a]
+                    else:
+                        boolupprlimt[a] = True
+                        print('listvarbprec[k].size')
+                        print(listvarbprec[k].size)
+                        print('metr[0, a]')
+                        print(metr[0, a])
+                        print('metr[1, a]')
+                        print(metr[1, a])
+                        metr[c, a] = 1. / listvarbreca[k].size * metr[1, a] / metr[0, a]
+                    print('metr[c, a]')
+                    print(metr[c, a])
+            print('metr[c, :]')
+            print(metr[c, :])
+            if (c == 0 or c == 1) and listvarbdete is None:
+                figr, axis = plt.subplots(figsize=(6, 4))
+                axis.plot(meanvarb, metr[c, :] * 100.)
+                axis.set_xlabel(listlablvarbtemp[k])
+                axis.set_ylabel(lablyaxi)
+                path = pathimag + '%s_%s_%s.%s' % (strgmetr, strgvarb, strgextn, strgplotextn) 
+                print('Writing to %s...' % path)
+                plt.savefig(path)
+                plt.close()
             
-            figr, axis = plt.subplots(figsize=(6, 4))
-            axis.plot(meanvarb, metr)
-            axis.set_xlabel(listlablvarbtemp[k])
-            axis.set_ylabel(strgyaxi)
-            path = pathimag + '%s_%s_%s.%s' % (strgmetr, strgvarb, strgextn, strgplotextn) 
-            print('Writing to %s...' % path)
-            plt.savefig(path)
-            plt.close()
-            k += 1
+            if c == 2 and listvarbdete is not None:
+                figr, axis = plt.subplots(figsize=(6, 4))
+                print('boolupprlimt')
+                print(boolupprlimt)
+                axis.errorbar(meanvarb, metr[c, :], marker='o', uplims=boolupprlimt)
+                axis.set_ylabel('Occurence rate')
+                axis.set_xlabel(listlablvarbrecaaugm[k])
+                path = pathimag + 'occu_%s_%s.%s' % (strgvarb, strgextn, strgplotextn) 
+                print('Writing to %s...' % path)
+                plt.savefig(path)
+                plt.close()
 
 
 def prep_mask(data, epoc=None, peri=None, duramask=None, limttime=None):
@@ -542,6 +574,12 @@ def retr_listlablscalpara(listnamepara):
         elif listnamepara[k] == 'massstar':
             listlablpara[k] = ['$M_\star$', '$M_\odot$']
             listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'massbhol':
+            listlablpara[k] = ['$M_{BH}$', '$M_\odot$']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'densstar':
+            listlablpara[k] = ['$d_\star$', 'g cm$^{-3}$']
+            listscalpara[k] = 'logt'
         elif listnamepara[k] == 'tmptplan':
             listlablpara[k] = ['$T_p$', 'K']
             listscalpara[k] = 'logt'
@@ -560,11 +598,11 @@ def retr_listlablscalpara(listnamepara):
         elif listnamepara[k] == 'nois':
             listlablpara[k] = ['$\sigma$', 'ppt']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'probexop':
-            listlablpara[k] = ['$P_{exo}$', '']
+        elif listnamepara[k] == 'proboccu':
+            listlablpara[k] = ['$P_{occ}$', '']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'boolexop':
-            listlablpara[k] = ['$B_{host}$', '']
+        elif listnamepara[k] == 'booloccu':
+            listlablpara[k] = ['$B_{occ}$', '']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'numbtsec':
             listlablpara[k] = ['$N_{sector}$', '']
@@ -593,6 +631,18 @@ def retr_listlablscalpara(listnamepara):
         elif listnamepara[k] == 'rsma':
             listlablpara[k] = ['$(R_\star+R_p)/a$', '']
             listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'rs2a':
+            listlablpara[k] = ['$R_\star/a$', '']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'dcyc':
+            listlablpara[k] = ['$\Delta \phi_{tr}$', '']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'amplslen':
+            listlablpara[k] = ['$A_{SL}$', 'ppt']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'sdee':
+            listlablpara[k] = ['SDE', '']
+            listscalpara[k] = 'self'
         elif listnamepara[k] == 'duratran':
             listlablpara[k] = ['$D_{tr}$', 'hours']
             listscalpara[k] = 'logt'
@@ -620,18 +670,18 @@ def retr_listlablscalpara(listnamepara):
         else:
             listlablpara[k] = [listnamepara[k], '']
             listscalpara[k] = 'logt'
-            print('Warning! Unrecognized parameter name.')
-            print('listnamepara[k]')
-            print(listnamepara[k])
-            #raise Exception('')
+            print('Warning! Unrecognized parameter name: %s' % listnamepara[k])
 
     return listlablpara, listscalpara
 
 
 def summgene(varb, boolfull=False):
     
-    if isinstance(varb, list):
-        print('Not a numpy array. Type is list')
+    if isinstance(varb, dict):
+        print('Type is dict with keys:')
+        print(list(varb.keys()))
+    elif isinstance(varb, list):
+        print('Type is list')
     try:
         if not np.isfinite(varb).all():
             indx = np.where(~np.isfinite(varb))[0]

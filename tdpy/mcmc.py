@@ -793,24 +793,77 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
     return listparafitt, listparaderi
 
 
+def plot_grid_diag(k, axis, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara):
+                    
+    axis.hist(listpara[:, k], bins=bins[:, k])
+    if truepara is not None and truepara[k] is not None and not np.isnan(truepara[k]):
+        axis.axvline(truepara[k], color='g', lw=4)
+    # draw the provided reference values
+    if listvarbdraw is not None:
+        for m in indxdraw:
+            axis.axvline(listvarbdraw[m][k], color='r', lw=3)
+    if boolquan:
+        quan = np.empty(4)
+        quan[0] = np.nanpercentile(listpara[:, k], 2.5)
+        quan[1] = np.nanpercentile(listpara[:, k], 16.)
+        quan[2] = np.nanpercentile(listpara[:, k], 84.)
+        quan[3] = np.nanpercentile(listpara[:, k], 97.5)
+        axis.axvline(quan[0], color='r', ls='--', lw=2)
+        axis.axvline(quan[1], color='r', ls='-.', lw=2)
+        axis.axvline(quan[2], color='r', ls='-.', lw=2)
+        axis.axvline(quan[3], color='r', ls='--', lw=2)
+        medivarb = np.nanmedian(listpara[:, k])
+    if listlablpara[k][1] != '':
+        strgunit = ' ' + listlablpara[k][1]
+    else:
+        strgunit = ''
+    axis.set_title(r'%s = %.3g $\substack{+%.2g \\\\ -%.2g}$ %s' % (listlablpara[k][0], medivarb, quan[2] - medivarb, medivarb - quan[1], strgunit))
+                
+
+def plot_grid_tria(k, l, axis, limt, numbtickbins, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara, listscalpara):
+    
+    binstemp = [bins[:, l], bins[:, k]]
+    hist = np.histogram2d(listpara[:, l], listpara[:, k], bins=binstemp)[0]
+    axis.pcolor(bins[:, l], bins[:, k], hist.T, cmap='Blues')
+    axis.set_xlim([np.amin(bins[:, l]), np.amax(bins[:, l])])
+    axis.set_ylim([np.amin(bins[:, k]), np.amax(bins[:, k])])
+    if truepara is not None and truepara[l] is not None and not np.isnan(truepara[l]) and truepara[k] is not None and not np.isnan(truepara[k]):
+        axis.scatter(truepara[l], truepara[k], color='g', marker='x', s=500)
+    # draw the provided reference values
+    if listvarbdraw is not None:
+        for m in indxdraw:
+            axis.scatter(listvarbdraw[m][l], listvarbdraw[m][k], color='r', marker='x', s=350)
+    if listscalpara[k] == 'logt':
+        axis.set_yscale('log', basey=10)
+        arry = np.logspace(np.log10(limt[0, k]), np.log10(limt[1, k]), numbtickbins)
+        strgarry = [mexp(arry[a]) for a in range(numbtickbins)]
+        axis.set_yticks(arry)
+        axis.set_yticklabels(strgarry)
+    
+
 def plot_grid(pathbase, strgplot, listpara, listlablpara, \
                        limt=None, listscalpara=None, plotsize=2.5, typefileplot='pdf', \
                        
-                       # Boolean flag to generate pair-wise correlation plots
-                       booljoin=False, \
-                       
                        # Boolean flag to generate individual histograms
                        boolplotindi=False, \
+                       
+                       # Boolean flag to generate individual pair-wise correlation plots
+                       boolplotpair=False, \
+                       
+                       # Boolean flag to generate the lower-triangle plot
+                       boolplottria=True, \
+                       
                        # list of base file names for the individual histograms
                        liststrgvarb=None, \
 
                        truepara=None, numbtickbins=3, numbbinsplot=20, boolquan=True, listvarbdraw=None, verbtype=0, boolscat=False):
 
-    if booljoin:
-        numbpara = 2
-    else:
-        numbpara = listpara.shape[1]
+    # check inputs
+    if (boolplotpair or boolplotindi) and liststrgvarb is None:
+        raise Exception('You should define liststrgvarb for individual and pairwise plots.')
     
+    numbpara = listpara.shape[1]
+    indxpara = np.arange(numbpara)
     listlablparaaugm = retr_listlablparaaugm(listlablpara)
     
     if not np.isfinite(listpara).all():
@@ -834,12 +887,12 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
         limt = np.zeros((2, numbpara))
         limt[0, :] = np.nanmin(listpara, 0)
         limt[1, :] = np.nanmax(listpara, 0)
-        for k in range(numbpara):
+        for k in indxpara:
             if not np.isfinite(listpara[:, k]).all():
                 print('Warning! Parameter %d (%s) is not all finite.' % (k, listlablpara[k][0]))
                 summgene(listpara[:, k])
     
-    for k in range(numbpara):
+    for k in indxpara:
         if limt[0, k] == limt[1, k]:
             print('WARNING! Lower and upper limits are the same for the following parameter.')
             print('k')
@@ -849,7 +902,7 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
             #return
     
     if truepara is not None:
-        for k in range(numbpara):
+        for k in indxpara:
             if truepara[k] is not None:
                 if truepara[k] < limt[0, k]:
                     limt[0, k] = truepara[k] - 0.1 * (limt[1, k] - truepara[k]) 
@@ -860,12 +913,12 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
         numbdraw = len(listvarbdraw)
         indxdraw = np.arange(numbdraw)
 
-    indxparagood = np.ones(numbpara, dtype=bool)
-    indxparagood[np.where(limt[0, :] == limt[1, :])] = False
+    boolparagood = np.ones(numbpara, dtype=bool)
+    boolparagood[np.where(limt[0, :] == limt[1, :])] = False
     
     if not boolscat:
         bins = np.zeros((numbbinsplot + 1, numbpara))
-        for k in range(numbpara):
+        for k in indxpara:
             if listscalpara[k] == 'self' or listscalpara[k] == 'gaus':
                 bins[:, k] = icdf_self(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
             elif listscalpara[k] == 'logt':
@@ -906,7 +959,7 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
     
     if boolplotindi:
         # histogram
-        for k in range(numbpara):
+        for k in indxpara:
             figr, axis = plt.subplots(figsize=(6, 4))
             axis.hist(listpara[:, k])
             if listvarbdraw is not None:
@@ -919,91 +972,46 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
             plt.savefig(path)
             plt.close()
 
-    if booljoin:
-        numbfram = 1
-        numbiter = 1
-    else:
-        numbfram = numbpara
-        numbiter = 1
-    numbiter = 1
-    for n in range(numbiter):
-        figr, axgr = plt.subplots(numbfram, numbfram, figsize=(plotsize*numbpara, plotsize*numbpara))
-
+    if boolplotpair:
+        for k in indxpara:
+            for l in indxpara:
+                figr, axis = plt.subplots(figsize=(7, 5))
+                plot_grid_tria(k, l, axis, limt, numbtickbins, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara, listscalpara)
+                axis.set_xlabel(listlablparaaugm[l])
+                axis.set_ylabel(listlablparaaugm[k])
+                path = pathbase + 'pmar_%s_%s_%s.%s' % (liststrgvarb[k], liststrgvarb[l], strgplot, typefileplot)
+                print('Writing to %s...' % path)
+                figr.savefig(path)
+                plt.close(figr)
+   
+    if boolplottria:
+        figr, axgr = plt.subplots(numbpara, numbpara, figsize=(plotsize*numbpara, plotsize*numbpara))
         if numbpara == 1:
             axgr = [[axgr]]
         for k, axrw in enumerate(axgr):
             for l, axis in enumerate(axrw):
-                if k < l or indxparagood[k] == False or indxparagood[l] == False:
+                if k < l:
                     axis.axis('off')
                     continue
 
-                if k == l and not booljoin:
-                    try:
-                        axis.hist(listpara[:, k], bins=bins[:, k])
-                    except:
-                        pass
-                    if truepara is not None and truepara[k] is not None and not np.isnan(truepara[k]):
-                        axis.axvline(truepara[k], color='g', lw=4)
-                    # draw the provided reference values
-                    if listvarbdraw is not None:
-                        for m in indxdraw:
-                            axis.axvline(listvarbdraw[m][k], color='r', lw=3)
-                    if boolquan:
-                        #quan = sp.stats.mstats.mquantiles(listpara[:, k], prob=[0.025, 0.16, 0.84, 0.975])
-                        quan = np.empty(4)
-                        quan[0] = np.nanpercentile(listpara[:, k], 2.5)
-                        quan[1] = np.nanpercentile(listpara[:, k], 16.)
-                        quan[2] = np.nanpercentile(listpara[:, k], 84.)
-                        quan[3] = np.nanpercentile(listpara[:, k], 97.5)
-                        axis.axvline(quan[0], color='r', ls='--', lw=2)
-                        axis.axvline(quan[1], color='r', ls='-.', lw=2)
-                        axis.axvline(quan[2], color='r', ls='-.', lw=2)
-                        axis.axvline(quan[3], color='r', ls='--', lw=2)
-                        medivarb = np.nanmedian(listpara[:, k])
-                    if listlablpara[k][1] != '':
-                        strgunit = ' ' + listlablpara[k][1]
-                    else:
-                        strgunit = ''
-                    axis.set_title(r'%s = %.3g $\substack{+%.2g \\\\ -%.2g}$ %s' % (listlablpara[k][0], medivarb, \
-                                                                                    quan[2] - medivarb, medivarb - quan[1], strgunit))
-                    #axis.set_title(r'%.3g +%.2g -%.2g' % (medivarb, quan[2] - medivarb, medivarb - quan[1]))
+                if k == l:
+                    plot_grid_diag(k, axis, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara)
                 else:
-                    if booljoin:
-                        k = 0
-                        l = 1
-                    
-                    binstemp = [bins[:, l], bins[:, k]]
-                    hist = np.histogram2d(listpara[:, l], listpara[:, k], bins=binstemp)[0]
-                    axis.pcolor(bins[:, l], bins[:, k], hist.T, cmap='Blues')
-                    axis.set_xlim([np.amin(bins[:, l]), np.amax(bins[:, l])])
-                    axis.set_ylim([np.amin(bins[:, k]), np.amax(bins[:, k])])
-                    if truepara is not None and truepara[l] is not None and not np.isnan(truepara[l]) and truepara[k] is not None and not np.isnan(truepara[k]):
-                        axis.scatter(truepara[l], truepara[k], color='g', marker='x', s=500)
-                    # draw the provided reference values
-                    if listvarbdraw is not None:
-                        for m in indxdraw:
-                            axis.scatter(listvarbdraw[m][l], listvarbdraw[m][k], color='r', marker='x', s=350)
-                    if listscalpara[k] == 'logt':
-                        axis.set_yscale('log', basey=10)
-                        arry = np.logspace(np.log10(limt[0, k]), np.log10(limt[1, k]), numbtickbins)
-                        strgarry = [mexp(arry[a]) for a in range(numbtickbins)]
-                        axis.set_yticks(arry)
-                        axis.set_yticklabels(strgarry)
+                    plot_grid_tria(k, l, axis, limt, numbtickbins, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara, listscalpara)
                     
                 if listscalpara[l] == 'logt':
                     axis.set_xscale('log', basex=10)
                     arry = np.logspace(np.log10(limt[0, l]), np.log10(limt[1, l]), numbtickbins)
-                    if not np.isfinite(arry).all():
-                        raise Exception('')
                     strgarry = [mexp(arry[a]) for a in range(numbtickbins)]
                     axis.set_xticks(arry)
                     axis.set_xticklabels(strgarry)
+
                 axis.set_xlim(limt[:, l])
                 if k == numbpara - 1:
                     axis.set_xlabel(listlablparaaugm[l])
                 else:
                     axis.set_xticklabels([])
-                if (l == 0 and k != 0 or booljoin):
+                if (l == 0 and k != 0):
                     axis.set_ylabel(listlablparaaugm[k])
                 else:
                     if k != 0:
