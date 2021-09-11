@@ -820,26 +820,109 @@ def plot_grid_diag(k, axis, listpara, bins, truepara, listvarbdraw, boolquan, li
     axis.set_title(r'%s = %.3g $\substack{+%.2g \\\\ -%.2g}$ %s' % (listlablpara[k][0], medivarb, quan[2] - medivarb, medivarb - quan[1], strgunit))
                 
 
-def plot_grid_tria(k, l, axis, limt, numbtickbins, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara, listscalpara):
+def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara, listscalpara, boolsqua, listvectplot):
     
     binstemp = [bins[:, l], bins[:, k]]
     hist = np.histogram2d(listpara[:, l], listpara[:, k], bins=binstemp)[0]
-    axis.pcolor(bins[:, l], bins[:, k], hist.T, cmap='Blues')
-    axis.set_xlim([np.amin(bins[:, l]), np.amax(bins[:, l])])
-    axis.set_ylim([np.amin(bins[:, k]), np.amax(bins[:, k])])
+    if np.isfinite(bins[:, l]).all() and np.isfinite(bins[:, k]).all():
+        axis.pcolor(bins[:, l], bins[:, k], hist.T, cmap='Blues')
+        axis.set_xlim([np.amin(bins[:, l]), np.amax(bins[:, l])])
+        axis.set_ylim([np.amin(bins[:, k]), np.amax(bins[:, k])])
     if truepara is not None and truepara[l] is not None and not np.isnan(truepara[l]) and truepara[k] is not None and not np.isnan(truepara[k]):
         axis.scatter(truepara[l], truepara[k], color='g', marker='x', s=500)
     # draw the provided reference values
     if listvarbdraw is not None:
         for m in indxdraw:
             axis.scatter(listvarbdraw[m][l], listvarbdraw[m][k], color='r', marker='x', s=350)
-    if listscalpara[k] == 'logt':
-        axis.set_yscale('log', basey=10)
-        arry = np.logspace(np.log10(limt[0, k]), np.log10(limt[1, k]), numbtickbins)
-        strgarry = [mexp(arry[a]) for a in range(numbtickbins)]
-        axis.set_yticks(arry)
-        axis.set_yticklabels(strgarry)
+    if listvectplot is not None:
+        for vectplot in listvectplot:
+            print('vectplot')
+            print(vectplot)
+            axis.arrow(vectplot[0], vectplot[1], vectplot[2], vectplot[3])
     
+    if boolsqua:
+        axis.set_aspect('equal')
+
+    if listscalpara[l] == 'logt':
+        setp_axislogt(axis, limt[:, l], 'x', listmantlabl)
+    
+    if listscalpara[k] == 'logt':
+        setp_axislogt(axis, limt[:, k], 'y', listmantlabl)
+    
+    axis.set_xlim(limt[:, l])
+    axis.set_ylim(limt[:, k])
+                
+
+def retr_listvalutickmajr(minm, maxm):
+    
+    minmlogt = np.log10(minm)
+    maxmlogt = np.log10(maxm)
+
+    listvalutickmajr = 10**(np.arange(np.ceil(minmlogt), np.floor(maxmlogt) + 1))
+    
+    return listvalutickmajr
+
+
+def retr_valulablticklogt(minm, maxm, listmantlabl=None):
+    
+    minmlogt = np.log10(minm)
+    maxmlogt = np.log10(maxm)
+    
+    # determine major ticks and labels
+    listvalutickmajr = retr_listvalutickmajr(minm, maxm)
+    listlabltickmajr = [retr_lablmexp(listvalutickmajr[a]) for a in range(len(listvalutickmajr))]
+    
+    # determine minor ticks and labels
+    ## minor tick mantissa
+    if listmantlabl is None:
+        if len(listvalutickmajr) > 2:
+            listmantlabl = []
+        elif len(listvalutickmajr) == 2:
+            listmantlabl = [3.]
+        else:
+            listmantlabl = [3., 5.]
+    listmantminr = np.arange(2., 10.)
+    listexpominr = np.arange(np.floor(minmlogt), np.ceil(maxmlogt) + 1)
+    listvalutickminr = []
+    listvalutickminrlabl = []
+    indxlablmant = []
+    indxlablexpo = []
+    for kk in range(len(listmantminr)):
+        for mm in range(len(listexpominr)):
+            valu = listmantminr[kk] * 10**(listexpominr[mm])
+            listvalutickminr.append(valu)
+            if listmantminr[kk] in listmantlabl:
+                listvalutickminrlabl.append(valu)
+                indxlablmant.append(kk)
+                indxlablexpo.append(mm)
+    indxlabl = np.array(indxlablexpo, dtype=int) * len(listmantminr) + np.array(indxlablmant, dtype=int)
+    listvalutickminr = np.array(listvalutickminr)
+    listvalutickminr = np.sort(listvalutickminr)
+    listlabltickminr = np.empty_like(listvalutickminr, dtype=object)
+    listlabltickminr[:] = ''
+    for a in range(len(listvalutickminrlabl)):
+        listlabltickminr[indxlabl[a]] = retr_lablmexp(listvalutickminrlabl[a])
+    
+    return listvalutickmajr, listlabltickmajr, listvalutickminr, listlabltickminr
+
+
+def setp_axislogt(axis, limt, typeaxis, listmantlabl):
+    
+    listvalutickmajr, listlabltickmajr, listvalutickminr, listlabltickminr = retr_valulablticklogt(minm, maxm, listmantlabl=listmantlabl)
+
+    if typeaxis == 'x':
+        axis.set_xscale('log', basex=10)
+        axis.set_xticks(listvalutickmajr)
+        axis.set_xticklabels(listlabltickmajr)
+        axis.set_xticks(listvalutickminr, minor=True)
+        axis.set_xticklabels(listlabltickminr, minor=True)
+    else:
+        axis.set_yscale('log', basey=10)
+        axis.set_yticks(listvalutickmajr)
+        axis.set_yticklabels(listlabltickmajr)
+        axis.set_yticks(listvalutickminr, minor=True)
+        axis.set_yticklabels(listlabltickminr, minor=True)
+
 
 def plot_grid(pathbase, strgplot, listpara, listlablpara, \
                        limt=None, listscalpara=None, plotsize=2.5, typefileplot='pdf', \
@@ -855,8 +938,19 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
                        
                        # list of base file names for the individual histograms
                        liststrgvarb=None, \
+                           
+                       # Boolean flag to make the two-dimensional plots square
+                       boolsqua=False, \
 
-                       truepara=None, numbtickbins=3, numbbinsplot=20, boolquan=True, listvarbdraw=None, verbtype=0, boolscat=False):
+                       # list of vectors to overplot
+                       listvectplot=None, \
+
+                       truepara=None, \
+                       
+                       # list of tick mantices (other than 1) to show in the label when the axis is log-streched
+                       listmantlabl=None, \
+                       
+                       numbbinsplot=20, boolquan=True, listvarbdraw=None, verbtype=0, boolscat=False):
 
     # check inputs
     if (boolplotpair or boolplotindi) and liststrgvarb is None:
@@ -864,7 +958,7 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
     
     numbpara = listpara.shape[1]
     indxpara = np.arange(numbpara)
-    listlablparaaugm = retr_listlablparaaugm(listlablpara)
+    listlablparatotl = retr_listlablparatotl(listlablpara)
     
     if not np.isfinite(listpara).all():
         print('plot_grid(): Not all samples are finite!')
@@ -877,6 +971,8 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
     if len(listscalpara) != numbpara:
         print('listscalpara')
         print(listscalpara)
+        print('len(listscalpara)')
+        print(len(listscalpara))
         print('listpara')
         summgene(listpara)
         print('numbpara')
@@ -885,13 +981,31 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
 
     if limt is None:
         limt = np.zeros((2, numbpara))
-        limt[0, :] = np.nanmin(listpara, 0)
-        limt[1, :] = np.nanmax(listpara, 0)
+        
+        for k in indxpara:
+            if listscalpara[k] == 'logt':
+                indxgood = np.where(listpara[:, k] > 0)[0]
+                if indxgood.size < listpara[:, k].size:
+                    print('Parameter %d (%s) has a log scaling but also nonpositive elements!' % (k, listlablpara[k]))
+            else:
+                indxgood = np.arange(listpara[:, k].size)
+            if indxgood.size > 0:
+                limt[0, k] = np.nanmin(listpara[indxgood, k], 0)
+                limt[1, k] = np.nanmax(listpara[indxgood, k], 0)
+            else:
+                limt[0, k] = 0.
+                limt[1, k] = 0.
+                print('limt[:, k]')
+                print(limt[:, k])
+
         for k in indxpara:
             if not np.isfinite(listpara[:, k]).all():
                 print('Warning! Parameter %d (%s) is not all finite.' % (k, listlablpara[k][0]))
                 summgene(listpara[:, k])
     
+    print('limt')
+    print(limt)
+
     for k in indxpara:
         if limt[0, k] == limt[1, k]:
             print('WARNING! Lower and upper limits are the same for the following parameter.')
@@ -919,6 +1033,8 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
     if not boolscat:
         bins = np.zeros((numbbinsplot + 1, numbpara))
         for k in indxpara:
+            if not boolparagood[k]:
+                continue
             if listscalpara[k] == 'self' or listscalpara[k] == 'gaus':
                 bins[:, k] = icdf_self(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
             elif listscalpara[k] == 'logt':
@@ -942,7 +1058,7 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
                 print(bins[:, k])
                 print('listpara[:, k]')
                 summgene(listpara[:, k])
-                raise Exception('')
+                #raise Exception('')
             if np.amin(bins[:, k]) == 0 and np.amax(bins[:, k]) == 0:
                 print('Lower and upper limits of the bins are the same for %s. Grid plot failed.' % listlablpara[k][0])
                 print('k')
@@ -960,6 +1076,8 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
     if boolplotindi:
         # histogram
         for k in indxpara:
+            if not boolparagood[k]:
+                continue
             figr, axis = plt.subplots(figsize=(6, 4))
             axis.hist(listpara[:, k])
             if listvarbdraw is not None:
@@ -975,21 +1093,30 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
     if boolplotpair:
         for k in indxpara:
             for l in indxpara:
-                figr, axis = plt.subplots(figsize=(7, 5))
-                plot_grid_tria(k, l, axis, limt, numbtickbins, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara, listscalpara)
-                axis.set_xlabel(listlablparaaugm[l])
-                axis.set_ylabel(listlablparaaugm[k])
+                if not boolparagood[k] or not boolparagood[l]:
+                    continue
+                if k <= l:
+                    continue
+                figr, axis = plt.subplots(figsize=(8, 6))
+                
+                plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara, listscalpara, boolsqua, listvectplot)
+                
+                axis.set_xlabel(listlablparatotl[l])
+                axis.set_ylabel(listlablparatotl[k])
+                
                 path = pathbase + 'pmar_%s_%s_%s.%s' % (liststrgvarb[k], liststrgvarb[l], strgplot, typefileplot)
                 print('Writing to %s...' % path)
                 figr.savefig(path)
                 plt.close(figr)
-   
+
     if boolplottria:
         figr, axgr = plt.subplots(numbpara, numbpara, figsize=(plotsize*numbpara, plotsize*numbpara))
         if numbpara == 1:
             axgr = [[axgr]]
         for k, axrw in enumerate(axgr):
             for l, axis in enumerate(axrw):
+                if not boolparagood[k] or not boolparagood[l]:
+                    continue
                 if k < l:
                     axis.axis('off')
                     continue
@@ -997,22 +1124,15 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
                 if k == l:
                     plot_grid_diag(k, axis, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara)
                 else:
-                    plot_grid_tria(k, l, axis, limt, numbtickbins, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara, listscalpara)
+                    plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara, listscalpara, boolsqua, listvectplot)
                     
-                if listscalpara[l] == 'logt':
-                    axis.set_xscale('log', basex=10)
-                    arry = np.logspace(np.log10(limt[0, l]), np.log10(limt[1, l]), numbtickbins)
-                    strgarry = [mexp(arry[a]) for a in range(numbtickbins)]
-                    axis.set_xticks(arry)
-                    axis.set_xticklabels(strgarry)
-
-                axis.set_xlim(limt[:, l])
                 if k == numbpara - 1:
-                    axis.set_xlabel(listlablparaaugm[l])
+                    axis.set_xlabel(listlablparatotl[l])
                 else:
                     axis.set_xticklabels([])
+                
                 if (l == 0 and k != 0):
-                    axis.set_ylabel(listlablparaaugm[k])
+                    axis.set_ylabel(listlablparatotl[k])
                 else:
                     if k != 0:
                         axis.set_yticklabels([])

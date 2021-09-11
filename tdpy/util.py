@@ -185,18 +185,6 @@ def retr_kdeg(listsamp, varb, stdv):
     return kdeg
 
 
-def retr_listlablparaaugm(listlablpara):
-    
-    listlablparaaugm = []
-    for lablpara in listlablpara:
-        if lablpara[1] != '':
-            listlablparaaugm.append('%s [%s]' % (lablpara[0], lablpara[1]))
-        else:
-            listlablparaaugm.append('%s' % lablpara[0])
-   
-    return listlablparaaugm
-
-
 def retr_recaprec():
 
     listlcur = np.empty((numbsamp, numbtime))
@@ -256,12 +244,12 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
 
     numbvarbreca = listvarbreca.shape[1]
     indxvarbreca = np.arange(numbvarbreca)
-    listlablvarbrecaaugm = retr_listlablparaaugm(listlablvarbreca)
+    listlablvarbrecatotl = retr_listlablparatotl(listlablvarbreca)
     
     if listvarbprec is not None:
         numbvarbprec = listvarbprec.shape[1]
         indxvarbprec = np.arange(numbvarbprec)
-        listlablvarbprecaugm = retr_listlablparaaugm(listlablvarbprec)
+        listlablvarbprectotl = retr_listlablparatotl(listlablvarbprec)
     
     if verbtype > 1:
         print('numbbins')
@@ -289,7 +277,7 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
                 continue
             listvarb = listvarbreca
             liststrgvarb = liststrgvarbreca
-            listlablvarbtemp = listlablvarbrecaaugm
+            listlablvarbtemp = listlablvarbrecatotl
             strgmetr = 'reca'
             lablyaxi = strgreca + ' [\%]'
         if c == 1:
@@ -297,13 +285,13 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
                 continue
             listvarb = listvarbprec
             liststrgvarb = liststrgvarbprec
-            listlablvarbtemp = listlablvarbprecaugm
+            listlablvarbtemp = listlablvarbprectotl
             strgmetr = 'prec'
             lablyaxi = 'Precision [\%]'
         if c == 2:
             listvarb = listvarbreca
             liststrgvarb = liststrgvarbreca
-            listlablvarbtemp = listlablvarbrecaaugm
+            listlablvarbtemp = listlablvarbrecatotl
             strgmetr = 'occu'
             lablyaxi = 'Occurence rate'
             
@@ -384,7 +372,7 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
                 print(boolupprlimt)
                 axis.errorbar(meanvarb, metr[c, :], marker='o', uplims=boolupprlimt)
                 axis.set_ylabel('Occurence rate')
-                axis.set_xlabel(listlablvarbrecaaugm[k])
+                axis.set_xlabel(listlablvarbrecatotl[k])
                 path = pathimag + 'occu_%s_%s.%s' % (strgvarb, strgextn, strgplotextn) 
                 print('Writing to %s...' % path)
                 plt.savefig(path)
@@ -488,7 +476,11 @@ def retr_nfwp(nfwg, numbside, norm=None):
     return edengridtotl
 
 
-def mexp(numb):
+def retr_lablmexp(numb):
+    '''
+    Return a string for a number including the mantissa and exponent
+    '''
+    
     if numb == 0.:
         strg = '0'
     else:
@@ -497,7 +489,7 @@ def mexp(numb):
         expo = int(expo)
         mant = 10**(logn - expo) * numb / np.fabs(numb)
         
-        if np.fabs(numb) > 1e2 or np.fabs(numb) < 1e-2:
+        if np.fabs(numb) >= 1e3 or np.fabs(numb) < 1e-3:
             if mant == 1. or mant == -1.:
                 strg = r'$10^{%d}$' % expo
             else:
@@ -549,6 +541,31 @@ def retr_listscalpara(listnamepara):
     return listscalpara
 
 
+def retr_labltotl(listlablpara):
+    
+    listlablparatotl = [[] for k in len(listlablpara)]
+    for k, lablpara in enumerate(listlablpara):
+        listlablparatotl[k] = retr_labltotlsing(labl, lablunit)
+   
+    return listlablparatotl
+
+
+def retr_labltotlsing(labl, lablunit):
+    
+    if lablunit == '' or lablunit is None:
+        if labl.startswith('$'):
+            labltotl = '%s' % (labl)
+        else:
+            labltotl = '$%s$' % (labl)
+    else:
+        if labl.startswith('$'):
+            labltotl = '%s [%s]' % (labl, lablunit)
+        else:
+            labltotl = '$%s$ [%s]' % (labl, lablunit)
+
+    return labltotl
+
+
 def retr_listlablscalpara(listnamepara):
     
     numbpara = len(listnamepara)
@@ -556,15 +573,21 @@ def retr_listlablscalpara(listnamepara):
     listlablpara = [[] for k in indxpara]
     listscalpara = [[] for k in indxpara]
     for k in indxpara:
-        if listnamepara[k] == 'rasc':
+        if listnamepara[k] == 'toii':
+            listlablpara[k] = ['TOI ID', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'rasc' or listnamepara[k] == 'rascstar':
             listlablpara[k] = ['RA', 'deg']
             listscalpara[k] = 'self'
-        elif listnamepara[k] == 'decl':
+        elif listnamepara[k] == 'decl' or listnamepara[k] == 'declstar':
             listlablpara[k] = ['Dec', 'deg']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'radiplan':
             listlablpara[k] = ['$R_p$', '$R_\oplus$']
             listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'stdvradiplan':
+            listlablpara[k] = ['$\sigma_{R_p}$', '$R_\oplus$']
+            listscalpara[k] = 'self'
         elif listnamepara[k] == 'radistar':
             listlablpara[k] = ['$R_\star$', '$R_\odot$']
             listscalpara[k] = 'logt'
@@ -573,6 +596,9 @@ def retr_listlablscalpara(listnamepara):
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'massstar':
             listlablpara[k] = ['$M_\star$', '$M_\odot$']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'stdvmassstar':
+            listlablpara[k] = ['$\sigma_{M_\star}$', '$M_\odot$']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'massbhol':
             listlablpara[k] = ['$M_{BH}$', '$M_\odot$']
@@ -592,9 +618,38 @@ def retr_listlablscalpara(listnamepara):
         elif listnamepara[k] == 'metastar':
             listlablpara[k] = ['[M/H]', '']
             listscalpara[k] = 'self'
+        elif listnamepara[k] == 'epoctess':
+            listlablpara[k] = ['$T_0$', 'BJD-2457000']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'epoc':
+            listlablpara[k] = ['$T_0$', 'BJD']
+            listscalpara[k] = 'self'
         elif listnamepara[k] == 'tmag':
             listlablpara[k] = ['T', '']
             listscalpara[k] = 'self'
+        # number of companions per star
+        elif listnamepara[k] == 'numbcompstar':
+            listlablpara[k] = ['$N_{c}$', '']
+            listscalpara[k] = 'self'
+        # number of transiting companions per star
+        elif listnamepara[k] == 'numbcomptranstar':
+            listlablpara[k] = ['$N_{ct}$', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'hmagsyst' or listnamepara[k] == 'hmag':
+            listlablpara[k] = ['H', 'mag']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'kmagsyst' or listnamepara[k] == 'kmag':
+            listlablpara[k] = ['K', 'mag']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'jmagsyst' or listnamepara[k] == 'jmag':
+            listlablpara[k] = ['J', 'mag']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'vmagsyst' or listnamepara[k] == 'vmag':
+            listlablpara[k] = ['V', 'mag']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'dist' or listnamepara[k] == 'distsyst':
+            listlablpara[k] = ['$d$', 'pc']
+            listscalpara[k] = 'logt'
         elif listnamepara[k] == 'nois':
             listlablpara[k] = ['$\sigma$', 'ppt']
             listscalpara[k] = 'logt'
@@ -650,7 +705,7 @@ def retr_listlablscalpara(listnamepara):
             listlablpara[k] = ['$R_p/R_\star$', '']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'dept':
-            listlablpara[k] = ['$\delta$', 'ppt']
+            listlablpara[k] = ['$\delta_{tr}$', 'ppt']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 's2nr':
             listlablpara[k] = ['S/N', '']
@@ -668,14 +723,14 @@ def retr_listlablscalpara(listnamepara):
             listlablpara[k] = ['TIC ID', '']
             listscalpara[k] = 'self'
         else:
-            listlablpara[k] = [listnamepara[k], '']
+            listlablpara[k] = [''.join(listnamepara[k].split('_')), '']
             listscalpara[k] = 'logt'
             print('Warning! Unrecognized parameter name: %s' % listnamepara[k])
 
     return listlablpara, listscalpara
 
 
-def summgene(varb, boolfull=False):
+def summgene(varb, boolslin=False, strgvarb=None, varbcomp=None):
     
     if isinstance(varb, dict):
         print('Type is dict with keys:')
@@ -683,25 +738,55 @@ def summgene(varb, boolfull=False):
     elif isinstance(varb, list):
         print('Type is list')
     try:
-        if not np.isfinite(varb).all():
-            indx = np.where(~np.isfinite(varb))[0]
-            print('%d elements are not finite!' % indx.size)
-        if boolfull:
+        if boolslin:
+            if strgvarb != None:
+                strgvarb = '%s: ' % strgvarb
+            else:
+                strgvarb = ''
             medi = np.nanpercentile(varb, 50)
+            minm = np.nanmin(varb)
+            maxm = np.nanmax(varb)
             lowr = np.nanpercentile(varb, 16)
             uppr = np.nanpercentile(varb, 84)
-            #print('p2.5:%g ' % np.nanpercentile(varb, 2.5))
-            #print('p16: %g' % np.nanpercentile(varb, 16))
-            #print('p50: %g' % np.nanpercentile(varb, 50))
-            #print('p84: %g' % np.nanpercentile(varb, 84))
-            #print('p97.5: %g' % np.nanpercentile(varb, 97.5))
-            print('p50 +- 1sig: %.3g +%.3g -%.3g' % (medi, uppr - medi, medi - lowr))
-        print(np.nanmin(varb))
-        print(np.nanmax(varb))
-        print(np.nanmean(varb))
-        print(varb.shape)
+            
+            if not np.isfinite(varb).all():
+                indx = np.where(~np.isfinite(varb))[0]
+                strginfi = ', %d infinite samples!' % indx.size
+            else:
+                strginfi = ''
+            
+            if varbcomp is None:
+                strgcomp = ''
+            else:
+                medicomp = np.nanpercentile(varbcomp, 50)
+                lowrcomp = np.nanpercentile(varbcomp, 16)
+                upprcomp = np.nanpercentile(varbcomp, 84)
+                stdvcomp = (upprcomp - lowrcomp) / 2.
+                sigm = (medi - medicomp) / np.sqrt(stdvcomp**2 + ((uppr - lowr) / 2.)**2)
+                strgcomp = ', %.3g sigma diff' % sigm
+            print('%s%.3g +%.3g -%.3g, limt: %.3g %.g, %d samples%s%s' % (strgvarb, medi, uppr - medi, medi - lowr, minm, maxm, varb.size, strginfi, strgcomp))
+        else:
+            if not np.isfinite(varb).all():
+                boolfini = np.isfinite(varb)
+                indxfini = np.where(boolfini)[0]
+                indxinfi = np.where(~boolfini)[0]
+                print('%d elements are not finite!' % indxinfi.size)
+                if indxfini.size > 0:
+                    print('Among %d finite samples, 0p: %g, 0.3p: %g, 5p: %g, 50p: %g, 95p: %g, 99.7p: %g, 100p: %g, mean: %g' % (indxfini.size, np.nanmin(varb[indxfini]), \
+                                                                                                    np.percentile(varb[indxfini], 0.3), \
+                                                                                                    np.percentile(varb[indxfini], 5.), \
+                                                                                                    np.percentile(varb[indxfini], 50.), \
+                                                                                                    np.percentile(varb[indxfini], 95.), \
+                                                                                                    np.percentile(varb[indxfini], 99.7), \
+                                                                                                    np.nanmax(varb[indxfini]), np.nanmean(varb[indxfini])))
+            print(np.nanmin(varb))
+            print(np.nanmax(varb))
+            print(np.nanmean(varb))
+            print(varb.shape)
+            print('')
     except:
         print(varb)
+        print('')
 
 
 def retr_p4dm_spec(anch, part='el'):
@@ -1182,6 +1267,9 @@ def retr_strgtimestmp():
 
 
 def read_fits(path, pathimag=None, full=False, verbtype=0):
+    '''
+    Read FITS file
+    '''
     
     if pathimag != None:
         os.system('mkdir -p ' + pathimag)
@@ -1689,6 +1777,7 @@ def retr_path(strg, pathextndata=None, pathextnimag=None, rtag=None, onlyimag=Fa
     else:
         return pathdata
 
+
 def conv_rascdecl(args):
 
     rasc = args[0] * 8 + args[1] / 60. + args[2] / 3600.
@@ -1697,7 +1786,7 @@ def conv_rascdecl(args):
     return rasc, decl
 
 
-def smth(maps, scalsmth, mpol=False, retrfull=False, numbsideoutp=None, indxpixlmask=None):
+def smth_heal(maps, scalsmth, mpol=False, retrfull=False, numbsideoutp=None, indxpixlmask=None):
 
     if mpol:
         mpolsmth = scalsmth
@@ -1985,30 +2074,5 @@ def plot_fermsmth():
                 
         path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/mapssmthgaus.pdf'
         plot_maps(path, mapssmthgaus, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
-
-
-def prca(matr):
-    
-    M = (matr - mean(matr.T, 1)).T
-    eigl, eigt = linalg.eig(cov(M))
-    tranmatr = dot(eigt.T, M).T
-    
-    return eigl, tranmatr, eigt
-
-
-def test_prca():
-
-    npara = 2
-    nsamp = 1000
-    matr = np.zeros((nsamp, 2))
-    matr[:, 0] = randn(nsamp)
-    matr[:, 1] = randn(nsamp) * 10.
-    eigl, tranmatr, eigt = prca(matr)
-    
-    plt.scatter(matr[:, 0], matr[:, 1])
-    plt.show()
-    
-    plt.scatter(tranmatr[:, 0], tranmatr[:, 1])
-    plt.show()
 
 
