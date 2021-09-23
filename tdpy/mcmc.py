@@ -528,31 +528,55 @@ def opti(pathimag, retr_llik, minmpara, maxmpara, numbtopp=3, numbiter=5):
     return listparatopp
 
 
-def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, retr_llik, listlablpara, scalpara, \
-              minmpara, maxmpara, meangauspara, stdvgauspara, numbdata, retr_lpri=None, boolpool=True, \
-              retr_dictderi=None, listlablparaderi=None, \
-              numbsamp=None, \
-              diagmode=True, strgextn='', samptype='emce', typefileplot='pdf', verbtype=1, strgsaveextn=None):
+def samp(gdat, pathimag, numbsampwalk, retr_llik, \
+              # model parameters
+              ## list of names of parameters
+              listnamepara, \
+              ## list of labels of parameters
+              listlablpara, \
+              ## list of scalings of parameters
+              scalpara, \
+              ## list of minima of parameters
+              minmpara, \
+              ## list of maxima of parameters
+              maxmpara, \
+              meangauspara=None, \
+              stdvgauspara=None, \
+              retr_lpri=None, \
+              # Boolean flag to turn on multiprocessing
+              boolmult=True, \
+              # burn-in
+              ## number of samples in a precursor run whose final state will be used as the initial state of the actual sampler
+              numbsampburnwalkinit=0, \
+              ## number of initial samples to be burned
+              numbsampburnwalk=0, \
+              # derivation
+              retr_dictderi=None, \
+              listlablparaderi=None, \
+              diagmode=True, strgextn='', typesamp='emce', typefileplot='png', verbtype=1, strgsaveextn=None):
         
     numbpara = len(listlablpara)
    
-    if numbsampwalk <= numbsampburnwalkseco:
+    if numbsampwalk <= numbsampburnwalk:
         raise Exception('Burn-in samples cannot outnumber samples.')
-        
+    
+    if isinstance(minmpara, list):
+        minmpara = np.array(minmpara)
+
+    if isinstance(maxmpara, list):
+        maxmpara = np.array(maxmpara)
+
     if numbpara != minmpara.size:
         raise Exception('')
     if numbpara != maxmpara.size:
         raise Exception('')
 
     indxpara = np.arange(numbpara)
-    numbdoff = numbdata - numbpara
     
-    if samptype == 'emce':
+    if typesamp == 'emce':
         numbwalk = max(20, 2 * numbpara)
         indxwalk = np.arange(numbwalk)
         numbsamptotl = numbsampwalk * numbwalk
-        if numbsamp is None:
-            numbsamp = max(10000, numbsamptotl)
 
     # plotting
     ## plot limits 
@@ -605,28 +629,29 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
             if scalpara[m] == 'gaus':
                 parainit[k][m] = np.random.rand() * stdvpara[m] + meanpara[m] + parainitcent[m]
         
-    if verbtype > 0:
-        progress = True
-    else:
-        progress = False
+    if typesamp == 'emce':
+        if verbtype > 0:
+            progress = True
+        else:
+            progress = False
     
-    if samptype == 'emce':
         import emcee
 
+        numbsamp = numbwalk * numbsampwalk
         indxsampwalk = np.arange(numbsampwalk)
         indxsamp = np.arange(numbsamp)
-        numbsampburn = numbsampburnwalk * numbwalk
+        numbsampburn = numbsampburnwalkinit * numbwalk
         if diagmode:
             if numbsampwalk == 0:
                 raise Exception('')
     
-        if boolpool:
+        if boolmult:
             pool = multiprocessing.Pool(processes=multiprocessing.cpu_count()-1)
         else:
             pool = None
         objtsamp = emcee.EnsembleSampler(numbwalk, numbpara, retr_lpos, args=dictlpos, pool=pool)
-        if numbsampburnwalk > 0:
-            parainitburn, prob, state = objtsamp.run_mcmc(parainit, numbsampburnwalk, progress=progress)
+        if numbsampburnwalkinit > 0:
+            parainitburn, prob, state = objtsamp.run_mcmc(parainit, numbsampburnwalkinit, progress=progress)
             if verbtype == 1:
                 print('Parameter states from the burn-in:')
                 print('parainitburn')
@@ -646,17 +671,17 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
         listparafittwalk = objtsamp.chain
         
         # get rid of burn-in and thin
-        indxsampwalkkeep = np.linspace(numbsampburnwalkseco, numbsampwalk - 1, int(numbsamp / numbwalk)).astype(int)
+        indxsampwalkkeep = np.linspace(numbsampburnwalk, numbsampwalk - 1, int(numbsamp / numbwalk)).astype(int)
         listparafitt = listparafittwalk[:, indxsampwalkkeep, :].reshape((-1, numbpara))
         
         listparaderi = None
+        dictparaderi = dict()
         if retr_dictderi is not None:
             listdictparaderi = [[] for n in indxsamp]
             listdictvarbderi = [[] for n in indxsamp]
             for n in indxsamp:
                 listdictparaderi[n], listdictvarbderi[n] = retr_dictderi(listparafitt[n, :], gdat)
 
-            dictparaderi = dict()
             for strg, valu in listdictparaderi[0].items():
                 dictparaderi[strg] = np.empty([numbsamp] + list(valu.shape))
                 for n in indxsamp:
@@ -677,7 +702,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
         figr, axis = plt.subplots(numbpara + 1, 1, figsize=(12, (numbpara + 1) * 4))
         for i in indxwalk:
             axis[0].plot(indxsampwalk, listlposwalk[i, :])
-        axis[0].axvline(numbsampburnwalkseco, color='k')
+        axis[0].axvline(numbsampburnwalk, color='k')
         axis[0].set_ylabel('log P')
         for k in indxpara:
             for i in indxwalk:
@@ -685,7 +710,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
             labl = listlablpara[k][0]
             if listlablpara[k][1] != '':
                 labl += ' [%s]' % listlablpara[k][1]
-            axis[k+1].axvline(numbsampburnwalkseco, color='k')
+            axis[k+1].axvline(numbsampburnwalk, color='k')
             axis[k+1].set_ylabel(labl)
         path = pathimag + 'trac%s.%s' % (strgextn, typefileplot)
         if verbtype == 1:
@@ -695,14 +720,14 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
         
         # plot the posterior
         ### trace
-        if numbsampburnwalkseco > 0:
+        if numbsampburnwalk > 0:
             figr, axis = plt.subplots(numbpara + 1, 1, figsize=(12, (numbpara + 1) * 4))
             for i in indxwalk:
-                axis[0].plot(indxsampwalk[numbsampburnwalkseco:], listlposwalk[i, numbsampburnwalkseco:])
+                axis[0].plot(indxsampwalk[numbsampburnwalk:], listlposwalk[i, numbsampburnwalk:])
             axis[0].set_ylabel('log P')
             for k in indxpara:
                 for i in indxwalk:
-                    axis[k+1].plot(indxsampwalk[numbsampburnwalkseco:], listparafittwalk[i, numbsampburnwalkseco:, k])
+                    axis[k+1].plot(indxsampwalk[numbsampburnwalk:], listparafittwalk[i, numbsampburnwalk:, k])
                 labl = listlablpara[k][0]
                 if listlablpara[k][1] != '':
                     labl += ' [%s]' % listlablpara[k][1]
@@ -713,7 +738,7 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
             plt.savefig(path)
             plt.close()
     
-    if samptype == 'nest':
+    if typesamp == 'nest':
         import dynesty
         from dynesty import plotting as dyplot
         from dynesty import utils as dyutils
@@ -741,33 +766,33 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
         numbsamp = listpara.shape[0]
         indxsamp = np.arange(numbsamp)
 
-        pathbase = pathimag + '%s/' % samptype
+        pathbase = pathimag + '%s/' % typesamp
         os.system('mkdir -p %s' % pathbase)
         for keys in objtsamp:
             if isinstance(objtsamp[keys], np.ndarray) and objtsamp[keys].size == numbsamp:
                 figr, axis = plt.subplots()
                 axis.plot(indxsamp, objtsamp[keys])
-                path = pathimag + '%s/%s%s.%s' % (samptype, keys, strgextn, typefileplot)
+                path = pathimag + '%s/%s%s.%s' % (typesamp, keys, strgextn, typefileplot)
                 if verbtype == 1:
                     print('Writing to %s...' % path)
                 plt.savefig(path)
     
         rfig, raxes = dyplot.runplot(results)
-        path = pathimag + '%s/dyne_runs%s.%s' % (samptype, strgextn, typefileplot)
+        path = pathimag + '%s/dyne_runs%s.%s' % (typesamp, strgextn, typefileplot)
         if verbtype == 1:
             print('Writing to %s...' % path)
         plt.savefig(path)
         plt.close()
         
         tfig, taxes = dyplot.traceplot(results)
-        path = pathimag + '%s/dyne_trac%s.%s' % (samptype, strgextn, typefileplot)
+        path = pathimag + '%s/dyne_trac%s.%s' % (typesamp, strgextn, typefileplot)
         if verbtype == 1:
             print('Writing to %s...' % path)
         plt.savefig(path)
         plt.close()
         
         cfig, caxes = dyplot.cornerplot(results)
-        path = pathimag + '%s/dyne_corn%s.%s' % (samptype, strgextn, typefileplot)
+        path = pathimag + '%s/dyne_corn%s.%s' % (typesamp, strgextn, typefileplot)
         if verbtype == 1:
             print('Writing to %s...' % path)
         plt.savefig(path)
@@ -788,9 +813,14 @@ def samp(gdat, pathimag, numbsampwalk, numbsampburnwalk, numbsampburnwalkseco, r
     
     if strgsaveextn is not None:
         print('Writing to the initial state from %s...' % strgsaveextn)
-        np.savetxt(strgsaveextn, np.median(listpara, 0))
+        np.savetxt(strgsaveextn, np.median(listparafitt, 0))
     
-    return listparafitt, listparaderi
+    dictparafitt = dict()
+    for k, name in enumerate(listnamepara):
+        dictparafitt[name] = listparafitt[:, k]
+    dictparafitt['lpos'] = listlposwalk.flatten()
+    
+    return dictparafitt, dictparaderi
 
 
 def plot_grid_diag(k, axis, listpara, bins, truepara, listvarbdraw, boolquan, listlablpara):
@@ -853,23 +883,24 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, bins, truepara, lis
     axis.set_ylim(limt[:, k])
                 
 
-def retr_listvalutickmajr(minm, maxm):
+def retr_listvalutickmajr(minmlogt, maxmlogt):
     
-    minmlogt = np.log10(minm)
-    maxmlogt = np.log10(maxm)
-
     listvalutickmajr = 10**(np.arange(np.ceil(minmlogt), np.floor(maxmlogt) + 1))
     
     return listvalutickmajr
 
 
-def retr_valulablticklogt(minm, maxm, listmantlabl=None):
+def retr_valulabltick(minm, maxm, scal, listmantlabl=None):
     
-    minmlogt = np.log10(minm)
-    maxmlogt = np.log10(maxm)
+    if scal == 'logt' or scal == 'powr':
+        minmlogt = np.log10(minm)
+        maxmlogt = np.log10(maxm)
+    if scal == 'asnh':
+        minmlogt = np.arcsinh(minm)
+        maxmlogt = np.arcsinh(maxm)
     
     # determine major ticks and labels
-    listvalutickmajr = retr_listvalutickmajr(minm, maxm)
+    listvalutickmajr = retr_listvalutickmajr(minmlogt, maxmlogt)
     listlabltickmajr = [retr_lablmexp(listvalutickmajr[a]) for a in range(len(listvalutickmajr))]
     
     # determine minor ticks and labels
@@ -889,7 +920,10 @@ def retr_valulablticklogt(minm, maxm, listmantlabl=None):
     indxlablexpo = []
     for kk in range(len(listmantminr)):
         for mm in range(len(listexpominr)):
-            valu = listmantminr[kk] * 10**(listexpominr[mm])
+            if scal == 'logt' or scal == 'powr':
+                valu = listmantminr[kk] * 10**(listexpominr[mm])
+            if scal == 'asnh':
+                valu = listmantminr[kk] * np.sinh(listexpominr[mm])
             listvalutickminr.append(valu)
             if listmantminr[kk] in listmantlabl:
                 listvalutickminrlabl.append(valu)
@@ -908,7 +942,10 @@ def retr_valulablticklogt(minm, maxm, listmantlabl=None):
 
 def setp_axislogt(axis, limt, typeaxis, listmantlabl):
     
-    listvalutickmajr, listlabltickmajr, listvalutickminr, listlabltickminr = retr_valulablticklogt(minm, maxm, listmantlabl=listmantlabl)
+    minm = limt[0]
+    maxm = limt[1]
+    
+    listvalutickmajr, listlabltickmajr, listvalutickminr, listlabltickminr = retr_valulabltick(minm, maxm, 'logt', listmantlabl=listmantlabl)
 
     if typeaxis == 'x':
         axis.set_xscale('log', basex=10)
@@ -958,7 +995,7 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
     
     numbpara = listpara.shape[1]
     indxpara = np.arange(numbpara)
-    listlablparatotl = retr_listlablparatotl(listlablpara)
+    listlablparatotl = retr_labltotl(listlablpara)
     
     if not np.isfinite(listpara).all():
         print('plot_grid(): Not all samples are finite!')

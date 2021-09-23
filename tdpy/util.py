@@ -244,12 +244,12 @@ def plot_recaprec(pathimag, strgextn, listvarbreca, listvarbprec, \
 
     numbvarbreca = listvarbreca.shape[1]
     indxvarbreca = np.arange(numbvarbreca)
-    listlablvarbrecatotl = retr_listlablparatotl(listlablvarbreca)
+    listlablvarbrecatotl = retr_labltotl(listlablvarbreca)
     
     if listvarbprec is not None:
         numbvarbprec = listvarbprec.shape[1]
         indxvarbprec = np.arange(numbvarbprec)
-        listlablvarbprectotl = retr_listlablparatotl(listlablvarbprec)
+        listlablvarbprectotl = retr_labltotl(listlablvarbprec)
     
     if verbtype > 1:
         print('numbbins')
@@ -543,9 +543,9 @@ def retr_listscalpara(listnamepara):
 
 def retr_labltotl(listlablpara):
     
-    listlablparatotl = [[] for k in len(listlablpara)]
-    for k, lablpara in enumerate(listlablpara):
-        listlablparatotl[k] = retr_labltotlsing(labl, lablunit)
+    listlablparatotl = [[] for k in range(len(listlablpara))]
+    for k in range(len(listlablpara)):
+        listlablparatotl[k] = retr_labltotlsing(listlablpara[k][0], listlablpara[k][1])
    
     return listlablparatotl
 
