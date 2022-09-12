@@ -1,5 +1,6 @@
 # utilities
 import os, time, datetime
+import pickle
 
 ## numerics
 import numpy as np
@@ -9,6 +10,8 @@ import scipy.fftpack
 import scipy.stats
 import healpy as hp
 import pandas as pd
+
+from tqdm import tqdm
 
 # plotting
 import matplotlib
@@ -509,7 +512,7 @@ def retr_recaprec():
 
 def plot_recaprec(pathimag, strgextn, listparareca, listparaprec, \
                                    listnameparareca, listnameparaprec, listlablvarbreca, listlablvarbprec, \
-                                                    boolposirele, boolreleposi, strgplotextn='pdf', verbtype=1, numbbins=10, strgreca='Recall', listparadete=None):
+                                                    boolposirele, boolreleposi, strgplotextn='pdf', typeverb=1, numbbins=10, strgreca='Recall', listparadete=None):
     
     if isinstance(boolreleposi, list):
         boolreleposi = np.array(boolreleposi)
@@ -519,8 +522,8 @@ def plot_recaprec(pathimag, strgextn, listparareca, listparaprec, \
     
     # sanity checks
     if np.sum(boolposirele) != np.sum(boolreleposi) or \
-                                boolreleposi.size != listparaprec.shape[0] or \
-                                boolposirele.size != listparareca.shape[0] or \
+                                listparaprec is not None and boolreleposi.size != listparaprec.shape[0] or \
+                                listparareca is not None and boolposirele.size != listparareca.shape[0] or \
                                 isinstance(listparareca, list) or isinstance(listparaprec, list) or \
                                 listlablvarbreca is not None and len(listlablvarbreca) != listparareca.shape[1] or \
                                 listlablvarbprec is not None and len(listlablvarbprec) != listparaprec.shape[1]:
@@ -551,7 +554,7 @@ def plot_recaprec(pathimag, strgextn, listparareca, listparaprec, \
         indxvarbprec = np.arange(numbvarbprec)
         listlablvarbprectotl = retr_labltotl(listlablvarbprec)
     
-    if verbtype > 1:
+    if typeverb > 1:
         print('numbbins')
         print(numbbins)
     
@@ -595,10 +598,12 @@ def plot_recaprec(pathimag, strgextn, listparareca, listparaprec, \
             
         for k, namepara in enumerate(listnamepara):
         
-            bins = np.linspace(np.amin(listpara[:, k]), np.amax(listpara[:, k]), numbbins + 1)
+            bins = np.linspace(np.nanmin(listpara[:, k]), np.nanmax(listpara[:, k]), numbbins + 1)
             meanvarb = (bins[1:] + bins[:-1]) / 2.
             
             if not np.isfinite(bins).all():
+                print('np.nanmin(listpara[:, k])')
+                print(np.nanmin(listpara[:, k]))
                 raise Exception('')
 
             if c == 2 and listparadete is not None:
@@ -832,14 +837,118 @@ def retr_labltotlsing(labl, lablunit):
     return labltotl
 
 
-def retr_listlablscalpara(listnamepara):
+def retr_factconv():
+    '''
+    Make a dictionary of relevant conversion factors.
+    '''
     
+    dictfact = dict()
+
+    dictfact['rsrj'] = 9.731
+    dictfact['rjre'] = 11.21
+    dictfact['rsre'] = dictfact['rsrj'] * dictfact['rjre']
+    dictfact['msmj'] = 1048.
+    dictfact['mjme'] = 317.8
+    dictfact['msme'] = dictfact['msmj'] * dictfact['mjme']
+    
+    dictfact['pcau'] = 206265.
+    
+    # Astronomical Unit in Solar radius
+    dictfact['aurs'] = 215.
+    
+    # Astronomical Unit in kilometers
+    dictfact['aukm'] = 149597870700
+
+    return dictfact
+
+
+def retr_dictturk():
+    
+    dictturk = dict()
+    
+    dictturk['All'] = 'Tüm'
+    dictturk['Detected'] = 'Keşfedilen'
+    dictturk['Exoplanets'] = 'Ötegezegenler'
+    dictturk['Stellar Age'] = 'Barınak Yıldız Yaşı'
+    dictturk['Gyr'] = 'Milyar yıl'
+    dictturk['Exoplanet Detections'] = 'Ötegezegen Keşifleri'
+    dictturk['Transit'] = 'Geçiş'
+    dictturk['Radial Velocity'] = 'Dikine Hız'
+    dictturk['Other'] = 'Diğer'
+    dictturk['Other Exoplanet Detections'] = 'Diğer Ötegezegen Keşifleri'
+    dictturk['Imaging'] = 'Görüntüleme'
+    dictturk['Microlensing'] = 'Mikromerceklenme'
+    dictturk['Transiting'] = 'Geçiş Yapan'
+    dictturk['Exoplanets with precise density'] = 'Yoğunluk ölçümü hassas olan ötegezegenler'
+    dictturk['Exoplanets with precise mass'] = 'Kütle ölçümü hassas olan ötegezegenler'
+    dictturk['Exoplanets with weak mass'] = 'Kütle ölçümü zayıf olan ötegezegenler'
+    dictturk['Young'] = 'Genç'
+    dictturk['Old'] = 'Yaşlı'
+    dictturk['Discovery Year'] = 'Keşif Yılı'
+    dictturk['Discovered by TESS'] = 'TESS tarafından keşfedilen'
+    dictturk['Discovered by Kepler'] = 'Kepler tarafından keşfedilen'
+    dictturk['With precise mass and radius'] = 'Hassas kütle ve yarı çap ölçümüne sahip'
+                
+    dictturk['Sun-like host'] = 'Güneş-benzeri barınak yıldızı'
+    dictturk['Habitable zone'] = 'Yaşanabilir bölge'
+    dictturk['Hot'] = 'Sıcak'
+    dictturk['Low irradiation'] = 'Az derecede aydınlatılmış'
+    dictturk['Medium irradiation'] = 'Orta derecede aydınlatılmış'
+    dictturk['High irradiation'] = 'Yüksek derecede aydınlatılmış'
+    
+    dictturk['Transiting exoplanets discovered by TESS'] = 'TESS tarafından keşfedilen geçiş yapan ötegezegenler'
+    dictturk['Bright'] = 'Parlak'
+    dictturk['Bright and small'] = 'Parlak ve küçük'
+    dictturk['Bright, small, and visible from LCO'] = "Parlak, küçük ve LCO'dan gözlemlenebilir"
+    dictturk['Bright, small, visible from LCO, and favorable for AC'] = "Parlak, küçük ve LCO'dan gözlemlenebilir ve atmosfer nitelendirmesine elverişli"
+    dictturk['High TSM/ESM'] = 'Yüksek TSM/ESM'
+    dictturk['High TSM/ESM \& Precise mass'] = 'Yüksek TSM/ESM ve Hassas Kütle Ölçümü'
+    dictturk['High TSM/ESM \& Weak mass'] = 'Yüksek TSM/ESM ve Zayıf Kütle Ölçümü'
+    dictturk['Precise mass'] = 'Hassas Kütle Ölçümü'
+    dictturk['Weak mass'] = 'Zayıf Kütle Ölçümü'
+    dictturk['Time from midtransit'] = 'Geçiş ortasına göre zaman'
+    dictturk['hour'] = 'saat'
+    dictturk['days'] = 'gün'
+    dictturk['degree'] = 'derece'
+    dictturk['Right Ascension'] = 'Bahar Açısı'
+    dictturk['Declination'] = 'Yükselim'
+    dictturk['Astrometry'] = 'Astrometri'
+    dictturk['Orbital Brightness Modulation'] = 'Yörünge Parlaklık Değişimi'
+    dictturk['Transit Timing Variations'] = 'Geçiş Zamanlama Değişimleri'
+    dictturk['Eclipse Timing Variations'] = 'Örtme Zamanlama Değişimleri'
+    
+    return dictturk
+
+
+def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldiag=False, typelang='English'):
+    
+    if dictdefa is not None:
+        if not isinstance(dictdefa, dict):
+            raise Exception('')
+    
+    if booldiag and listlablpara is not None and len(listnamepara) != len(listlablpara):
+        print('listnamepara')
+        print(listnamepara)
+        print('listlablpara')
+        print(listlablpara)
+        raise Exception('')
+                
     numbpara = len(listnamepara)
     indxpara = np.arange(numbpara)
-    listlablpara = [[] for k in indxpara]
+    
+    if listlablpara is None:
+        listlablpara = [[] for k in indxpara]
+    listlabltotlpara = [[] for k in indxpara]
+    listlablrootpara = [[] for k in indxpara]
+    listlablunitpara = [[] for k in indxpara]
     listscalpara = [[] for k in indxpara]
     for k in indxpara:
-        if listnamepara[k] == 'toii':
+        if listlablpara[k] is not None and len(listlablpara[k]) > 0:
+            continue
+        if dictdefa is not None and listnamepara[k] in dictdefa:
+            listlablpara[k] = dictdefa[listnamepara[k]]['labl']
+            listscalpara[k] = dictdefa[listnamepara[k]]['scal']
+        elif listnamepara[k] == 'toii':
             listlablpara[k] = ['TOI ID', '']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'HostRedshift':
@@ -855,29 +964,54 @@ def retr_listlablscalpara(listnamepara):
             listlablpara[k] = ['Sector', '']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'nameplan':
-            listlablpara[k] = ['Planet Name', '']
+            listlablpara[k] = ['Planet', '']
             listscalpara[k] = ''
+        # TOI
+        elif listnamepara[k] == 'numbobsvtime':
+            listlablpara[k] = ['Number of time-series observations', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'numbobsvspec':
+            listlablpara[k] = ['Number of spectroscopic observations', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'numbobsvimag':
+            listlablpara[k] = ['Number of imaging observations', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'yearaler':
+            listlablpara[k] = ['Decimal Year', '']
+            listscalpara[k] = 'self'
+        
+        elif listnamepara[k] == 'tolerrat':
+            listlablpara[k] = ['$\delta_{rr}$', '']
+            listscalpara[k] = 'self'
+        
+        elif listnamepara[k] == 'namestar':
+            listlablpara[k] = ['Star', '']
+            listscalpara[k] = 'self'
+
         # discovery magnitude
         elif listnamepara[k] == 'magtdisc':
             listlablpara[k] = [r'$m_{disc}$', '']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'laecstar':
-            listlablpara[k] = [r'$\beta$', 'deg']
+            listlablpara[k] = [r'$\beta$', 'degree']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'loecstar':
-            listlablpara[k] = [r'$\lambda$', 'deg']
+            listlablpara[k] = [r'$\lambda$', 'degree']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'rasc' or listnamepara[k] == 'rascstar':
-            listlablpara[k] = ['RA', 'deg']
+            listlablpara[k] = ['Right Ascension', 'degree']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'decl' or listnamepara[k] == 'declstar':
-            listlablpara[k] = ['Dec', 'deg']
+            listlablpara[k] = ['Declination', 'degree']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'lgal' or listnamepara[k] == 'lgalstar':
-            listlablpara[k] = ['$l$', 'deg']
+            listlablpara[k] = ['$l$', 'degree']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'bgal' or listnamepara[k] == 'bgalstar':
-            listlablpara[k] = ['$b$', 'deg']
+            listlablpara[k] = ['$b$', 'degree']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'yeardisc':
+            listlablpara[k] = ['Discovery Year', '']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'ratimass':
             listlablpara[k] = ['$q$', '']
@@ -890,6 +1024,9 @@ def retr_listlablscalpara(listnamepara):
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'radistar':
             listlablpara[k] = ['$R_\star$', '$R_\odot$']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'tagestar':
+            listlablpara[k] = ['Stellar Age', 'Gyr']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'massplan':
             listlablpara[k] = ['$M_p$', '$M_\oplus$']
@@ -938,13 +1075,59 @@ def retr_listlablscalpara(listnamepara):
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'densplan':
             listlablpara[k] = ['d', 'g cm$^{-3}$']
-            listscalpara[k] = 'self'
-        elif listnamepara[k] == 'epoctess':
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'epocmtratess':
             listlablpara[k] = ['$T_0$', 'BJD-2457000']
             listscalpara[k] = 'self'
-        elif listnamepara[k] == 'epoc':
+        elif listnamepara[k] == 'epocmtra':
             listlablpara[k] = ['$T_0$', 'BJD']
             listscalpara[k] = 'self'
+        elif listnamepara[k] == 'timesupn':
+            listlablpara[k] = ['$T_0$', 'BJD']
+            listscalpara[k] = 'self'
+        
+        # time-series constants
+        elif listnamepara[k].startswith('cons') or listnamepara[k].startswith('timestep') or listnamepara[k].startswith('scalstep') or \
+                                                listnamepara[k].startswith('coeflmdk') or listnamepara[k].startswith('rratcom'):
+            ## white
+            if listnamepara[k].endswith('whit'):
+                strg = ',w'
+            ## energy-dependent
+            elif listnamepara[k][-4:-2] == 'en' and listnamepara[k][-2:].isnumeric():
+                strg = ',%d' % int(listnamepara[k][-2:])
+            ## single-wavelength
+            else:
+                strg = ''
+            
+            if listnamepara[k].startswith('consfrst'):
+                listlablpara[k] = ['$C_{1%s}$' % strg, '']
+            elif listnamepara[k].startswith('consseco'):
+                listlablpara[k] = ['$C_{2%s}$' % strg, '']
+            elif listnamepara[k].startswith('cons'):
+                listlablpara[k] = ['$C_{%s}$' % strg, '']
+            # the time at which a time-series baseline has a step (discontinuity)
+            elif listnamepara[k].startswith('timestep'):
+                listlablpara[k] = ['$t_{b%s}$' % strg, '']
+            # the slope of the step
+            elif listnamepara[k].startswith('scalstep'):
+                listlablpara[k] = ['$A_{b%s}$' % strg, '']
+            elif listnamepara[k].startswith('rratcomp'):
+                listlablpara[k] = ['$R_{p%s}/R_\star$' % strg, '']
+            elif listnamepara[k].startswith('rratcom'):
+                listlablpara[k] = ['$R_{%d%s}/R_\star$' % (int(listnamepara[k][7]), strg), '']
+            # linear limb-darkening coefficient
+            elif listnamepara[k].startswith('coeflmdklinr'):
+                listlablpara[k] = ['$u_{l%s}$' % strg, '']
+            # quadratic limb-darkening coefficient
+            elif listnamepara[k].startswith('coeflmdkquad'):
+                listlablpara[k] = ['$u_{q%s}$' % strg, '']
+            
+            if listnamepara[k].startswith('rratcom'):
+                listscalpara[k] = 'logt'
+            else:
+                listscalpara[k] = 'self'
+            
+        
         elif listnamepara[k] == 'tmagsyst' or listnamepara[k] == 'tmag':
             listlablpara[k] = ['T', '']
             listscalpara[k] = 'self'
@@ -1005,10 +1188,13 @@ def retr_listlablscalpara(listnamepara):
             listlablpara[k] = ['$N_{tr}$', '']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'incl':
-            listlablpara[k] = ['$i$', 'deg']
+            listlablpara[k] = ['$i$', 'degree']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'cosi':
             listlablpara[k] = ['$\cos i$', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'booltran':
+            listlablpara[k] = ['Whether transiting', '']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'inso':
             listlablpara[k] = ['$I_{irr}$', '$I_{\oplus}$']
@@ -1025,7 +1211,7 @@ def retr_listlablscalpara(listnamepara):
         elif listnamepara[k] == 'perilspeprim':
             listlablpara[k] = ['$P_{LS,max}$', 'days']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'peri':
+        elif listnamepara[k] == 'peri' or listnamepara[k] == 'pericomp' or listnamepara[k] == 'periplan':
             listlablpara[k] = ['$P$', 'days']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'masscomp':
@@ -1050,38 +1236,35 @@ def retr_listlablscalpara(listnamepara):
             listlablpara[k] = ['$A_{SL}$', 'ppt']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'duratran' or listnamepara[k] == 'duratrantotl':
-            listlablpara[k] = ['$D_{tt}$', 'hours']
+            listlablpara[k] = ['Transit Duration', 'hours']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'duratranfull':
-            listlablpara[k] = ['$D_{ft}$', 'hours']
+            listlablpara[k] = ['Full Transit Duration', 'hours']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'radicomp':
-            listlablpara[k] = ['$R_{comp}$', '$M_\oplus$']
-            listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'rrat':
-            listlablpara[k] = ['$R_p/R_\star$', '']
+            listlablpara[k] = ['Companion Radius, $R_{comp}$', '$R_\oplus$']
             listscalpara[k] = 'logt'
         
         # orbital parameters for each component
-        elif listnamepara[k][:7] == 'radicom' and len(listnamepara[k]) == 8 and listnamepara[k][7].isalpha():
+        elif listnamepara[k][:7] == 'radicom' and len(listnamepara[k]) == 8 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
             listlablpara[k] = ['$R_{%s}$' % listnamepara[k][7], '']
             listscalpara[k] = 'logt'
-        elif listnamepara[k][:7] == 'rratcom' and len(listnamepara[k]) == 8 and listnamepara[k][7].isalpha():
+        elif listnamepara[k][:7] == 'rratcom' and len(listnamepara[k]) == 8 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
             listlablpara[k] = ['$R_{%s}/R_\star$' % listnamepara[k][7], '']
             listscalpara[k] = 'self'
-        elif listnamepara[k][:7] == 'rsmacom' and len(listnamepara[k]) == 8 and listnamepara[k][7].isalpha():
+        elif listnamepara[k][:7] == 'rsmacom' and len(listnamepara[k]) == 8 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
             listlablpara[k] = ['$(R_\star+R_{%s})/a$' % listnamepara[k][7], '']
             listscalpara[k] = 'self'
-        elif listnamepara[k][:7] == 'cosicom' and len(listnamepara[k]) == 8 and listnamepara[k][7].isalpha():
+        elif listnamepara[k][:7] == 'cosicom' and len(listnamepara[k]) == 8 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
             listlablpara[k] = ['$\cos i_{%s}$' % listnamepara[k][7], '']
             listscalpara[k] = 'self'
-        elif listnamepara[k][:7] == 'epoccom' and len(listnamepara[k]) == 8 and listnamepara[k][7].isalpha():
-            listlablpara[k] = ['$T_{0;%s}$' % listnamepara[k][7], 'BJD']
+        elif listnamepara[k][:11] == 'epocmtracom' and len(listnamepara[k]) == 12 and (listnamepara[k][11].isnumeric() or listnamepara[k][11] == 'p'):
+            listlablpara[k] = ['$T_{0;%s}$' % listnamepara[k][11], 'BJD']
             listscalpara[k] = 'self'
-        elif listnamepara[k][:7] == 'pericom' and len(listnamepara[k]) == 8 and listnamepara[k][7].isalpha():
+        elif listnamepara[k][:7] == 'pericom' and len(listnamepara[k]) == 8 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
             listlablpara[k] = ['$P_{%s}$' % listnamepara[k][7], 'days']
             listscalpara[k] = 'self'
-        elif listnamepara[k][:11] == 'massplancom' and len(listnamepara[k]) == 12 and listnamepara[k][11].isalpha():
+        elif listnamepara[k][:11] == 'massplancom' and len(listnamepara[k]) == 12 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
             listlablpara[k] = ['$M_{%s}$' % listnamepara[k][11], '$M_\oplus$']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'masscomp':
@@ -1110,8 +1293,32 @@ def retr_listlablscalpara(listnamepara):
             listlablpara[k] = [''.join(listnamepara[k].split('_')), '']
             listscalpara[k] = 'logt'
             print('Warning! Unrecognized parameter name: %s' % listnamepara[k])
+        
+        if len(listscalpara[k]) == 0:
+            print('listnamepara[k]')
+            print(listnamepara[k])
+            raise Exception('')
 
-    return listlablpara, listscalpara
+        if len(listlablpara[k]) == 0:
+            raise Exception('')
+
+    if typelang == 'Turkish':
+        dictturk = retr_dictturk()
+        for k in indxpara:
+            if listlablpara[k][0] in dictturk:
+                listlablpara[k][0] = dictturk[listlablpara[k][0]]
+            if listlablpara[k][1] in dictturk:
+                listlablpara[k][1] = dictturk[listlablpara[k][1]]
+
+    for k in indxpara:
+        listlablrootpara[k] = listlablpara[k][0]
+        listlablunitpara[k] = listlablpara[k][1]
+        if listlablunitpara[k] == '':
+            listlabltotlpara[k] = listlablpara[k][0]
+        else:
+            listlabltotlpara[k] = '%s [%s]' % (listlablpara[k][0], listlablpara[k][1])
+            
+    return listlablpara, listscalpara, listlablrootpara, listlablunitpara, listlabltotlpara
 
 
 def summgene(varb, boolslin=False, namevarb=None, varbcomp=None):
@@ -1173,7 +1380,7 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None):
                 if varb.size == 0:
                     print('An empty number array with size 0.')
                     print('')
-                elif varb.dtype.type is np.string_:
+                elif varb.dtype.type is np.string_ or varb.dtype.type is np.str_:
                     print('string type numpy array')
                 elif varb.dtype.type is np.object_:
                     print('Object type numpy array')
@@ -1197,16 +1404,18 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None):
                                                                                                             np.percentile(varb[indxfini], 99.7), \
                                                                                                             maxmtemp, meantemp, \
                                                                                                             ))
-                    print(np.nanmin(varb))
-                    print(np.nanmax(varb))
-                    print(np.nanmean(varb))
-                    print(varb.shape)
-                    print('%d unique elements.' % np.unique(varb).size)
+                    if np.isfinite(varb).any():
+                        print(np.nanmin(varb))
+                        print(np.nanmax(varb))
+                        print(np.nanmean(varb))
+                        print(varb.shape)
+                        print('%d unique elements.' % np.unique(varb).size)
                     print('')
-            if isinstance(varb, np.floating):
+            elif isinstance(varb, np.floating):
                 print('Numpy float with type %s' % type(varb))
                 print(varb)
-
+            else:
+                print('Type is %s' % type(varb))
     #except:
     #    print('summgene() failed')
     #    print('type(varb)')
@@ -1292,7 +1501,7 @@ def regr(xdat, ydat, ordr):
     return coef, func, strg
 
 
-def corr_catl(lgalseco, bgalseco, lgalfrst, bgalfrst, anglassc=np.pi/180., verbtype=1):
+def corr_catl(lgalseco, bgalseco, lgalfrst, bgalfrst, anglassc=np.pi/180., typeverb=1):
 
     numbfrst = lgalfrst.size
 
@@ -1321,7 +1530,7 @@ def corr_catl(lgalseco, bgalseco, lgalfrst, bgalfrst, anglassc=np.pi/180., verbt
                 indxsecoassc[thisindxfrst[0]] = k
 
         nextfraccomp = int(100 * float(k) / numbseco)
-        if verbtype > 1 and nextfraccomp > thisfraccomp:
+        if typeverb > 1 and nextfraccomp > thisfraccomp:
             thisfraccomp = nextfraccomp
             print('%02d%% completed.' % thisfraccomp)
 
@@ -1384,7 +1593,7 @@ def retr_psfngausnorm(angl):
     return norm
 
 
-def retr_mapspnts(lgal, bgal, stdv, flux, numbside=256, verbtype=0):
+def retr_mapspnts(lgal, bgal, stdv, flux, numbside=256, typeverb=0):
     
     # lgal, bgal and stdv are in degrees
     numbpnts = lgal.size
@@ -1512,6 +1721,50 @@ def retr_indximagmaxm(data):
         indxydatmaxm = indxmaxm[:, 1]
         indxxdatmaxm = indxmaxm[:, 0]
     return indxxdatmaxm, indxydatmaxm
+
+
+def plot_timeline(path, dictrows, listlablrows=None, dictcolrbars=None):
+    '''
+    Make a timeline (Gantt) chart
+    '''
+
+    if dictcolrbars is None:
+        dictcolrbars = dict()
+        dictcolrbars['NY'] = 'r'
+        dictcolrbars['STL'] = 'b'
+        dictcolrbars['Turkey'] = 'g'
+    
+    if listlablrows is None:
+        listlablrows = list(dictrows.keys())
+
+    jdatinit = astropy.time.Time('2022-08-01', format='iso').jd
+    jdatinit0819 = astropy.time.Time('2022-08-19', format='iso').jd
+    listjdat = jdatinit + np.arange(0., 3.5, 0.25) * 365.25
+    listlabltick = [[] for jdat in listjdat]
+    for kk, jdat in enumerate(listjdat):
+        listlabltick[kk] = astropy.time.Time(jdat, format='jd').to_value('iso', subfmt='date')
+    
+    fig, axis = plt.subplots(1, figsize=(9, 4))
+    numbrows = len(listlablrows)
+    indxrows = np.arange(numbrows)
+    for k in indxrows:
+        for l in range(len(dictrows[listlablrows[k]])):
+            if l == len(dictrows[listlablrows[k]]) - 1:
+                break
+            jdatfrst = astropy.time.Time(dictrows[listlablrows[k]][l][0], format='iso').jd
+            jdatseco = astropy.time.Time(dictrows[listlablrows[k]][l+1][0], format='iso').jd
+            
+            axis.barh(listlablrows[k], jdatseco - jdatfrst, left=jdatfrst, color=dictcolrbars[dictrows[listlablrows[k]][l][1]], alpha=0.3)
+            
+            listlablxaxi = axis.set_xticks(listjdat, rotation=45)
+            axis.set_xticklabels(listlabltick, rotation=45)
+            
+            axis.text(jdatfrst + 0.5 * (jdatseco - jdatfrst), k, dictrows[listlablrows[k]][l][1], ha='center', va='center', color=dictcolrbars[dictrows[listlablrows[k]][l][1]])
+
+    print('Writing to %s...' % path)
+    plt.tight_layout()
+    plt.savefig(path)
+    plt.close()
 
 
 def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, \
@@ -1692,7 +1945,7 @@ def retr_strgtimestmp():
     return strgtimestmp
 
 
-def read_fits(path, pathimag=None, full=False, verbtype=0):
+def read_fits(path, pathimag=None, full=False, typeverb=0):
     '''
     Read FITS file
     '''
@@ -1700,30 +1953,64 @@ def read_fits(path, pathimag=None, full=False, verbtype=0):
     if pathimag != None:
         os.system('mkdir -p ' + pathimag)
     
-    hdun = pf.open(path)
+    print('Reading from %s...' % path)
+    hdun = astropy.io.fits.open(path)
     numbhead = len(hdun)
     listdata = []
     for k in range(numbhead):
         head = hdun[k].header
         data = hdun[k].data
-        
+
+        print('Extension %d...' % k)
         listdata.append(data)
+
+        print('Header:')
+        print(repr(head))
+        print('')
+        print('')
+        print('')
+        print('Data:')
+        if data is not None:
+            print('data.names')
+            print(data.names)
+            for name in data.names:
+                print(name)
+                summgene(data[name])
+        print('')
+        print('')
+        print('')
+        print('')
+        print('')
+        print('')
+        continue
 
         if data == None:
             continue
 
-        arry = np.array(stack((head.keys(), head.values()), 1))
+        numb = len(list(head.keys()))
+        listkeys = list(head.keys())
+        listvalu = list(head.values())
+        #print('listkeys')
+        #print(listkeys)
+        #print('listvalu')
+        #print(listvalu)
+        
+        for m, keys in enumerate(listkeys):
+            print(keys)
+            print(listvalu[m])
+            print('')
+            
         listtype = []
         listform = []
         listunit = []
        
-        for n in range(arry.shape[0]):
-            if arry[n, 0].startswith('TTYPE'):
-                listtype.append(arry[n, 1])
-            if arry[n, 0].startswith('TFORM'):
-                listform.append(arry[n, 1])
-            if arry[n, 0].startswith('TUNIT'):
-                listunit.append(arry[n, 1])
+        for n in range(numb):
+            if listkeys[n].startswith('TTYPE'):
+                listtype.append(listvalu[n])
+            if listkeys[n].startswith('TFORM'):
+                listform.append(listvalu[n])
+            if listkeys[n].startswith('TUNIT'):
+                listunit.append(listvalu[n])
 
         if pathimag != None:
             cmnd = 'convert -density 300'
@@ -2605,7 +2892,7 @@ def retr_atcr_neww(listpara):
     return atcr[:int(numbsamp/2), ...]
 
 
-def retr_timeatcr(listpara, verbtype=1, atcrtype='maxm'):
+def retr_timeatcr(listpara, typeverb=1, atcrtype='maxm'):
 
     numbsamp = listpara.shape[0]
     listpara = listpara.reshape((numbsamp, -1))
@@ -2809,7 +3096,10 @@ def plot_plot(path, xdat, ydat, lablxdat, lablydat, scalxaxi, titl=None, linesty
     plt.close(figr)
 
 
-def plot_hist(path, listpara, strg, titl=None, numbbins=20, truepara=None, boolquan=True, typefileplot='pdf', \
+def plot_hist( \
+              path, listpara, strg, titl=None, numbbins=20, truepara=None, boolquan=True, 
+              # type of the file for plots
+              typefileplot='pdf', \
                                             scalpara='self', listparadraw=None, listlabldraw=None, listcolrdraw=None):
 
     minmvarb = np.amin(listpara)
@@ -3007,54 +3297,92 @@ def opti(pathimag, retr_llik, minmpara, maxmpara, numbtopp=3, numbiter=5):
     return listparatopp
 
 
-def samp(gdat, numbsampwalk, retr_llik, \
-              
-              # model parameters
-              ## list of names of parameters
-              listnamepara, \
-              ## list of labels of parameters
-              listlablpara, \
-              ## list of scalings of parameters
-              scalpara, \
-              ## list of minima of parameters
-              minmpara, \
-              ## list of maxima of parameters
-              maxmpara, \
-              
-              # base path for placing plot and data files
-              pathbase=None, \
-              
-              # Boolean flag to enforce a reprocess and overwrite
-              boolforcrepr=False, \
+def retr_modl_corr(gdat, feat, inpt):
+    '''
+    Return a linear model
+    '''    
+    angl = feat[0]
+    gamm = feat[1]
 
-              # Boolean flag to make plots
-              boolplot=True, \
-              
-              numbsamppost=None, \
+    slop = -1. / np.tan(angl)
+    intc = gamm / np.sin(angl)
+    
+    line = inpt * slop + intc
+    
+    return line, []
 
-              meangauspara=None, \
-              stdvgauspara=None, \
-              retr_lpri=None, \
-              # Boolean flag to turn on multiprocessing
-              boolmult=False, \
-              # burn-in
-              ## number of samples in a precursor run whose final state will be used as the initial state of the actual sampler
-              numbsampburnwalkinit=0, \
-              ## number of initial samples to be burned
-              numbsampburnwalk=0, \
-              # function to return derived variables from the parameter vector
-              retr_dictderi=None, \
-              # dictionary of labels and scalings for derived parameters
-              dictlablscalparaderi=None, \
-              # Boolean flag to diagnose the code
-              booldiag=True, \
-              # a string used to save and retrieve results
-              strgextn='', \
-              typesamp='mcmc', typefileplot='png', verbtype=1, \
+
+def retr_llik_corr(feat, gdat):
+    '''
+    Return the likelihood for a linear model
+    '''
+    angl = feat[0]
+    gamm = feat[1]
+
+    dist = np.cos(angl) * gdat.tempfrst + np.sin(angl) * gdat.tempseco - gamm
+    vari = np.cos(angl)**2 * gdat.tempfrststdv**2 + np.sin(angl)**2 * gdat.tempsecostdv**2
+
+    llik = -0.5 * np.sum(dist**2 / vari)
+
+    return llik
+
+
+def samp( \
+         gdat, \
+
+         numbsampwalk, \
+
+         retr_llik, \
               
-              # verbosity level
-              typeverb=1, \
-             ):
+         # model parameters
+         ## list of names of parameters
+         listnamepara, \
+         ## list of labels of parameters
+         listlablpara, \
+         ## list of scalings of parameters
+         scalpara, \
+         ## list of minima of parameters
+         minmpara, \
+         ## list of maxima of parameters
+         maxmpara, \
+         
+         # base path for placing plot and data files
+         pathbase=None, \
+         
+         # Boolean flag to enforce a reprocess and overwrite
+         boolforcrepr=False, \
+
+         # Boolean flag to make plots
+         boolplot=True, \
+         
+         numbsamppostwalk=None, \
+
+         meangauspara=None, \
+         stdvgauspara=None, \
+         retr_lpri=None, \
+         # Boolean flag to turn on multiprocessing
+         boolmult=False, \
+         # burn-in
+         ## number of samples in a precursor run whose final state will be used as the initial state of the actual sampler
+         numbsampburnwalkinit=0, \
+         ## number of initial samples to be burned
+         numbsampburnwalk=0, \
+         # function to return derived variables from the parameter vector
+         retr_dictderi=None, \
+         # dictionary of labels and scalings for derived parameters
+         dictlablscalparaderi=None, \
+         # Boolean flag to diagnose the code
+         booldiag=True, \
+         # a string used to save and retrieve results
+         strgextn='', \
+         typesamp='mcmc', \
+
+         # type of the file for plots
+         typefileplot='png', \
+         
+         # verbosity level
+         typeverb=1, \
+        ):
         
     numbpara = len(listlablpara)
    
@@ -3079,14 +3407,16 @@ def samp(gdat, numbsampwalk, retr_llik, \
     
     if typesamp == 'mcmc':
         numbwalk = max(20, 2 * numbpara)
-        print('numbsampwalk')
-        print(numbsampwalk)
-        print('numbwalk')
-        print(numbwalk)
         indxwalk = np.arange(numbwalk)
         numbsamptotl = numbsampwalk * numbwalk
-        print('numbsamptotl')
-        print(numbsamptotl)
+        
+        if typeverb > 0:
+            print('numbsampwalk')
+            print(numbsampwalk)
+            print('numbwalk')
+            print(numbwalk)
+            print('numbsamptotl')
+            print(numbsamptotl)
 
     if pathbase is not None:
         pathbasesamp = pathbase + '%s/' % typesamp
@@ -3097,21 +3427,7 @@ def samp(gdat, numbsampwalk, retr_llik, \
 
     # plotting
     ## plot limits 
-    print('listlablpara')
-    print(listlablpara)
-    print('minmpara')
-    print(minmpara)
-    print('maxmpara')
-    print(maxmpara)
-    print('scalpara')
-    print(scalpara)
-    print('meangauspara')
-    print(meangauspara)
-    print('stdvgauspara')
-    print(stdvgauspara)
     limtpara = retr_limtpara(scalpara, minmpara, maxmpara, meangauspara, stdvgauspara)
-    print('limtpara')
-    print(limtpara)
 
     ## plot bins
     numbbins = 20
@@ -3130,35 +3446,38 @@ def samp(gdat, numbsampwalk, retr_llik, \
     
     dictlpos = [gdat, indxpara, scalpara, minmpara, maxmpara, meangauspara, stdvgauspara, retr_llik, retr_lpri]
     
-    if numbsamppost is None:
-        numbsamppost = 1000
+    if numbsamppostwalk is None:
+        numbsamppostwalk = 100
 
-    if verbtype == 2:
+    if typeverb > 0:
+        print('listlablpara')
+        print(listlablpara)
         print('scalpara')
         print(scalpara)
-        print('minmpara')
-        print(minmpara)
-        print('maxmpara')
-        print(maxmpara)
-        print('meangauspara')
-        print(meangauspara)
-        print('stdvgauspara')
-        print(stdvgauspara)
-        print('limtpara')
-        print(limtpara)
+        if minmpara is not None:
+            print('minmpara')
+            print(minmpara)
+            print('maxmpara')
+            print(maxmpara)
+        if meangauspara is not None:
+            print('meangauspara')
+            print(meangauspara)
+            print('stdvgauspara')
+            print(stdvgauspara)
     
     if strgextn is not '':
         strgextn = '_%s' % strgextn
     
     # path of the posterior
     if pathbase is not None:
-        pathpost = pathdata + 'post%s.csv' % strgextn
-        pathdict = pathdata + 'dict%s.csv' % strgextn
+        pathpost = pathdata + 'postpara%s.csv' % strgextn
+        pathdict = pathdata + 'samppostpara%s.csv' % strgextn
+        pathpickderi = pathdata + 'postderi%s.pickle' % strgextn
     
     if boolforcrepr or not boolforcrepr and (pathbase is None or not os.path.exists(pathdict)):
         
         # initialize
-        if pathbase is not None and os.path.exists(pathpost):
+        if pathbase is not None and os.path.exists(pathpost) and np.loadtxt(pathpost, delimiter=',').shape[0] == limtpara.shape[1]:
             print('Reading the initial state from %s...' % pathpost)
             parainitcent = np.loadtxt(pathpost, delimiter=',')[:, 0]
             paraunitinitcent = np.empty_like(parainitcent)
@@ -3180,12 +3499,17 @@ def samp(gdat, numbsampwalk, retr_llik, \
                 if scalpara[m] == 'self':
                     parainit[k][m] = icdf_self(paraunit, limtpara[0, m], limtpara[1, m])
                 if scalpara[m] == 'logt':
+                    if booldiag:
+                        if limtpara[0, m] <= 0.:
+                            raise Exception('')
+                        if limtpara[1, m] <= 0.:
+                            raise Exception('')
                     parainit[k][m] = icdf_logt(paraunit, limtpara[0, m], limtpara[1, m])
                 if scalpara[m] == 'gaus':
                     parainit[k][m] = icdf_logt(paraunit, meanpara[m], gauspara[m])
 
         if typesamp == 'mcmc':
-            if verbtype > 0:
+            if typeverb > 0:
                 progress = True
             else:
                 progress = False
@@ -3207,7 +3531,7 @@ def samp(gdat, numbsampwalk, retr_llik, \
             objtsamp = emcee.EnsembleSampler(numbwalk, numbpara, retr_lpos, args=dictlpos, pool=pool)
             if numbsampburnwalkinit > 0:
                 parainitburn, prob, state = objtsamp.run_mcmc(parainit, numbsampburnwalkinit, progress=progress)
-                if verbtype == 1:
+                if typeverb == 1:
                     print('Parameter states from the burn-in:')
                     print('parainitburn')
                     print(parainitburn)
@@ -3226,8 +3550,7 @@ def samp(gdat, numbsampwalk, retr_llik, \
             listparafittwalk = objtsamp.chain
             
             # get rid of burn-in and thin
-            #indxsampwalkkeep = np.arange(numbsampburnwalk, numbsampwalk)
-            indxsampwalkkeep = np.linspace(numbsampburnwalk, numbsampwalk - 1, numbsamppost).astype(int)
+            indxsampwalkkeep = np.linspace(numbsampburnwalk, numbsampwalk - 1, numbsamppostwalk).astype(int)
             listparafitt = listparafittwalk[:, indxsampwalkkeep, :].reshape((-1, numbpara))
             
             numbsampkeep = listparafitt.shape[0]
@@ -3236,34 +3559,60 @@ def samp(gdat, numbsampwalk, retr_llik, \
             listparaderi = None
             dictvarbderi = dict()
             if retr_dictderi is not None:
-                listdictvarbderi = [[] for n in indxsampkeep]
-                for n in indxsampkeep:
-                    listdictvarbderi[n] = retr_dictderi(listparafitt[n, :], gdat)
+                numbsampderi = 10
+                indxsampderi = np.random.choice(indxsampkeep, size=numbsampderi)
+                #numbsampderi = indxsampderi.size
 
+                print('Evaluating derived variables...')
+                listdictvarbderi = [[] for n in indxsampderi]
+                for n in tqdm(range(numbsampderi)):
+                    listdictvarbderi[n] = retr_dictderi(listparafitt[indxsampderi[n], :], gdat)
+
+                print('Placing the evaluated derived variables in the output dictionary...')
                 for strg, valu in listdictvarbderi[0].items():
+                    if valu is None:
+                        print('Encountered a None derived variable (%s). Skipping...' % strg)
+                        continue
                     if np.isscalar(valu):
                         dictvarbderi[strg] = np.empty((numbsampkeep, 1))
                     else:
-                        dictvarbderi[strg] = np.empty([numbsampkeep] + list(valu.shape))
-                        
-                    for n in indxsampkeep:
+                        dictvarbderi[strg] = np.empty([numbsampderi] + list(valu.shape))
+                    
+                    for n in range(numbsampderi):
                         dictvarbderi[strg][n, ...] = listdictvarbderi[n][strg]
+                
                 listnamevarbderi = listdictvarbderi[0].keys()
                 listnameparaderi = []
                 for name, valu in listdictvarbderi[0].items():
-                    if np.isscalar(valu):
+                    if np.isscalar(valu) and valu is not None:
                         listnameparaderi.append(name)
                 numbparaderi = len(listnameparaderi)
+                print('Placing the evaluated derived parameters in the output dictionary...')
                 listparaderi = np.empty((numbsampkeep, numbparaderi)) 
                 k = 0
                 for strg, valu in listdictvarbderi[0].items():
-                    for n in indxsampkeep:
+                    if valu is None:
+                        continue
+                    for n in range(numbsampderi):
                         dictvarbderi[strg][n, ...] = listdictvarbderi[n][strg]
                     
-                        if np.isscalar(listdictvarbderi[n][strg]):
-                            listparaderi[n, k] = listdictvarbderi[n][strg]
-                            if n == numbsampkeep - 1:
-                                k += 1
+                    #if np.isscalar(listdictvarbderi[n][strg]) and numbsamp == numbsampderi:
+                    #    for n in indxsampkeep:
+                    #        print('')
+                    #        print('')
+                    #        print('')
+                    #        print('n, k')
+                    #        print(n, k)
+                    #        print('strg')
+                    #        print(strg)
+                    #        print('listparaderi')
+                    #        summgene(listparaderi)
+                    #        print('listdictvarbderi')
+                    #        summgene(listdictvarbderi)
+
+                    #        listparaderi[n, k] = listdictvarbderi[n][strg]
+                    #        if n == numbsampkeep - 1:
+                    #            k += 1
                 
             indxsampwalk = np.arange(numbsampwalk)
             
@@ -3284,7 +3633,7 @@ def samp(gdat, numbsampwalk, retr_llik, \
                     axis[k+1].axvline(numbsampburnwalk, color='k')
                     axis[k+1].set_ylabel(labl)
                 path = pathimag + 'trac%s.%s' % (strgextn, typefileplot)
-                if verbtype == 1:
+                if typeverb == 1:
                     print('Writing to %s...' % path)
                 plt.savefig(path)
                 plt.close()
@@ -3304,7 +3653,7 @@ def samp(gdat, numbsampwalk, retr_llik, \
                             labl += ' [%s]' % listlablpara[k][1]
                         axis[k+1].set_ylabel(labl)
                     path = pathimag + 'tracgood%s.%s' % (strgextn, typefileplot)
-                    if verbtype == 1:
+                    if typeverb == 1:
                         print('Writing to %s...' % path)
                     plt.savefig(path)
                     plt.close()
@@ -3340,12 +3689,17 @@ def samp(gdat, numbsampwalk, retr_llik, \
             arry[:, 1] = np.percentile(listparatotl, 84.) - arry[:, 0]
             arry[:, 2] = arry[:, 0] - np.percentile(listparatotl, 16.)
             np.savetxt(pathpost, arry, delimiter=',')
-    
+            
+            print('Writing the posterior derived variables to %s...' % pathpickderi)
+            with open(pathpickderi, 'wb') as objtfile:
+                pickle.dump(dictvarbderi, objtfile, protocol=pickle.HIGHEST_PROTOCOL)
+
+
         dictsamp = dict()
         for k, name in enumerate(listnamepara):
             dictsamp[name] = listparafitt[:, k]
         dictsamp['lpos'] = listlposwalk[:, indxsampwalkkeep].flatten()
-        pd.DataFrame.from_dict(dictsamp).to_csv(pathdict)
+        pd.DataFrame.from_dict(dictsamp).to_csv(pathdict, index=False)
         for name, valu in dictvarbderi.items():
             dictsamp[name] = valu
 
@@ -3355,16 +3709,24 @@ def samp(gdat, numbsampwalk, retr_llik, \
         dictsamp = pd.read_csv(pathdict).to_dict(orient='list')
         for name in dictsamp.keys():
             dictsamp[name] = np.array(dictsamp[name])
-        del dictsamp['Unnamed: 0']
-    
+        
+        if retr_dictderi is not None:
+            objtfile = open(pathpickderi, "rb")
+            if typeverb > 0:
+                print('Reading from %s...' % pathpickderi)
+            dictvarbderi = pickle.load(objtfile)
+            for strgvarbderi, valuvarbderi in dictvarbderi.items():
+                dictsamp[strgvarbderi] = valuvarbderi
+
     return dictsamp
 
 
-def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, listlablpara, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, bins=None):
+def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, \
+                            listlablpara, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, boolmakelegd, bins=None):
                     
     for u in indxpopl:
-        axis.hist(listpara[u][:, k], bins=bins[:, k])
-    if indxpopl.size > 1:
+        axis.hist(listpara[u][:, k], bins=bins[k])
+    if boolmakelegd and indxpopl.size > 1:
         axis.legend()
     
     if truepara is not None and truepara[k] is not None and not np.isnan(truepara[k]):
@@ -3394,8 +3756,9 @@ def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, listlabl
     axis.set_title(r'%s = %.3g $\substack{+%.2g \\\\ -%.2g}$ %s' % (listlablpara[k][0], medivarb, quan[2] - medivarb, medivarb - quan[1], strgunit))
                 
 
-def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolquan, listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
-                                    listlablpopl, listlablsamp=None, bins=None, boolcbar=True):
+def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolquan, \
+                            listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
+                                    listlablpopl, boolmakelegd, listlablsamp=None, bins=None, boolcbar=True):
     
     if not np.isfinite(limt).all():
         print('limt')
@@ -3403,7 +3766,7 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
         raise Exception('')
     
     if (listtypeplottdim == 'hist').any():
-        binstemp = [bins[:, l], bins[:, k]]
+        binstemp = [bins[l], bins[k]]
 
     for u in indxpopl:
             
@@ -3545,12 +3908,12 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
 
         else:
             hist = np.histogram2d(listpara[u][:, l], listpara[u][:, k], bins=binstemp)[0]
-            objtaxispcol = axis.pcolor(bins[:, l], bins[:, k], hist.T, cmap='Blues')
+            objtaxispcol = axis.pcolor(bins[l], bins[k], hist.T, cmap='Blues')
     
     if boolcbar and (listtypeplottdim == 'hist').any():
         cbar = plt.colorbar(objtaxispcol)
         
-    if indxpopl.size > 1:
+    if boolmakelegd and indxpopl.size > 1:
         axis.legend()
     
     if truepara is not None and truepara[l] is not None and not np.isnan(truepara[l]) and truepara[k] is not None and not np.isnan(truepara[k]):
@@ -3567,7 +3930,7 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
     
     if boolsqua:
         axis.set_aspect('equal')
-
+    
     if listscalpara[l] == 'logt':
         setp_axislogt(axis, limt[:, l], 'x', listmantlabl)
     
@@ -3640,71 +4003,129 @@ def setp_axislogt(axis, limt, typeaxis, listmantlabl):
     listvalutickmajr, listlabltickmajr, listvalutickminr, listlabltickminr = retr_valulabltick(minm, maxm, 'logt', listmantlabl=listmantlabl)
 
     if typeaxis == 'x':
-        axis.set_xscale('log', basex=10)
+        axis.set_xscale('log', base=10)
         axis.set_xticks(listvalutickmajr)
         axis.set_xticklabels(listlabltickmajr)
         axis.set_xticks(listvalutickminr, minor=True)
         axis.set_xticklabels(listlabltickminr, minor=True)
     else:
-        axis.set_yscale('log', basey=10)
+        axis.set_yscale('log', base=10)
         axis.set_yticks(listvalutickmajr)
         axis.set_yticklabels(listlabltickmajr)
         axis.set_yticks(listvalutickminr, minor=True)
         axis.set_yticklabels(listlabltickminr, minor=True)
 
 
-def plot_grid(pathbase, strgplot, listpara, listlablpara, \
-                       limt=None, listscalpara=None, plotsize=2.5, typefileplot='pdf', \
-                       
-                       # Boolean flag to generate individual histograms
-                       boolplotindi=False, \
-                       
-                       # Boolean flag to generate individual pair-wise correlation plots
-                       boolplotpair=False, \
-                       
-                       # Boolean flag to generate the lower-triangle plot
-                       boolplottria=True, \
-                       
-                       # list of base file names for the individual histograms
-                       listnamepara=None, \
-                           
-                       # Boolean flag to make the two-dimensional plots square
-                       boolsqua=False, \
-                       
-                       # list of colors for populations
-                       listcolrpopl=None, \
+def plot_grid(
+              # the path in which to write the plot
+              pathbase, \
+              
+              # the base string to include in the file name
+              strgplot, \
+              
+              # two dimensional array of samples, where the first dimension is the sample and second dimension is the parameter
+              listpara, \
+              
+              # a list where each element is itself a list of two elements containing the label for each parameter and its unit
+              listlablpara, \
+              
+              # the limits for the parameters
+              limt=None, \
 
-                       # list of vectors to overplot
-                       listvectplot=None, \
-                       
-                       # list of labels for each sample
-                       listlablsamp=None, \
-                       
-                       # list of labels for populations
-                       listlablpopl=None, \
+              # list of scalings for the parameters
+              listscalpara=None, \
+              
+              # size of each subplot
+              plotsize=3.5, \
+              
+              # type of the file for plots
+              typefileplot='pdf', \
+              
+              # Boolean flag to generate individual histograms
+              boolplothistodim=False, \
+              
+              # Boolean flag to generate individual pair-wise plots
+              boolplotpair=False, \
+              
+              # Boolean flag to generate the lower-triangle plot
+              boolplottria=True, \
+              
+              # list of base file names for the individual histograms
+              listnamepara=None, \
+                  
+              # Boolean flag to make the two-dimensional plots square
+              boolsqua=False, \
+              
+              # label to be used to denote the number of samples (takes priority over namesamp)
+              lablnumbsamp=None, \
 
-                       truepara=None, \
-                       
-                       # list of tick mantices (other than 1) to show in the label when the axis is log-streched
-                       listmantlabl=None, \
-                       
-                       numbbinsplot=40, boolquan=None, listparadraw=None, verbtype=0, \
-                       
-                       # type of the two-dimensional plots
-                       ## 'scat': all populations are scatter plots.
-                       ## 'hist': all populations are histogram plots.
-                       ## 'best': the largest population is histogram if there are too many samples, scatter otherwise. All other populations are scatter.
-                       typeplottdim='best', \
-                       
-                       ):
+              # label to be used as subscript to denote the number of samples
+              namesamp=None, \
 
+              # list of colors for populations
+              listcolrpopl=None, \
+
+              # list of vectors to overplot
+              listvectplot=None, \
+              
+              # list of labels for each sample
+              listlablsamp=None, \
+              
+              # list of labels for populations
+              listlablpopl=None, \
+              
+              # Boolean flag to include a legend
+              boolmakelegd=True, \
+             
+              # Boolean flag to indicate that the populations are mutually-exclusive
+              boolpoplexcl=False, \
+             
+              # title for the plots
+              titl=None, \
+              
+              # list of tick mantices (other than 1) to show in the label when the axis is log-streched
+              listmantlabl=None, \
+              
+              # number of bins
+              numbbinsplot=40, \
+
+              # Boolean flag to overplot quantiles
+              boolquan=None, \
+              
+              # list of parameters to overplot
+              listparadraw=None, \
+              
+              # true parameters to highlight
+              truepara=None, \
+              
+              # a list of pairs of feature names, which enforces the given order (first item y-axis, second item y-axis)
+              listnameordrpair=None, \
+
+              # verbosity level
+              typeverb=1, \
+              
+              # type of the two-dimensional plots
+              ## 'scat': all populations are scatter plots.
+              ## 'hist': all populations are histogram plots.
+              ## 'best': the largest population is histogram if there are too many samples, scatter otherwise. All other populations are scatter.
+              typeplottdim='best', \
+              
+              # Boolean flag to diagnose the code
+              booldiag=True, \
+              
+             ):
+    
+    '''
+    Make a corner plot of a multivariate distribution.
+    '''
+    
     print('tdpy.plot_grid() initialized...')
     
     if not os.path.exists(pathbase):
         os.system('mkdir -p %s' % pathbase)
 
     # check inputs
-    if (boolplotpair or boolplotindi) and listnamepara is None:
+    if (boolplotpair or boolplothistodim) and listnamepara is None:
         raise Exception('You should define listnamepara for individual and pairwise plots.')
     
     # check whether there is a single population or multiple populations
@@ -3763,16 +4184,16 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
     
     # determine the type of 2-dimensional plots
     if typeplottdim == 'scat' or typeplottdim == 'best':
-        listtypeplottdim = ['scat' for u in indxpopl]
+        listtypeplottdim = np.array(['scat' for u in indxpopl])
     if typeplottdim == 'hist':
-        listtypeplottdim = ['hist' for u in indxpopl]
+        listtypeplottdim = np.array(['hist' for u in indxpopl])
     if typeplottdim == 'best':
         listtypeplottdim = np.array(listtypeplottdim)
         numbsamp = np.empty(numbpopl, dtype=int)
         for u in indxpopl:
             numbsamp[u] = listpara[u][:, 0].size
         indxpoplmaxm = np.argmax(numbsamp)
-        if numbsamp[indxpoplmaxm] >= 1e4:
+        if numbsamp[indxpoplmaxm] >= 1e3:
             listtypeplottdim[indxpoplmaxm] = 'hist'
 
     listindxgood = [[[] for k in indxpara] for u in indxpopl]
@@ -3781,6 +4202,7 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
         limt[0, :] = 1e100
         limt[1, :] = -1e100
         
+        boolinte = [[] for k in indxpara]
         for k in indxpara:
             for u in indxpopl:
                 if listscalpara[k] == 'logt':
@@ -3788,6 +4210,10 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
                     boolsampposi = listpara[u][:, k] > 0
                     listindxgood[u][k] = np.where(boolsampposi & boolsampfini)[0]
                     if (listpara[u][boolsampfini, k] <= 0).any():
+                        print('')
+                        print('')
+                        print('')
+                        print('')
                         print('tdpy.plot_grid(): Parameter %d (%s) has a log scaling but also nonpositive elements!' % (k, listlablpara[k]))
                         print('listpara[u][:, k]')
                         summgene(listpara[u][:, k])
@@ -3795,6 +4221,9 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
                         summgene(listindxgood[u][k])
                         print('np.where(boolsampfini)[0]')
                         summgene(np.where(boolsampfini)[0])
+                        print('')
+                        print('')
+                        print('')
                         print('')
                         #raise Exception('')
                 else:
@@ -3804,15 +4233,83 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
                     limt[0, k] = min(limt[0, k], np.nanmin(listpara[u][listindxgood[u][k], k], 0))
                     limt[1, k] = max(limt[1, k], np.nanmax(listpara[u][listindxgood[u][k], k], 0))
         
+            # list of Booleans for each parameter indicating whether it is a list of integers
+            boolinte[k] = True
+            for u in indxpopl:
+                if ((listpara[u][:, k] - listpara[u][:, k].astype(int)) != 0).any():
+                    boolinte[k] = False
+        
         # limits that do not leave any room for white space which is good for histograms
         limtrims = np.copy(limt)
+
+        # sanity checks
+        if booldiag:
+            for k in indxpara:
+                #for u in indxpopl:
+                #    if listpara[u][:, k].size == 0:
+                #        print('')
+                #        print('')
+                #        print('')
+                #        print('')
+                #        print('')
+                #        print('')
+                #        print('')
+                #        print('tdpy.plot_grid(): size is 0 for parameter %d!' % k)
+                #        print('k')
+                #        print(k)
+                #        print('listindxgood[u][k]')
+                #        summgene(listindxgood[u][k])
+                #        print('listpara[u][:, k]')
+                #        summgene(listpara[u][:, k])
+                #        print('numbbinsplot')
+                #        print(numbbinsplot)
+                #        print('listnamepara[k]')
+                #        print(listnamepara[k])
+                #        print('listlablpara[k]')
+                #        print(listlablpara[k])
+                #        print('listscalpara[k]')
+                #        print(listscalpara[k])
+                #        print('limt[:, k]')
+                #        print(limt[:, k])
+                #        raise Exception('')
+                
+                for u in indxpopl:
+                    if listpara[u][:, k].size > 0:
+                        minmtemp = np.amin(np.abs(listpara[u][:, k]))
+                        if not np.isfinite(limt[:, k]).all() or minmtemp < 1e-100 and minmtemp > 0.:
+                            print('')
+                            print('')
+                            print('')
+                            print('')
+                            print('')
+                            print('')
+                            print('')
+                            print('tdpy.plot_grid(): limit for parameter %d is infinite!' % k)
+                            print('k')
+                            print(k)
+                            print('listindxgood[u][k]')
+                            summgene(listindxgood[u][k])
+                            print('listpara[u][:, k]')
+                            summgene(listpara[u][:, k])
+                            print('numbbinsplot')
+                            print(numbbinsplot)
+                            print('listlablpara[k]')
+                            print(listlablpara[k])
+                            print('listscalpara[k]')
+                            print(listscalpara[k])
+                            print('limt[:, k]')
+                            print(limt[:, k])
+                            raise Exception('')
 
         if (listtypeplottdim == 'scat').any():
             # update limits to leave white space in the rims which is good for scatter plots
             for k in indxpara:
                 
                 if listscalpara[k] == 'self':
-                    delt = 0.05 * (limt[1, k] - limt[0, k])
+                    if boolinte[k]:
+                        delt = 0.5
+                    else:
+                        delt = 0.05 * (limt[1, k] - limt[0, k])
                     limt[0, k] -= delt
                     limt[1, k] += delt
                 if listscalpara[k] == 'logt':
@@ -3821,26 +4318,35 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
                     limt[1, k] *= fact
         
         # sanity checks
-        for k in indxpara:
-            if not np.isfinite(limt[:, k]).all():
-                print('tdpy.plot_grid(): limit for parameter %d is infinite!' % k)
-                print('k')
-                print(k)
-                for u in indxpopl:
-                    print('listindxgood[u][k]')
-                    summgene(listindxgood[u][k])
-                    print('listpara[u][:, k]')
-                    summgene(listpara[u][:, k])
-                print('numbbinsplot')
-                print(numbbinsplot)
-                print('listlablpara[k]')
-                print(listlablpara[k])
-                print('listscalpara[k]')
-                print(listscalpara[k])
-                print('limt[:, k]')
-                print(limt[:, k])
-                raise Exception('')
+        if booldiag:
+            for k in indxpara:
+                if not np.isfinite(limt[:, k]).all():
+                    print('')
+                    print('')
+                    print('')
+                    print('')
+                    print('')
+                    print('')
+                    print('')
+                    print('tdpy.plot_grid(): limit for parameter %d is infinite!' % k)
+                    print('k')
+                    print(k)
+                    for u in indxpopl:
+                        print('listindxgood[u][k]')
+                        summgene(listindxgood[u][k])
+                        print('listpara[u][:, k]')
+                        summgene(listpara[u][:, k])
+                    print('numbbinsplot')
+                    print(numbbinsplot)
+                    print('listlablpara[k]')
+                    print(listlablpara[k])
+                    print('listscalpara[k]')
+                    print(listscalpara[k])
+                    print('limt[:, k]')
+                    print(limt[:, k])
+                    raise Exception('')
 
+        for k in indxpara:
             if listlablpopl is not None:
                 for u in indxpopl:
                     if not np.isfinite(listpara[u][:, k]).all():
@@ -3871,45 +4377,60 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
         numbdraw = len(listparadraw)
         indxdraw = np.arange(numbdraw)
 
+    # list of Booleans indicating whether a parameter is good to plot
     boolparagood = np.ones(numbpara, dtype=bool)
+    for k in indxpara:
+        booltemp = False
+        for u in indxpopl:
+            if np.isfinite(listpara[u][:, k]).any():
+                booltemp = True
+        boolparagood[k] = booltemp
     boolparagood[np.where(limt[0, :] == limt[1, :])] = False
-    if boolplottria or boolplotindi or boolplotpair and (listtypeplottdim == 'hist').any():
-        bins = np.zeros((numbbinsplot + 1, numbpara))
+        
+    if boolplottria or boolplothistodim or boolplotpair and (listtypeplottdim == 'hist').any():
+        bins = [[] for k in indxpara]
         for k in indxpara:
+            
             if not boolparagood[k]:
                 continue
-            if listscalpara[k] == 'self' or listscalpara[k] == 'gaus':
-                bins[:, k] = icdf_self(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
-            elif listscalpara[k] == 'logt':
-                bins[:, k] = icdf_logt(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
-            elif listscalpara[k] == 'atan':
-                bins[:, k] = icdf_atan(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
-            else:
-                raise Exception('Unrecognized scaling: %s' % listscalpara[k])
             
-            if not np.isfinite(bins[:, k]).all():
+            if boolinte[k]:
+                bins[k] = np.linspace(limt[0, k], limt[1, k], int(limt[1, k] - limt[0, k] + 1))
+            else:
+                if listscalpara[k] == 'self' or listscalpara[k] == 'gaus':
+                    bins[k] = icdf_self(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
+                elif listscalpara[k] == 'logt':
+                    bins[k] = icdf_logt(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
+                elif listscalpara[k] == 'atan':
+                    bins[k] = icdf_atan(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
+                else:
+                    raise Exception('Unrecognized scaling: %s' % listscalpara[k])
+            
+            if not np.isfinite(bins[k]).all() or bins[k][0] > bins[k][-1]:
                 print('k')
                 print(k)
                 print('numbbinsplot')
                 print(numbbinsplot)
+                print('listnamepara[k]')
+                print(listnamepara[k])
                 print('listlablpara[k]')
                 print(listlablpara[k])
                 print('listscalpara[k]')
                 print(listscalpara[k])
                 print('limt[:, k]')
                 print(limt[:, k])
-                print('bins[:, k]')
-                print(bins[:, k])
+                print('bins[k]')
+                print(bins[k])
                 for u in indxpopl:
                     print('listpara[u][:, k]')
                     summgene(listpara[u][:, k])
                 raise Exception('')
-            if np.amin(bins[:, k]) == 0 and np.amax(bins[:, k]) == 0:
+            if np.amin(bins[k]) == 0 and np.amax(bins[k]) == 0:
                 print('Lower and upper limits of the bins are the same for %s. Grid plot failed.' % listlablpara[k][0])
                 print('k')
                 print(k)
-                print('bins[:, k]')
-                print(bins[:, k])
+                print('bins[k]')
+                print(bins[k])
                 print('limt[:, k]')
                 print(limt[:, k])
                 print('listscalpara[k]')
@@ -3920,7 +4441,7 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
     else:
         bins = None
 
-    if boolplotindi:
+    if boolplothistodim:
         # one dimensional histograms
         for k in indxpara:
             if not boolparagood[k]:
@@ -3935,25 +4456,62 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
                     else:
                         labl = None
                         alph = 1.
-                    axis.hist(listpara[u][:, k], bins=bins[:, k], label=labl, edgecolor='none', facecolor=listcolrpopl[u], alpha=0.5)
-                    axis.hist(listpara[u][:, k], bins=bins[:, k], facecolor='none', edgecolor=listcolrpopl[u])
+                    axis.hist(listpara[u][:, k], bins=bins[k], label=labl, edgecolor=matplotlib.colors.to_rgba(listcolrpopl[u], 1.0), lw=2, ls='-', \
+                                                                           facecolor=matplotlib.colors.to_rgba(listcolrpopl[u], 0.2))
+                    #, alpha=0.2)
+                    #axis.hist(listpara[u][:, k], bins=bins[k], facecolor='none', edgecolor=listcolrpopl[u])
                 if listparadraw is not None:
                     for m in indxdraw:
                         axis.axvline(listparadraw[m][k], color='orange', lw=3)
                 axis.set_xlabel(listlablparatotl[k])
-                axis.set_ylabel('$N$')
-                if indxpopl.size > 1:
+                if lablnumbsamp is not None:
+                    axis.set_ylabel(lablnumbsamp)
+                elif namesamp is not None:
+                    axis.set_ylabel(r'$N_{\rm{%s}}$' % namesamp)
+                
+                if boolinte[k]:
+                    axis.xaxis.get_major_locator().set_params(integer=True)
+
+                if boolmakelegd and indxpopl.size > 1:
                     axis.legend()
                 if listscalpara[k] == 'logt':
                     setp_axislogt(axis, limtrims[:, k], 'x', listmantlabl)
                 limtyaxi = axis.get_ylim()
                 if limtyaxi[1] - limtyaxi[0] > 100.:
                     axis.set_yscale('log')
+                if titl is not None:
+                    axis.set_title(titl)
                 axis.set_xlim(limt[:, k]) 
                 print('Writing to %s...' % path)
                 plt.savefig(path)
                 plt.close()
 
+    # make pie-chart of the populations if populations are mutually-exclusive
+    if boolpoplexcl:
+    
+        listsizepopl = []
+        for u in indxpopl:
+            listsizepopl.append(listpara[u][:, 0].size)
+
+        def make_autopct(listsizepopl):
+            
+            def my_autopct(pct):
+                total = sum(listsizepopl)
+                val = int(round(pct*total/100.0))
+                return '{p:.1f}% hey  ({v:d})'.format(p=pct,v=val)
+            
+            return my_autopct
+
+        figr, axis = plt.subplots(figsize=(5., 5.))
+        axis.pie(listsizepopl, labels=listlablpopl, autopct=make_autopct(listsizepopl))
+        axis.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+        if titl is not None:
+            axis.set_title(titl)
+        path = pathbase + 'pies_%s.%s' % (strgplot, typefileplot)
+        print('Writing to %s...' % path)
+        figr.savefig(path, bbox_inches='tight')
+        plt.close(figr)
+    
     if boolplotpair:
         if listlablsamp is None:
             liststrgtext = ['']
@@ -3971,32 +4529,44 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
                         continue
                     if k <= l:
                         continue
-                    path = pathbase + 'pmar_%s_%s_%s_%s%s.%s' % (typeplottdim, listnamepara[k], listnamepara[l], strgplot, strgtext, typefileplot)
                     
-                    if not os.path.exists(path):
+                    if not (listnamepara[l] == 'rascstar' and listnamepara[k] == 'declstar'):
+                        numbiter = 1
+                    else:
+                        numbiter = 2
+                    
+                    for e in range(numbiter):
                         
-                        figr = plt.figure(figsize=(4., 3.))
-                        if not (listnamepara[l] == 'rascstar' and listnamepara[k] == 'declstar'):
+                        if e == 0:
                             projection = None
-                        else:
+                            strgiter = ''
+                        if e == 1:
                             projection = 'aitoff'
+                            strgiter = '_aito'
+                        path = pathbase + 'pmar_%s_%s_%s_%s%s%s.%s' % (typeplottdim, listnamepara[k], listnamepara[l], strgplot, strgtext, strgiter, typefileplot)
                         
-                        axis = figr.add_subplot(111, projection=projection)
+                        if not os.path.exists(path):
                         
-                        plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, \
-                                                    boolquan, listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
-                                                                                                    listlablpopl, bins=bins, listlablsamp=listlablsamptemp, boolcbar=True)
-                        
-                        if not (listnamepara[l] == 'rascstar' and listnamepara[k] == 'declstar'):
-                            axis.set_xlim(limt[:, l])
-                            axis.set_ylim(limt[:, k])
+                            figr = plt.figure(figsize=(4., 3.))
+                            axis = figr.add_subplot(111, projection=projection)
+                            
+                            plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, \
+                                                        boolquan, listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
+                                                                                listlablpopl, boolmakelegd, bins=bins, listlablsamp=listlablsamptemp, boolcbar=True)
+                            
+                            if e == 0:
+                                axis.set_xlim(limt[:, l])
+                                axis.set_ylim(limt[:, k])
                 
-                        axis.set_xlabel(listlablparatotl[l])
-                        axis.set_ylabel(listlablparatotl[k])
-                        
-                        print('Writing to %s...' % path)
-                        figr.savefig(path, bbox_inches='tight')
-                        plt.close(figr)
+                            axis.set_xlabel(listlablparatotl[l])
+                            axis.set_ylabel(listlablparatotl[k])
+                            
+                            if titl is not None:
+                                axis.set_title(titl)
+                            
+                            print('Writing to %s...' % path)
+                            figr.savefig(path, bbox_inches='tight')
+                            plt.close(figr)
                         
     if boolplottria:
         figr, axgr = plt.subplots(numbpara, numbpara, figsize=(plotsize*numbpara, plotsize*numbpara))
@@ -4011,10 +4581,10 @@ def plot_grid(pathbase, strgplot, listpara, listlablpara, \
                     continue
 
                 if k == l:
-                    plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, listlablpara, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, bins=bins)
+                    plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, listlablpara, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, boolmakelegd, bins=bins)
                 else:
                     plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolquan, listlablpara, \
-                                                      listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, bins=bins, boolcbar=False)
+                                             listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, boolmakelegd, bins=bins, boolcbar=False)
                     
                     axis.set_xlim(limt[:, l])
                     axis.set_ylim(limt[:, k])
