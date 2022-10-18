@@ -350,6 +350,49 @@ def retr_llikgaustrun(para, gdat):
     return cost
 
 
+def calc_visitarg(rasctarg, decltarg, latiobvt, longobvt, strgtimeobvtyear, listdelttimeobvtyear, heigobvt=None):
+    
+    print('rasctarg')
+    print(rasctarg)
+    print('decltarg')
+    print(decltarg)
+    print('latiobvt')
+    print(latiobvt)
+    print('longobvt')
+    print(longobvt)
+    print('strgtimeobvtyear')
+    print(strgtimeobvtyear)
+    print('listdelttimeobvtyear')
+    summgene(listdelttimeobvtyear)
+    print('heigobvt')
+    print(heigobvt)
+    if heigobvt is None:
+        heigobvt = 0.
+
+    # location object for the observatory
+    objtlocaobvt = astropy.coordinates.EarthLocation(lat=latiobvt*astropy.units.deg, lon=longobvt*astropy.units.deg, height=heigobvt*astropy.units.m)
+    
+    # time object for the year
+    timeyear = astropy.time.Time(strgtimeobvtyear).jd + listdelttimeobvtyear
+    objttimeyear = astropy.time.Time(timeyear, format='jd', location=objtlocaobvt)
+    timeside = objttimeyear.sidereal_time('mean')
+    
+    # delt time arry for night
+    timedeltscal = 0.5
+    timedelt = np.linspace(-12., 12. - timedeltscal, int(24. / timedeltscal))
+    
+    # frame object for the observatory during the year
+    objtframobvtyear = astropy.coordinates.AltAz(obstime=objttimeyear, location=objtlocaobvt)
+    
+    # alt-az coordinate object for the target
+    objtcoorplanalazyear = astropy.coordinates.SkyCoord(ra=rasctarg, dec=decltarg, frame='icrs', unit='deg').transform_to(objtframobvtyear)
+    
+    # air mass of the target during the time interval
+    massairr = objtcoorplanalazyear.secz
+    
+    return massairr
+
+
 def samp_gaustrun(numbsamp, meanpara, stdvpara, minmpara, maxmpara):
     
     if not np.isfinite(meanpara).any():
@@ -977,7 +1020,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             listlablpara[k] = ['Number of imaging observations', '']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'yearaler':
-            listlablpara[k] = ['Decimal Year', '']
+            listlablpara[k] = ['Time of Alert', '']
             listscalpara[k] = 'self'
         
         elif listnamepara[k] == 'tolerrat':
@@ -1085,6 +1128,11 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'timesupn':
             listlablpara[k] = ['$T_0$', 'BJD']
             listscalpara[k] = 'self'
+        
+        # predicted radial velocity semi-amplitude
+        elif listnamepara[k] == 'rvelsemapred':
+            listlablpara[k] = ['Predicted RV semi-amplitude', 'm s$^{-1}$']
+            listscalpara[k] = 'logt'
         
         # time-series constants
         elif listnamepara[k].startswith('cons') or listnamepara[k].startswith('timestep') or listnamepara[k].startswith('scalstep') or \
@@ -1235,10 +1283,10 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'amplslen':
             listlablpara[k] = ['$A_{SL}$', 'ppt']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'duratran' or listnamepara[k] == 'duratrantotl':
-            listlablpara[k] = ['Transit Duration', 'hours']
+        elif listnamepara[k] == 'duratrancomp' or listnamepara[k] == 'duratrancomptotl':
+            listlablpara[k] = ['Total Transit Duration', 'hours']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'duratranfull':
+        elif listnamepara[k] == 'duratrancompfull':
             listlablpara[k] = ['Full Transit Duration', 'hours']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'radicomp':
@@ -1322,7 +1370,9 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
 
 
 def summgene(varb, boolslin=False, namevarb=None, varbcomp=None):
-    
+    '''
+    Output to the command line the content of a varible including its type and summary statistics
+    '''
     if isinstance(varb, dict):
         print('Type is dict with keys:')
         print(list(varb.keys()))
@@ -3450,6 +3500,8 @@ def samp( \
         numbsamppostwalk = 100
 
     if typeverb > 0:
+        print('listnamepara')
+        print(listnamepara)
         print('listlablpara')
         print(listlablpara)
         print('scalpara')
@@ -3785,12 +3837,12 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
             axis.scatter(listpara[u][:, l], listpara[u][:, k], s=1, color=listcolrpopl[u], label=labl, alpha=alph)
         
             # add text labels on outliers
-            if listlablsamp is not None:
+            if listlablsamp is not None and indxpopl.size == 1:
                 
                 # remove infinite samples
-                indx = np.where(np.isfinite(listpara[0][:, l]) & np.isfinite(listpara[0][:, k]))[0]
-                listparapair = listpara[0][indx, :]
-                listlablsamppair = listlablsamp[indx]
+                indx = np.where(np.isfinite(listpara[u][:, l]) & np.isfinite(listpara[u][:, k]))[0]
+                listparapair = listpara[u][indx, :]
+                listlablsamppair = listlablsamp[u][indx]
                 listparapair = listparapair[:, np.array([l, k])]
                 
                 # transform from data to axis coordinate positions
@@ -3800,11 +3852,17 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 listparapairoutl = axis.transAxes.inverted().transform(posidisp)
                 
                 from sklearn.neighbors import LocalOutlierFactor
-                objtfore = LocalOutlierFactor(n_neighbors=40)
-                objtfore.fit(listparapairoutl)
-                louf = objtfore.negative_outlier_factor_
+                numbsamp = listparapairoutl.shape[0]
+                
+                numboutf = min(5, numbsamp)
+                if numbsamp > numboutf:
+                    n_neighbors = min(numbsamp, 20)
+                    objtfore = LocalOutlierFactor(n_neighbors=n_neighbors)
+                    objtfore.fit(listparapairoutl)
+                    louf = objtfore.negative_outlier_factor_
+                else:
+                    louf = np.zeros(numbsamp)
 
-                numboutf = 5
                 listindxsamplouf = np.argsort(louf)[:numboutf]
                 listparapair = listparapair[listindxsamplouf, :]
                 listlablsamppair = listlablsamppair[listindxsamplouf]
@@ -3828,7 +3886,8 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 else:
                     raise Exception('Unrecognized scaling: %s' % listscalpara[k])
                 
-                axis.scatter(listparapair[:, 0], listparapair[:, 1], s=3, color='b')
+                # place larger markers at the positions of the outliers
+                axis.scatter(listparapair[:, 0], listparapair[:, 1], s=3, color=listcolrpopl[u])
                 
                 print('Automatically positioning the annotations...')
                 # automatically position the annotations
@@ -3838,13 +3897,19 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 sizelablxpos = 0.3 
                 sizelablypos = 0.1
                 
-                distxpos = 0.5
-                distypos = 0.5
+                # maximum horizontal distance between the sample and label
+                distxpos = 0.35
+                # maximum vertical distance between the sample and label
+                distypos = 0.35
                 
+                # minimum horizontal position of the label
                 minmlablxpos = 0.5 * sizelablxpos
+                # minimum vertical position of the label
                 minmlablypos = 0.5 * sizelablypos
 
+                # maximum horizontal position of the label
                 maxmlablxpos = 1. - 0.5 * sizelablxpos
+                # maximum vertical position of the label
                 maxmlablypos = 1. - 0.5 * sizelablypos
                 
                 while True:
@@ -3894,14 +3959,14 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 #listxposlabl = listxposlabl[indxlablassi]
                 #listyposlabl = listyposlabl[indxlablassi]
                 print('Automatically positioned the annotations in %d trials...' % numbtria)
-
+                
                 for n in range(numboutf):
                     axis.annotate(listlablsamppair[n], xy=(xpossamp[n], ypossamp[n]), \
                                   xytext=(listxposlabl[n], listyposlabl[n]),
                                   textcoords=axis.transAxes, \
                                   xycoords=axis.transAxes, \
                                   ha='center', va='center', \
-                                  color='darkblue', \
+                                  color=listcolrpopl[u], \
                                   bbox=dict(boxstyle='round,pad=0.2', fc='yellow', ec='darkblue', alpha=1.), \
                                   arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.1', color='red'), \
                                  )
@@ -3945,7 +4010,18 @@ def retr_listvalutickmajr(minmlogt, maxmlogt):
     return listvalutickmajr
 
 
-def retr_valulabltick(minm, maxm, scal, listmantlabl=None):
+def retr_valulabltick( \
+                      # minimum value of the axis
+                      minm, \
+                      # maximum values of the axis
+                      maxm, \
+                      # a string indicating the scaling
+                      ## 'self': linear
+                      ## 'logt': logarithmic
+                      scal, \
+                      # optional list of mantissa to be used
+                      listmantlabl=None, \
+                     ):
     
     if scal == 'logt' or scal == 'powr':
         minmlogt = np.log10(minm)
@@ -4056,11 +4132,11 @@ def plot_grid(
               # Boolean flag to make the two-dimensional plots square
               boolsqua=False, \
               
-              # label to be used to denote the number of samples (takes priority over namesamp)
+              # label to be used to denote the number of samples (takes priority over lablsampgene)
               lablnumbsamp=None, \
 
               # label to be used as subscript to denote the number of samples
-              namesamp=None, \
+              lablsampgene=None, \
 
               # list of colors for populations
               listcolrpopl=None, \
@@ -4070,6 +4146,9 @@ def plot_grid(
               
               # list of labels for each sample
               listlablsamp=None, \
+              
+              # list of pairs of feature names to be skipped
+              listnamefeatskip=None, \
               
               # list of labels for populations
               listlablpopl=None, \
@@ -4232,7 +4311,7 @@ def plot_grid(
                 if listindxgood[u][k].size > 0:
                     limt[0, k] = min(limt[0, k], np.nanmin(listpara[u][listindxgood[u][k], k], 0))
                     limt[1, k] = max(limt[1, k], np.nanmax(listpara[u][listindxgood[u][k], k], 0))
-        
+            
             # list of Booleans for each parameter indicating whether it is a list of integers
             boolinte[k] = True
             for u in indxpopl:
@@ -4362,7 +4441,13 @@ def plot_grid(
             print(limt[:, k])
             print('listlablpara[k]')
             print(listlablpara[k])
+            for u in indxpopl:
+                print('u')
+                print(u)
+                print('listpara[u]')
+                summgene(listpara[u])
             print('')
+            raise Exception('')
             #return
     
     if truepara is not None:
@@ -4456,6 +4541,12 @@ def plot_grid(
                     else:
                         labl = None
                         alph = 1.
+                    print('listnamepara[k]')
+                    print(listnamepara[k])
+                    print('indxpopl')
+                    print(indxpopl)
+                    print('listpara[u][:, k]')
+                    summgene(listpara[u][:, k])
                     axis.hist(listpara[u][:, k], bins=bins[k], label=labl, edgecolor=matplotlib.colors.to_rgba(listcolrpopl[u], 1.0), lw=2, ls='-', \
                                                                            facecolor=matplotlib.colors.to_rgba(listcolrpopl[u], 0.2))
                     #, alpha=0.2)
@@ -4466,8 +4557,8 @@ def plot_grid(
                 axis.set_xlabel(listlablparatotl[k])
                 if lablnumbsamp is not None:
                     axis.set_ylabel(lablnumbsamp)
-                elif namesamp is not None:
-                    axis.set_ylabel(r'$N_{\rm{%s}}$' % namesamp)
+                elif lablsampgene is not None:
+                    axis.set_ylabel(r'$N_{\rm{%s}}$' % lablsampgene)
                 
                 if boolinte[k]:
                     axis.xaxis.get_major_locator().set_params(integer=True)
@@ -4513,7 +4604,7 @@ def plot_grid(
         plt.close(figr)
     
     if boolplotpair:
-        if listlablsamp is None:
+        if listlablsamp is None or numbpopl > 1:
             liststrgtext = ['']
         else:
             liststrgtext = ['', '_anno']
@@ -4530,6 +4621,15 @@ def plot_grid(
                     if k <= l:
                         continue
                     
+                    # skip the feature pair if specified by the user
+                    if listnamefeatskip is not None:
+                        boolskip = False
+                        for gg in range(len(listnamefeatskip)):
+                            if listnamepara[k] in listnamefeatskip[gg] and listnamepara[l] in listnamefeatskip[gg]:
+                                boolskip = True
+                        if boolskip:
+                            continue
+                    
                     if not (listnamepara[l] == 'rascstar' and listnamepara[k] == 'declstar'):
                         numbiter = 1
                     else:
@@ -4543,7 +4643,8 @@ def plot_grid(
                         if e == 1:
                             projection = 'aitoff'
                             strgiter = '_aito'
-                        path = pathbase + 'pmar_%s_%s_%s_%s%s%s.%s' % (typeplottdim, listnamepara[k], listnamepara[l], strgplot, strgtext, strgiter, typefileplot)
+                        path = pathbase + 'pmar_%s_%s_%s_%s%s%s.%s' % (typeplottdim, listnamepara[k], \
+                                                    listnamepara[l], strgplot, strgtext, strgiter, typefileplot)
                         
                         if not os.path.exists(path):
                         
@@ -4551,8 +4652,8 @@ def plot_grid(
                             axis = figr.add_subplot(111, projection=projection)
                             
                             plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, \
-                                                        boolquan, listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
-                                                                                listlablpopl, boolmakelegd, bins=bins, listlablsamp=listlablsamptemp, boolcbar=True)
+                                               boolquan, listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
+                                                                  listlablpopl, boolmakelegd, bins=bins, listlablsamp=listlablsamptemp, boolcbar=True)
                             
                             if e == 0:
                                 axis.set_xlim(limt[:, l])
