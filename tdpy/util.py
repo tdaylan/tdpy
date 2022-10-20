@@ -1319,7 +1319,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             listlablpara[k] = ['$M_{C}$', '$M_\odot$']
             listscalpara[k] = 'self'
         
-        elif listnamepara[k] == 'dept':
+        elif listnamepara[k] == 'depttran' or listnamepara[k] == 'depttrancomp':
             listlablpara[k] = ['$\delta_{tr}$', 'ppt']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 's2nr':
@@ -3854,16 +3854,23 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 from sklearn.neighbors import LocalOutlierFactor
                 numbsamp = listparapairoutl.shape[0]
                 
-                numboutf = min(5, numbsamp)
-                if numbsamp > numboutf:
-                    n_neighbors = min(numbsamp, 20)
-                    objtfore = LocalOutlierFactor(n_neighbors=n_neighbors)
-                    objtfore.fit(listparapairoutl)
-                    louf = objtfore.negative_outlier_factor_
+                numboutf = min(0, numbsamp)
+                if numboutf > 0:
+                    if numbsamp > numboutf:
+                        n_neighbors = min(numbsamp, 100)
+                        objtfore = LocalOutlierFactor(n_neighbors=n_neighbors)
+                        objtfore.fit(listparapairoutl)
+                        louf = objtfore.negative_outlier_factor_
+                    else:
+                        louf = np.zeros(numbsamp)
+                    listindxsamplouf = np.argsort(louf)[:numboutf]
                 else:
-                    louf = np.zeros(numbsamp)
+                    listindxsamplouf = np.array([], dtype=int)
 
-                listindxsamplouf = np.argsort(louf)[:numboutf]
+                indxtemp = np.array([np.argmin(listparapair[:, 0]), np.argmin(listparapair[:, 1]), np.argmax(listparapair[:, 0]), np.argmax(listparapair[:, 1])])
+                listindxsamplouf = np.concatenate([listindxsamplouf, indxtemp])
+                listindxsamplouf = np.unique(listindxsamplouf)
+                numboutf = listindxsamplouf.size
                 listparapair = listparapair[listindxsamplouf, :]
                 listlablsamppair = listlablsamppair[listindxsamplouf]
             
@@ -3891,59 +3898,62 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 
                 print('Automatically positioning the annotations...')
                 # automatically position the annotations
-                numbtria = 0
 
                 # tunable parameters
                 sizelablxpos = 0.3 
                 sizelablypos = 0.1
                 
-                # maximum horizontal distance between the sample and label
-                distxpos = 0.35
-                # maximum vertical distance between the sample and label
-                distypos = 0.35
-                
                 # minimum horizontal position of the label
-                minmlablxpos = 0.5 * sizelablxpos
+                minmlablxpos = 0.#0.5 * sizelablxpos
                 # minimum vertical position of the label
-                minmlablypos = 0.5 * sizelablypos
+                minmlablypos = 0.#0.5 * sizelablypos
 
                 # maximum horizontal position of the label
-                maxmlablxpos = 1. - 0.5 * sizelablxpos
+                maxmlablxpos = 1.# - 0.5 * sizelablxpos
                 # maximum vertical position of the label
-                maxmlablypos = 1. - 0.5 * sizelablypos
+                maxmlablypos = 1.# - 0.5 * sizelablypos
                 
-                while True:
+                # list of trial maximum horizontal distances between the sample and label
+                listdistxpos = np.array([1.5, 3., 100.]) * sizelablxpos
+                # list of trial maximum vertical distances between the sample and label
+                listdistypos = np.array([1.5, 3., 100.]) * sizelablypos
+                for ll in range(len(listdistxpos)):
+                    distxpos = listdistxpos[ll]
+                    distypos = listdistypos[ll]
                     
-                    # trial coordinates of the annotations
-                    listxposlabl = xpossamp + distxpos * (2. * np.random.rand(numboutf) - 1.)
-                    listyposlabl = ypossamp + distypos * (2. * np.random.rand(numboutf) - 1.)
+                    numbtria = 0
+                    while True:
+                        
+                        # trial coordinates of the annotations
+                        listxposlabl = xpossamp + distxpos * (2. * np.random.rand(numboutf) - 1.)
+                        listyposlabl = ypossamp + distypos * (2. * np.random.rand(numboutf) - 1.)
+                        
+                        indxxpos = np.where((listxposlabl > maxmlablxpos) | (listxposlabl < minmlablxpos))[0]
+                        listxposlabl[indxxpos] = minmlablxpos + listxposlabl[indxxpos] % (maxmlablxpos - minmlablxpos)
+
+                        indxypos = np.where((listyposlabl > maxmlablypos) | (listyposlabl < minmlablypos))[0]
+                        listyposlabl[indxypos] = minmlablypos + listyposlabl[indxypos] % (maxmlablypos - minmlablypos)
+
+                        # concatenated list of coordinates of samples and trial annotations
+                        xpos = np.concatenate((listxposlabl, xpossamp))
+                        ypos = np.concatenate((listyposlabl, ypossamp))
+                        
+                        # check if each trial annotation is sufficiantly distant from all samples and other trial annotations
+                        boolgood = True
+                        for n in range(numboutf):
+                            xposdiff = abs(listxposlabl[n] - xpos)
+                            yposdiff = abs(listyposlabl[n] - ypos)
+                            if ((xposdiff < sizelablxpos) & (xposdiff > 0) & (yposdiff < sizelablypos) & (yposdiff > 0)).any():
+                                boolgood = False
+                        if boolgood or numbtria > 99999:
+                            break
+                        numbtria += 1
                     
-                    indxxpos = np.where(listxposlabl > maxmlablxpos)[0]
-                    listxposlabl[indxxpos] = maxmlablxpos - (listxposlabl[indxxpos] - maxmlablxpos)
-
-                    indxypos = np.where(listyposlabl > maxmlablypos)[0]
-                    listyposlabl[indxypos] = maxmlablypos - (listyposlabl[indxypos] - maxmlablypos)
-
-                    indxxpos = np.where(listxposlabl < minmlablxpos)[0]
-                    listxposlabl[indxxpos] = minmlablxpos + (minmlablxpos - listxposlabl[indxxpos])
-
-                    indxypos = np.where(listyposlabl < minmlablypos)[0]
-                    listyposlabl[indxypos] = minmlablypos + (minmlablypos - listyposlabl[indxypos])
-
-                    # concatenated list of coordinates of samples and trial annotations
-                    xpos = np.concatenate((listxposlabl, xpossamp))
-                    ypos = np.concatenate((listyposlabl, ypossamp))
-                    
-                    # check if each trial annotation is sufficiantly distant from all samples and other trial annotations
-                    boolgood = True
-                    for n in range(numboutf):
-                        xposdiff = abs(listxposlabl[n] - xpos)
-                        yposdiff = abs(listyposlabl[n] - ypos)
-                        if ((xposdiff < sizelablxpos) & (xposdiff > 0) & (yposdiff < sizelablypos) & (yposdiff > 0)).any():
-                            boolgood = False
-                    numbtria += 1
-                    if boolgood or numbtria > 99999:
+                    if boolgood:
+                        print('Automatically positioned the annotations in %d trials, ll=%d...' % (numbtria, ll))
                         break
+                if not boolgood:
+                    print('Failed to automatically positioned the annotations...')
                 
                 #indxoutf = np.arange(numboutf)
                 #indxsampassi = []
@@ -3958,7 +3968,6 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 #    indxsampassi.append(indxsamplive[indxsampminm])
                 #listxposlabl = listxposlabl[indxlablassi]
                 #listyposlabl = listyposlabl[indxlablassi]
-                print('Automatically positioned the annotations in %d trials...' % numbtria)
                 
                 for n in range(numboutf):
                     axis.annotate(listlablsamppair[n], xy=(xpossamp[n], ypossamp[n]), \
@@ -4016,22 +4025,31 @@ def retr_valulabltick( \
                       # maximum values of the axis
                       maxm, \
                       # a string indicating the scaling
-                      ## 'self': linear
+                      ## 'powr': power-law
                       ## 'logt': logarithmic
+                      ## 'asnh': arcsinh
                       scal, \
                       # optional list of mantissa to be used
                       listmantlabl=None, \
                      ):
     
     if scal == 'logt' or scal == 'powr':
-        minmlogt = np.log10(minm)
-        maxmlogt = np.log10(maxm)
-    if scal == 'asnh':
-        minmlogt = np.arcsinh(minm)
-        maxmlogt = np.arcsinh(maxm)
+        minm = np.log10(minm)
+        maxm = np.log10(maxm)
+    elif scal == 'asnh':
+        minm = np.arcsinh(minm)
+        maxm = np.arcsinh(maxm)
+    elif scal == 'self':
+        raise Exception('This function is not supposed to be used for linear scaling.')
+    else:
+        raise Exception('Scaling is not recognized.')
     
     # determine major ticks and labels
-    listvalutickmajr = retr_listvalutickmajr(minmlogt, maxmlogt)
+    ## list of values for the major ticks
+    listvalutickmajr = retr_listvalutickmajr(minm, maxm)
+    print('listvalutickmajr')
+    print(listvalutickmajr)
+    ## list of labels for the major ticks
     listlabltickmajr = [retr_lablmexp(listvalutickmajr[a]) for a in range(len(listvalutickmajr))]
     
     # determine minor ticks and labels
@@ -4044,7 +4062,9 @@ def retr_valulabltick( \
         else:
             listmantlabl = [2., 5.]
     listmantminr = np.arange(2., 10.)
-    listexpominr = np.arange(np.floor(minmlogt), np.ceil(maxmlogt) + 1)
+    listexpominr = np.arange(np.floor(minm), np.ceil(maxm) + 1)
+    
+    # list of values for the minor ticks
     listvalutickminr = []
     listvalutickminrlabl = []
     indxlablmant = []
@@ -4063,6 +4083,8 @@ def retr_valulabltick( \
     indxlabl = np.array(indxlablexpo, dtype=int) * len(listmantminr) + np.array(indxlablmant, dtype=int)
     listvalutickminr = np.array(listvalutickminr)
     listvalutickminr = np.sort(listvalutickminr)
+    
+    # list of labels for the minor ticks
     listlabltickminr = np.empty_like(listvalutickminr, dtype=object)
     listlabltickminr[:] = ''
     for a in range(len(listvalutickminrlabl)):
@@ -4312,6 +4334,17 @@ def plot_grid(
                     limt[0, k] = min(limt[0, k], np.nanmin(listpara[u][listindxgood[u][k], k], 0))
                     limt[1, k] = max(limt[1, k], np.nanmax(listpara[u][listindxgood[u][k], k], 0))
             
+            if booldiag:
+                if limt[0, k] == limt[1, k]:
+                    print('limt[0, k]')
+                    print(limt[0, k])
+                    print('listpara[u][:, k]')
+                    summgene(listpara[u][:, k])
+                    print('listpara[u][listindxgood[u][k], k]')
+                    summgene(listpara[u][listindxgood[u][k], k])
+                    print('')
+                    raise Exception('')
+
             # list of Booleans for each parameter indicating whether it is a list of integers
             boolinte[k] = True
             for u in indxpopl:
