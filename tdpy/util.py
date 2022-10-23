@@ -1,6 +1,7 @@
 # utilities
 import os, time, datetime
 import pickle
+from tqdm import tqdm
 
 ## numerics
 import numpy as np
@@ -8,10 +9,7 @@ import scipy as sp
 from scipy.special import erfi
 import scipy.fftpack
 import scipy.stats
-import healpy as hp
 import pandas as pd
-
-from tqdm import tqdm
 
 # plotting
 import matplotlib
@@ -4336,8 +4334,8 @@ def plot_grid(
             
             if booldiag:
                 if limt[0, k] == limt[1, k]:
-                    print('limt[0, k]')
-                    print(limt[0, k])
+                    print('listnamepara[k]')
+                    print('Warning! The lower and upper limits for parameters %s are the same: %g.' % (listnamepara[k], limt[0, k]))
                     print('listpara[u][:, k]')
                     summgene(listpara[u][:, k])
                     print('listpara[u][listindxgood[u][k], k]')
