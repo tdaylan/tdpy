@@ -3,8 +3,8 @@ from setuptools import setup, find_packages
 setup(
     name = 'tdpy',
     packages = find_packages(),
-    version = '1.1',
-    description = 'A library of numerical routines', \
+    version = '1.2',
+    description = 'A python library of numberical routines', \
     author = 'Tansu Daylan',
     author_email = 'tansu.daylan@gmail.com',
     url = 'https://github.com/tdaylan/tdpy',
@@ -14,8 +14,7 @@ setup(
                  'Intended Audience :: Science/Research',
                  'License :: OSI Approved :: MIT License',
                  'Programming Language :: Python'],
-    install_requires=['numpy'],
+    install_requires=['numpy', 'matplotlib', 'astropy', 'scipy', 'pandas', 'sklearn'],
     python_requires='>=3'
-    #include_package_data = True
     )
 

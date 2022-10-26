@@ -13,7 +13,6 @@ import pandas as pd
 
 # plotting
 import matplotlib
-matplotlib.use('agg')
 import matplotlib.pyplot as plt
 plt.rc('text', usetex=True)
 plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
@@ -104,6 +103,9 @@ class datapara(object):
 
 
 def time_func(func, *args):
+    '''
+    Measure the execution time of a function.
+    '''    
     
     numbiter = 100
     timediff = np.empty(numbiter)
@@ -115,7 +117,16 @@ def time_func(func, *args):
     return mean(timediff), std(timediff)
 
 
+def time_func_verb(func, *args):
+    
+    meantimediff, stdvtimediff = time_func(func, *args)
+
+
+# astrophysics
 def retr_specbbod(tmpt, wlen):
+    '''
+    Calculate the spectrum of a blackbody
+    '''
     
     #0.0143877735e6 # [um K]
     spec = 3.742e11 / wlen**5 / (np.exp(0.0143877735e6 / (wlen * tmpt)) - 1.)
@@ -123,6 +134,53 @@ def retr_specbbod(tmpt, wlen):
     return spec
 
 
+def calc_visitarg(rasctarg, decltarg, latiobvt, longobvt, strgtimeobvtyear, listdelttimeobvtyear, heigobvt=None):
+    '''
+    Calculate the visibility of a celestial target.
+    '''
+    
+    print('rasctarg')
+    print(rasctarg)
+    print('decltarg')
+    print(decltarg)
+    print('latiobvt')
+    print(latiobvt)
+    print('longobvt')
+    print(longobvt)
+    print('strgtimeobvtyear')
+    print(strgtimeobvtyear)
+    print('listdelttimeobvtyear')
+    summgene(listdelttimeobvtyear)
+    print('heigobvt')
+    print(heigobvt)
+    if heigobvt is None:
+        heigobvt = 0.
+
+    # location object for the observatory
+    objtlocaobvt = astropy.coordinates.EarthLocation(lat=latiobvt*astropy.units.deg, lon=longobvt*astropy.units.deg, height=heigobvt*astropy.units.m)
+    
+    # time object for the year
+    timeyear = astropy.time.Time(strgtimeobvtyear).jd + listdelttimeobvtyear
+    objttimeyear = astropy.time.Time(timeyear, format='jd', location=objtlocaobvt)
+    timeside = objttimeyear.sidereal_time('mean')
+    
+    # delt time arry for night
+    timedeltscal = 0.5
+    timedelt = np.linspace(-12., 12. - timedeltscal, int(24. / timedeltscal))
+    
+    # frame object for the observatory during the year
+    objtframobvtyear = astropy.coordinates.AltAz(obstime=objttimeyear, location=objtlocaobvt)
+    
+    # alt-az coordinate object for the target
+    objtcoorplanalazyear = astropy.coordinates.SkyCoord(ra=rasctarg, dec=decltarg, frame='icrs', unit='deg').transform_to(objtframobvtyear)
+    
+    # air mass of the target during the time interval
+    massairr = objtcoorplanalazyear.secz
+    
+    return massairr
+
+
+# statistics
 def cdfn_self(parascal, minmpara, maxmpara):
     '''
     Return the CDF transform of a variable drawrn from the uniform distribution
@@ -348,51 +406,11 @@ def retr_llikgaustrun(para, gdat):
     return cost
 
 
-def calc_visitarg(rasctarg, decltarg, latiobvt, longobvt, strgtimeobvtyear, listdelttimeobvtyear, heigobvt=None):
-    
-    print('rasctarg')
-    print(rasctarg)
-    print('decltarg')
-    print(decltarg)
-    print('latiobvt')
-    print(latiobvt)
-    print('longobvt')
-    print(longobvt)
-    print('strgtimeobvtyear')
-    print(strgtimeobvtyear)
-    print('listdelttimeobvtyear')
-    summgene(listdelttimeobvtyear)
-    print('heigobvt')
-    print(heigobvt)
-    if heigobvt is None:
-        heigobvt = 0.
-
-    # location object for the observatory
-    objtlocaobvt = astropy.coordinates.EarthLocation(lat=latiobvt*astropy.units.deg, lon=longobvt*astropy.units.deg, height=heigobvt*astropy.units.m)
-    
-    # time object for the year
-    timeyear = astropy.time.Time(strgtimeobvtyear).jd + listdelttimeobvtyear
-    objttimeyear = astropy.time.Time(timeyear, format='jd', location=objtlocaobvt)
-    timeside = objttimeyear.sidereal_time('mean')
-    
-    # delt time arry for night
-    timedeltscal = 0.5
-    timedelt = np.linspace(-12., 12. - timedeltscal, int(24. / timedeltscal))
-    
-    # frame object for the observatory during the year
-    objtframobvtyear = astropy.coordinates.AltAz(obstime=objttimeyear, location=objtlocaobvt)
-    
-    # alt-az coordinate object for the target
-    objtcoorplanalazyear = astropy.coordinates.SkyCoord(ra=rasctarg, dec=decltarg, frame='icrs', unit='deg').transform_to(objtframobvtyear)
-    
-    # air mass of the target during the time interval
-    massairr = objtcoorplanalazyear.secz
-    
-    return massairr
-
-
 def samp_gaustrun(numbsamp, meanpara, stdvpara, minmpara, maxmpara):
-    
+    '''
+    Sample from a truncated Gaussian
+    '''
+
     if not np.isfinite(meanpara).any():
         raise Exception('')
 
@@ -439,36 +457,9 @@ def samp_gaustrun(numbsamp, meanpara, stdvpara, minmpara, maxmpara):
     # sample from truncated Gaussian
     para = scipy.stats.truncnorm.rvs(a, b, loc=meantria, scale=stdvtria, size=numbsamp)
     
-    #print('samp_gaustrun():')
-    #print('minmpara')
-    #print(minmpara)
-    #print('maxmpara')
-    #print(maxmpara)
-    #print('meanpara')
-    #print(meanpara)
-    #print('stdvpara')
-    #print(stdvpara)
-    #print('meantria')
-    #print(meantria)
-    #print('stdvtria')
-    #print(stdvtria)
-    #print('para')
-    #summgene(para)
-    #summgene(para, boolslin=True)
-    #print(np.std(para))
-    #print('')
-    #print('')
-    #print('')
-    #print('')
-    #raise Exception('')
-
     return para
 
 
-def time_func_verb(func, *args):
-    
-    meantimediff, stdvtimediff = time_func(func, *args)
-    
 
 def retr_pctlvarb(listpara):
 
@@ -553,7 +544,7 @@ def retr_recaprec():
 
 def plot_recaprec(pathimag, strgextn, listparareca, listparaprec, \
                                    listnameparareca, listnameparaprec, listlablvarbreca, listlablvarbprec, \
-                                                    boolposirele, boolreleposi, strgplotextn='pdf', typeverb=1, numbbins=10, strgreca='Recall', listparadete=None):
+                                                boolposirele, boolreleposi, strgplotextn='pdf', typeverb=1, numbbins=10, strgreca='Recall', listparadete=None):
     
     if isinstance(boolreleposi, list):
         boolreleposi = np.array(boolreleposi)
@@ -725,37 +716,6 @@ def prep_mask(data, epoc=None, peri=None, duramask=None, limttime=None):
     return dataoutp
 
 
-def prep_mask_knwn(pathbase, epoc, peri, duramask, listindxtranmask=None, strgextn=None):
-    
-    '''
-    Read the TESS data, mask out the transits, write csv files to the allesfitter folders
-    '''
-    
-    pathdata = pathbase + 'data_preparation/'
-    pathinpt = '%sPDCSAP/TESS.csv' % pathbase
-    pathoutp = '%sallesfits/allesfit_TESS_oot/TESS.csv' % pathbase
-    pathorig = pathdata + 'original_data/'
-    pathtess = pathdata + 'PDCSAP/TESS.csv'
-    
-    print('Reading the TESS PDCSAP light curve and saving the transit-masked light curve to the OOT allesfit folder...')
-    
-    # read data
-    data = np.loadtxt(pathtess, delimiter=',')
-    
-    # mask out the transits
-    dataoutp = prep_mask(data, epoc, peri, duramask)
-
-    # save to CSV file
-    np.savetxt(pathoutp, dataoutp, delimiter=',')
-
-
-def rbin(arry, shap):
-        
-    arry = arry[[slice(None, None, thissize / nextsize) for thissize, nextsize in zip(arry.shape, shap)]]
-    
-    return arry
-
-
 def retr_nfwp(nfwg, numbside, norm=None):
     
     edenlocl = 0.3 # [GeV/cm^3]
@@ -920,6 +880,7 @@ def retr_dictturk():
     dictturk['Imaging'] = 'Görüntüleme'
     dictturk['Microlensing'] = 'Mikromerceklenme'
     dictturk['Transiting'] = 'Geçiş Yapan'
+    dictturk['exoplanet'] = 'ötegezegen'
     dictturk['Exoplanets with precise density'] = 'Yoğunluk ölçümü hassas olan ötegezegenler'
     dictturk['Exoplanets with precise mass'] = 'Kütle ölçümü hassas olan ötegezegenler'
     dictturk['Exoplanets with weak mass'] = 'Kütle ölçümü zayıf olan ötegezegenler'
@@ -1414,7 +1375,8 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None):
                 stdvcomp = (upprcomp - lowrcomp) / 2.
                 sigm = (medi - medicomp) / np.sqrt(stdvcomp**2 + ((uppr - lowr) / 2.)**2)
                 strgcomp = ', %.3g sigma diff' % sigm
-            print('%s%.3g +%.3g -%.3g, limt: %.3g %.g, %d samples%s%s%s' % (namevarb, medi, uppr - medi, medi - lowr, minm, maxm, varb.size, strginfi, strgnann, strgcomp))
+            print('%s%.3g +%.3g -%.3g, limt: %.3g %.g, %d samples%s%s%s' % (namevarb, medi, uppr - medi, medi - lowr, \
+                                                                                minm, maxm, varb.size, strginfi, strgnann, strgcomp))
         else:
             
             #print('varb')
@@ -1433,7 +1395,6 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None):
                 elif varb.dtype.type is np.object_:
                     print('Object type numpy array')
                 else:
-                    #if varb.dtype == 'float64' or varb.dtype == 'int64' or varb.dtype == 'float32' or varb.dtype == 'int32' or varb.dtype == 'bool' or varb.dtype == 'int32':
                     if not np.isfinite(varb).all():
                         boolfini = np.isfinite(varb)
                         indxfini = np.where(boolfini)
@@ -1444,7 +1405,8 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None):
                             minmtemp = np.amin(varb[indxfini])
                             maxmtemp = np.nanmax(varb[indxfini])
                             meantemp = np.nanmean(varb[indxfini])
-                            print('Among %d finite samples, 0p: %g, 0.3p: %g, 5p: %g, 50p: %g, 95p: %g, 99.7p: %g, 100p: %g, mean: %g' % (indxfini[0].size, minmtemp, \
+                            print('Among %d finite samples, 0p: %g, 0.3p: %g, 5p: %g, 50p: %g, 95p: %g, 99.7p: %g, 100p: %g, mean: %g' % \
+                                                                                                            (indxfini[0].size, minmtemp, \
                                                                                                             np.percentile(varb[indxfini], 0.3), \
                                                                                                             np.percentile(varb[indxfini], 5.), \
                                                                                                             np.percentile(varb[indxfini], 50.), \
@@ -1464,12 +1426,6 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None):
                 print(varb)
             else:
                 print('Type is %s' % type(varb))
-    #except:
-    #    print('summgene() failed')
-    #    print('type(varb)')
-    #    print(type(varb))
-    #    print(varb)
-    #    print('')
 
 
 def retr_p4dm_spec(anch, part='el'):
@@ -1636,7 +1592,7 @@ def retr_axis(minm=None, maxm=None, numb=None, bins=None, scal='self'):
 def retr_psfngausnorm(angl):
 
     norm = np.sqrt(2. / np.pi**3) / angl / exp(-0.5 * angl**2) / \
-                        real(-erfi((angl**2 - np.pi * 1j) / np.sqrt(2) / angl) - erfi((angl**2 + np.pi * 1j) / np.sqrt(2) / angl) + 2. * erfi(angl / np.sqrt(2.)))
+                    real(-erfi((angl**2 - np.pi * 1j) / np.sqrt(2) / angl) - erfi((angl**2 + np.pi * 1j) / np.sqrt(2) / angl) + 2. * erfi(angl / np.sqrt(2.)))
 
     return norm
 
@@ -1771,44 +1727,82 @@ def retr_indximagmaxm(data):
     return indxxdatmaxm, indxydatmaxm
 
 
-def plot_timeline(path, dictrows, listlablrows=None, dictcolrbars=None):
+def plot_timeline(path, dictrows):
     '''
     Make a timeline (Gantt) chart
     '''
 
-    if dictcolrbars is None:
-        dictcolrbars = dict()
-        dictcolrbars['NY'] = 'r'
-        dictcolrbars['STL'] = 'b'
-        dictcolrbars['Turkey'] = 'g'
+    listnamerows = list(dictrows.keys())
+    numbrows = len(dictrows)
+    indxrows = np.arange(numbrows)
+    minmjdat = 1e100
+    maxmjdat = -1e100
+    listlablrows = [[] for k in indxrows]
+    listsizerows = [[] for k in indxrows]
+    listcolrrows = [[] for k in indxrows]
+    for k in indxrows:
+        
+        if 'size' in dictrows[listnamerows[k]]:
+            listsizerows[k] = dictrows[listnamerows[k]]['size']
+        else:
+            listsizerows[k] = 1.
+        
+        if 'colr' in dictrows[listnamerows[k]]:
+            listcolrrows[k] = dictrows[listnamerows[k]]['colr']
+        else:
+            listcolrrows[k] = 'gray'
+        
+        if 'labl' in dictrows[listnamerows[k]]:
+            listlablrows[k] = dictrows[listnamerows[k]]['labl']
+        else:
+            listlablrows[k] = listnamerows[k]
+            
+        for l in range(len(dictrows[listnamerows[k]]['listelem'])):
+            minmjdat = min(minmjdat, astropy.time.Time(dictrows[listnamerows[k]]['listelem'][l][0], format='iso').jd)
+            maxmjdat = max(maxmjdat, astropy.time.Time(dictrows[listnamerows[k]]['listelem'][l][1], format='iso').jd)
     
-    if listlablrows is None:
-        listlablrows = list(dictrows.keys())
-
-    jdatinit = astropy.time.Time('2022-08-01', format='iso').jd
-    jdatinit0819 = astropy.time.Time('2022-08-19', format='iso').jd
-    listjdat = jdatinit + np.arange(0., 3.5, 0.25) * 365.25
+    limtjdat = [minmjdat, maxmjdat]
+    listjdat = np.arange(minmjdat, maxmjdat, 0.5 * 365.25)
     listlabltick = [[] for jdat in listjdat]
     for kk, jdat in enumerate(listjdat):
         listlabltick[kk] = astropy.time.Time(jdat, format='jd').to_value('iso', subfmt='date')
     
-    fig, axis = plt.subplots(1, figsize=(9, 4))
-    numbrows = len(listlablrows)
-    indxrows = np.arange(numbrows)
+    fig, axis = plt.subplots(1, figsize=(9, 2.5))
+    
+    ydattext = 0.
+    listtick = [[] for k in indxrows]
     for k in indxrows:
-        for l in range(len(dictrows[listlablrows[k]])):
-            if l == len(dictrows[listlablrows[k]]) - 1:
-                break
-            jdatfrst = astropy.time.Time(dictrows[listlablrows[k]][l][0], format='iso').jd
-            jdatseco = astropy.time.Time(dictrows[listlablrows[k]][l+1][0], format='iso').jd
+        
+        for l in range(len(dictrows[listnamerows[k]]['listelem'])):
             
-            axis.barh(listlablrows[k], jdatseco - jdatfrst, left=jdatfrst, color=dictcolrbars[dictrows[listlablrows[k]][l][1]], alpha=0.3)
+            jdatfrst = astropy.time.Time(dictrows[listnamerows[k]]['listelem'][l][0], format='iso').jd
+            jdatseco = astropy.time.Time(dictrows[listnamerows[k]]['listelem'][l][1], format='iso').jd
+            
+            xdattext = jdatfrst + 0.5 * (jdatseco - jdatfrst)
+            
+            axis.barh(ydattext, jdatseco - jdatfrst, left=jdatfrst, color=listcolrrows[k], height=listsizerows[k], edgecolor='k')
             
             listlablxaxi = axis.set_xticks(listjdat, rotation=45)
-            axis.set_xticklabels(listlabltick, rotation=45)
             
-            axis.text(jdatfrst + 0.5 * (jdatseco - jdatfrst), k, dictrows[listlablrows[k]][l][1], ha='center', va='center', color=dictcolrbars[dictrows[listlablrows[k]][l][1]])
+            axis.set_xticklabels(listlabltick)
+            
+            axis.text(xdattext, ydattext, dictrows[listnamerows[k]]['listelem'][l][2], color='k', ha='center', va='center')
+        
+        if k == 0:
+            minmydat = ydattext - 0.5 * listsizerows[k]
+        if k == numbrows - 1:
+            maxmydat = ydattext + 0.5 * listsizerows[k]
+        
+        listtick[k] = ydattext
 
+        if k < numbrows - 1:
+            ydattext += 0.5 * (listsizerows[k] + listsizerows[k+1])
+    
+    limtydat = [minmydat, maxmydat]
+    axis.set_yticks(listtick)
+    axis.set_yticklabels(listlablrows)
+    axis.set_xlim(limtjdat)
+    axis.set_ylim(limtydat)
     print('Writing to %s...' % path)
     plt.tight_layout()
     plt.savefig(path)
@@ -2085,7 +2079,7 @@ def read_fits(path, pathimag=None, full=False, typeverb=0):
 
 
 def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=None, maxmlgal=None, minmbgal=None, maxmbgal=None, \
-                                                                                                resi=False, satu=False, numbsidelgal=None, numbsidebgal=None, igal=False):
+                                                                                        resi=False, satu=False, numbsidelgal=None, numbsidebgal=None, igal=False):
    
     if minmlgal == None:
         if not igal:
@@ -2621,29 +2615,6 @@ def smth_ferm(mapsinpt, meanener, recotype, maxmmpol=None, makeplot=False, kernt
         for i in indxener:
             for m in indxevtt:
                 if recotype == 'manu':
-                    #fwhmfitt = np.array([ \
-                    #                  2.2591633256, \
-                    #                  1.71342705148, \
-                    #                  1.45102416042, \
-                    #                  1.10904308863, \
-                    #                  0.928844633041, \
-                    #                  0.621357720854, \
-                    #                  0.510777917886, \
-                    #                  0.500998238444, \
-                    #                  0.36102878406, \
-                    #                  0.246788005029, \
-                    #                  0.195373208584, \
-                    #                  0.192829849688, \
-                    #                  0.155934418827, \
-                    #                  0.123744918778, \
-                    #                  0.0889795596446, \
-                    #                  0.0739099177209, \
-                    #                  0.0777070595049, \
-                    #                  0.0590032526699, \
-                    #                  0.0570066113952, \
-                    #                  0.0522932064601, \
-                    #                 ])
-                    #fwhmtemp = fwhmfitt[4*i+m]
                     if i == 0:
                         if m == 0:
                             sigm = 100.
@@ -3431,7 +3402,10 @@ def samp( \
          # verbosity level
          typeverb=1, \
         ):
-        
+    '''
+    Sample from a posterior using MCMC
+    '''
+    
     numbpara = len(listlablpara)
    
     if numbsampwalk <= numbsampburnwalk:
@@ -4335,6 +4309,7 @@ def plot_grid(
             if booldiag:
                 if limt[0, k] == limt[1, k]:
                     print('listnamepara[k]')
+                    print(listnamepara[k])
                     print('Warning! The lower and upper limits for parameters %s are the same: %g.' % (listnamepara[k], limt[0, k]))
                     print('listpara[u][:, k]')
                     summgene(listpara[u][:, k])
