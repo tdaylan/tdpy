@@ -967,8 +967,7 @@ def sign_code(axis, typesigncode):
     Sign the axis to indicate the generating code.
     ''' 
 
-    bbox = dict(boxstyle='round', ec='white', fc='white')
-    
+    bbox = dict(boxstyle='round', ec='k', fc='white')
     axis.text(0.97, 0.05, r'github.com/tdaylan/\textbf{%s}' % (typesigncode), bbox=bbox, \
                                                                         transform=axis.transAxes, color='firebrick', ha='right', size='small')
 
@@ -1143,6 +1142,9 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'epocmtratess':
             listlablpara[k] = ['$T_0$', 'BJD-2457000']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'offsphascomp':
+            listlablpara[k] = ['$\phi_{off}$', '$^\circ$']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'epocmtra':
             listlablpara[k] = ['$T_0$', 'BJD']
@@ -4029,11 +4031,11 @@ def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, \
         axis.axvline(quan[3], color='r', ls='--', lw=2)
         medivarb = np.nanmedian(listpara[0][:, k])
     
-    if listlablpara[k][1] != '':
-        strgunit = ' ' + listlablpara[k][1]
-    else:
-        strgunit = ''
-    axis.set_title(r'%s = %.3g $\substack{+%.2g \\\\ -%.2g}$ %s' % (listlablpara[k][0], medivarb, quan[2] - medivarb, medivarb - quan[1], strgunit))
+        if listlablpara[k][1] != '':
+            strgunit = ' ' + listlablpara[k][1]
+        else:
+            strgunit = ''
+        axis.set_title(r'%s = %.3g $\substack{+%.2g \\\\ -%.2g}$ %s' % (listlablpara[k][0], medivarb, quan[2] - medivarb, medivarb - quan[1], strgunit))
                 
 
 def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolquan, \
@@ -4525,24 +4527,6 @@ def plot_grid(
     
     print('tdpy.plot_grid() initialized...')
     
-    print('')
-    print('')
-    print('')
-    print('')
-    print('')
-    print('')
-    print('')
-    print('')
-    print('plotsize')
-    print(plotsize)
-    print('')
-    print('')
-    print('')
-    print('')
-    print('')
-    print('')
-    print('')
-    print('')
     if not os.path.exists(pathbase):
         os.system('mkdir -p %s' % pathbase)
 
@@ -4574,6 +4558,7 @@ def plot_grid(
     numbpopl = len(listpara)
     
     if numbpopl > 1 and listlablpopl is None:
+        print('listlablpopl should be defined when there are more than one populations.')
         raise Exception('')
 
     indxpopl = np.arange(numbpopl)
@@ -5036,7 +5021,7 @@ def plot_grid(
                             plt.close(figr)
                         
     if boolplottria:
-        figr, axgr = plt.subplots(numbpara, numbpara, figsize=(plotsize*numbpara, plotsize*numbpara))
+        figr, axgr = plt.subplots(numbpara, numbpara, figsize=(0.8*plotsize*numbpara, 0.8*plotsize*numbpara))
         if numbpara == 1:
             axgr = [[axgr]]
         for k, axrw in enumerate(axgr):
@@ -5048,11 +5033,12 @@ def plot_grid(
                     continue
 
                 if k == l:
-                    plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, listlablpara, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, boolmakelegd, bins=bins)
+                    plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, listlablpara, listtypeplottdim, indxpopl, \
+                                                                                    listcolrpopl, listlablpopl, boolmakelegd, bins=bins)
                 else:
                     plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolquan, listlablpara, \
                                              listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, boolmakelegd, \
-                                                                                                            bins=bins, boolcbar=False)
+                                                                                                                                    bins=bins, boolcbar=False)
                     
                     axis.set_xlim(limt[:, l])
                     axis.set_ylim(limt[:, k])
