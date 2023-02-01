@@ -4011,7 +4011,7 @@ def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, \
             labl = listlablpopl[u]
         else:
             labl = None
-        axis.hist(listpara[u][:, k], bins=bins[k], label=labl)
+        axis.hist(listpara[u][:, k], bins=bins[k], label=labl, color=listcolrpopl[u])
     if boolmakelegd and indxpopl.size > 1:
         axis.legend(framealpha=1.)
     
@@ -4046,7 +4046,7 @@ def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, \
                 
 
 def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolquan, \
-                            listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
+                            listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listcolrpopltdim, \
                                     listlablpopl, boolmakelegd, listlablsamp=None, bins=None, boolcbar=True, \
                                     ):
     
@@ -4224,7 +4224,7 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
 
         else:
             hist = np.histogram2d(listpara[u][:, l], listpara[u][:, k], bins=binstemp)[0]
-            objtaxispcol = axis.pcolor(bins[l], bins[k], hist.T, cmap='Blues', label=labl)
+            objtaxispcol = axis.pcolor(bins[l], bins[k], hist.T, cmap=listcolrpopltdim[u], label=labl)
     
     if boolcbar and (listtypeplottdim == 'hist').any():
         cbar = plt.colorbar(objtaxispcol)
@@ -4444,7 +4444,7 @@ def plot_grid(
               plotsize=3.5, \
               
               # type of the file for plots
-              typefileplot='pdf', \
+              typefileplot='png', \
               
               # Boolean flag to generate individual histograms
               boolplothistodim=False, \
@@ -4469,6 +4469,9 @@ def plot_grid(
 
               # list of colors for populations
               listcolrpopl=None, \
+
+              # list of colors for populations to be used in two histograms
+              listcolrpopltdim=None, \
 
               # list of vectors to overplot
               listvectplot=None, \
@@ -4562,7 +4565,11 @@ def plot_grid(
     listlablparatotl = retr_labltotl(listlablpara)
     
     if listcolrpopl is None:
-        listcolrpopl = np.array(['g', 'b', 'violet', 'pink', 'orange', 'magenta'])
+        listcolrpopl = np.array(['g', 'b', 'purple', 'orange', 'pink', 'magenta'])
+    
+    if listcolrpopltdim is None:
+        listcolrpopltdim = np.array(['Greens', 'Blues', 'Purples', 'Oranges'])
+    
     numbpopl = len(listpara)
     
     if numbpopl > 1 and listlablpopl is None:
@@ -5011,7 +5018,7 @@ def plot_grid(
                             axis = figr.add_subplot(111, projection=projection)
                             
                             plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, \
-                                               boolquan, listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
+                                        boolquan, listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listcolrpopltdim, \
                                                            listlablpopl, boolmakelegd, bins=bins, listlablsamp=listlablsamptemp, boolcbar=True)
                             
                             if e == 0:
@@ -5045,7 +5052,8 @@ def plot_grid(
                                                                                     listcolrpopl, listlablpopl, boolmakelegd, listsizepopl, bins=bins)
                 else:
                     plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolquan, listlablpara, \
-                                             listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, boolmakelegd, \
+                                             listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listcolrpopltdim, \
+                                                                                                            listlablpopl, boolmakelegd, \
                                                                                                                                     bins=bins, boolcbar=False)
                     
                     axis.set_xlim(limt[:, l])
@@ -5066,7 +5074,7 @@ def plot_grid(
         plt.subplots_adjust(wspace=0.05, hspace=0.05)
         path = pathbase + 'pmar_%s_%s.%s' % (typeplottdim, strgplot, typefileplot)
         print('Writing to %s...' % path)
-        figr.savefig(path)
+        figr.savefig(path, dpi=300)
         plt.close(figr)
         
 

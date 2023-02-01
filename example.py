@@ -6,7 +6,7 @@ import matplotlib
 matplotlib.use('agg')
 
 # number of samples
-numbsamp = [100000, 100]
+numbsamp = [1000, 1000]
 
 # number of features
 numbfeat = 5
