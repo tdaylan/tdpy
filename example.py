@@ -4,19 +4,22 @@ import os
 
 import matplotlib
 matplotlib.use('agg')
-#import matplotlib.pyplot as plt
 
-numbsamp = 100
+# number of samples
+numbsamp = [100000, 100]
 
+# number of features
 numbfeat = 5
-numbdata = numbfeat * numbsamp
 
-listpara = [[], []]
-# class 1
-listpara[0] = np.random.randn(numbdata).reshape((numbsamp, numbfeat))
+numbpopl = 2
 
-# class 2
-listpara[1] = np.random.randn(numbdata).reshape((numbsamp, numbfeat)) + np.random.randn(numbfeat)[None, :]
+listpara = [[] for k in range(numbpopl)]
+for k in range(numbpopl):
+
+    # number of points
+    numbdata = numbfeat * numbsamp[k]
+
+    listpara[k] = np.random.randn(numbdata).reshape((numbsamp[k], numbfeat)) + 5. * np.random.randn(numbfeat)[None, :]
 
 pathbase = os.environ['TDPY_DATA_PATH'] + '/imag/grid_plot/'
 os.system('mkdir -p %s' % pathbase)
@@ -27,7 +30,7 @@ listlablpara = []
 for k in range(numbfeat):
     listlablpara.append(['$p_{%d}$' % k, ''])
 
-strgplot = ''
+strgplot = 'PositivesNegatives'
 tdpy.plot_grid(pathbase, strgplot, listpara, listlablpara, listlablpopl=listlablpopl)
               
 

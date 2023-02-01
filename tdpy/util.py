@@ -4004,10 +4004,14 @@ def setp_para_defa_wrap(gdat, strgmodl, strgvarb, valuvarb):
 
 
 def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, \
-                            listlablpara, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, boolmakelegd, bins=None):
+                            listlablpara, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, boolmakelegd, listsizepopl, bins=None):
                     
     for u in indxpopl:
-        axis.hist(listpara[u][:, k], bins=bins[k])
+        if indxpopl.size > 1:
+            labl = listlablpopl[u]
+        else:
+            labl = None
+        axis.hist(listpara[u][:, k], bins=bins[k], label=labl)
     if boolmakelegd and indxpopl.size > 1:
         axis.legend(framealpha=1.)
     
@@ -4036,6 +4040,9 @@ def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, \
         else:
             strgunit = ''
         axis.set_title(r'%s = %.3g $\substack{+%.2g \\\\ -%.2g}$ %s' % (listlablpara[k][0], medivarb, quan[2] - medivarb, medivarb - quan[1], strgunit))
+    
+    axis.set_yscale('log')
+    
                 
 
 def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolquan, \
@@ -4055,6 +4062,13 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
          
         if listpara[u][:, l].size == 0:
             continue
+            
+        if indxpopl.size > 1:
+            labl = listlablpopl[u]
+            alph = 0.5
+        else:
+            labl = None
+            alph = 1.
 
         if listtypeplottdim[u] == 'scat':
         
@@ -4062,12 +4076,6 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 print('Warning! Skipped the scatter plot because there are too many points to plot!')
                 return
 
-            if indxpopl.size > 1:
-                labl = listlablpopl[u]
-                alph = 0.5
-            else:
-                labl = None
-                alph = 1.
             axis.scatter(listpara[u][:, l], listpara[u][:, k], s=1, color=listcolrpopl[u], label=labl, alpha=alph)
         
             # add text labels on outliers
@@ -4216,7 +4224,7 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
 
         else:
             hist = np.histogram2d(listpara[u][:, l], listpara[u][:, k], bins=binstemp)[0]
-            objtaxispcol = axis.pcolor(bins[l], bins[k], hist.T, cmap='Blues')
+            objtaxispcol = axis.pcolor(bins[l], bins[k], hist.T, cmap='Blues', label=labl)
     
     if boolcbar and (listtypeplottdim == 'hist').any():
         cbar = plt.colorbar(objtaxispcol)
@@ -5021,7 +5029,7 @@ def plot_grid(
                             plt.close(figr)
                         
     if boolplottria:
-        figr, axgr = plt.subplots(numbpara, numbpara, figsize=(0.8*plotsize*numbpara, 0.8*plotsize*numbpara))
+        figr, axgr = plt.subplots(numbpara, numbpara, figsize=(0.6*plotsize*numbpara, 0.6*plotsize*numbpara))
         if numbpara == 1:
             axgr = [[axgr]]
         for k, axrw in enumerate(axgr):
@@ -5034,7 +5042,7 @@ def plot_grid(
 
                 if k == l:
                     plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, listlablpara, listtypeplottdim, indxpopl, \
-                                                                                    listcolrpopl, listlablpopl, boolmakelegd, bins=bins)
+                                                                                    listcolrpopl, listlablpopl, boolmakelegd, listsizepopl, bins=bins)
                 else:
                     plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolquan, listlablpara, \
                                              listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, boolmakelegd, \
