@@ -68,6 +68,18 @@ class gdatstrtpcat(object):
         super(gdatstrt, self).__setattr__(attr, valu)
 
 
+def retr_dictstrg():
+    
+    dicttdpy = dict()
+    dicttdpy['lcur'] = 'LightCurve'
+    dicttdpy['cosc'] = 'CompactObjectWithStellarCompanion'
+    dicttdpy['psys'] = 'SystemOfPlanets'
+    dicttdpy['psyspcur'] = 'SystemOfPlanetsWithPhaseCurve'
+    dicttdpy['psysdiskedgehori'] = 'SystemOfPlanetsWithEdgeOnHorizontalDisks'
+
+    return dicttdpy
+
+
 class datapara(object):
 
     def __init__(self, numbpara):
@@ -376,13 +388,6 @@ def icdf_eerr(paraunit, meanpara, stdvpara, paraunitnormminm, paraunitnormdiff):
     tranpara = sp.special.erfinv(2. * paraunitnormpara - 1.) * np.sqrt(2)
     para = tranpara * stdvpara + meanpara
    
-    return para
-
-
-def icdf_logt(paraunit, minmpara, maxmpara):
-    
-    para = np.exp((np.log(maxmpara) - np.log(minmpara)) * paraunit + np.log(minmpara))
-
     return para
 
 
@@ -1070,6 +1075,31 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'yeardisc':
             listlablpara[k] = ['Discovery Year', '']
             listscalpara[k] = 'self'
+        
+        elif listnamepara[k] == 'duraobsv':
+            listlablpara[k] = ['Duration of Observation', 'days']
+            listscalpara[k] = 'logt'
+        
+        elif listnamepara[k] == 'amplflar':
+            listlablpara[k] = ['Flare amplitude', '']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'rateflar':
+            listlablpara[k] = ['Flare rate', 'day$^{-1}$']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'fwhmflar':
+            listlablpara[k] = ['FWHM of flare', 'seconds']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'enerflar':
+            listlablpara[k] = ['Energy of flare', 'erg']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'amplstar':
+            listlablpara[k] = ['$A_{f}$', '']
+            listscalpara[k] = 'logt'
+        
+        elif listnamepara[k] == 'areasrch':
+            listlablpara[k] = ['Area to be searched', 'degree$^2$']
+            listscalpara[k] = 'self'
+        
         elif listnamepara[k] == 'ratimass':
             listlablpara[k] = ['$q$', '']
             listscalpara[k] = 'self'
@@ -1199,9 +1229,16 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             else:
                 listscalpara[k] = 'self'
             
+        elif listnamepara[k] == 'limtvmag':
+            listlablpara[k] = ['Limiting V Magnitude', '']
+            listscalpara[k] = 'self'
         
-        elif listnamepara[k] == 'tmagsyst' or listnamepara[k] == 'tmag':
-            listlablpara[k] = ['T', '']
+        elif listnamepara[k] == 'timeexpo':
+            listlablpara[k] = ['Exposure Time', 'seconds']
+            listscalpara[k] = 'self'
+        
+        elif listnamepara[k] == 'tmagsyst' or listnamepara[k] == 'tmag' or listnamepara[k] == 'tmagstar':
+            listlablpara[k] = ['TESS Magnitude', '']
             listscalpara[k] = 'self'
         # number of companions per star
         elif listnamepara[k] == 'numbcompstar':
@@ -1243,7 +1280,11 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                 listlablpara[k][0] = '$d$'
             else:
                 listlablpara[k][0] = 'Distance'
-            listlablpara[k][1] = 'pc'
+            #listlablpara[k][1] = 'pc'
+            listlablpara[k][1] = 'Mpc'
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'noisphot':
+            listlablpara[k] = ['Photometric Noise', 'ppt']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'nois':
             listlablpara[k] = ['$\sigma$', 'ppt']
@@ -1322,6 +1363,9 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'duratrancomp' or listnamepara[k] == 'duratrancomptotl' or listnamepara[k] == 'duratrantotl':
             listlablpara[k] = ['Total Transit Duration', 'hours']
             listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'typebrgtcomp':
+            listlablpara[k] = ['Brightness Type of the Companion', '']
+            listscalpara[k] = 'self'
         elif listnamepara[k] == 'duratrancompfull':
             listlablpara[k] = ['Full Transit Duration', 'hours']
             listscalpara[k] = 'logt'
@@ -1331,6 +1375,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             else:
                 listlablpara[k][0] = 'Companion radius'
             listlablpara[k][1] = '$R_\oplus$'
+            listscalpara[k] = 'logt'
         
         # orbital parameters for each component
         elif listnamepara[k][:7] == 'radicom' and len(listnamepara[k]) == 8 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
@@ -1386,6 +1431,10 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             print('Warning! Unrecognized parameter name: %s' % listnamepara[k])
         
         if len(listscalpara[k]) == 0:
+            print('')
+            print('')
+            print('')
+            print('Scale (listscalpara[k]) is not defined for the parameter.')
             print('listnamepara[k]')
             print(listnamepara[k])
             raise Exception('')
@@ -1493,31 +1542,40 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None, boolshowuniq=Fa
                 elif varb.dtype.type is np.object_:
                     print('Object type numpy array')
                 else:
-                    if not np.isfinite(varb).all():
-                        boolfini = np.isfinite(varb)
-                        indxfini = np.where(boolfini)
-                        indxinfi = np.where(~boolfini)[0]
-                        print('%d elements in total.' % varb.size)
-                        print('%d elements are not finite!' % indxinfi.size)
-                        if indxfini[0].size > 0:
-                            minmtemp = np.amin(varb[indxfini])
-                            maxmtemp = np.nanmax(varb[indxfini])
-                            meantemp = np.nanmean(varb[indxfini])
-                            print('Among %d finite samples, 0p: %g, 0.3p: %g, 5p: %g, 50p: %g, 95p: %g, 99.7p: %g, 100p: %g, mean: %g' % \
-                                                                                                            (indxfini[0].size, minmtemp, \
-                                                                                                            np.percentile(varb[indxfini], 0.3), \
-                                                                                                            np.percentile(varb[indxfini], 5.), \
-                                                                                                            np.percentile(varb[indxfini], 50.), \
-                                                                                                            np.percentile(varb[indxfini], 95.), \
-                                                                                                            np.percentile(varb[indxfini], 99.7), \
-                                                                                                            maxmtemp, meantemp, \
-                                                                                                            ))
-                    if np.isfinite(varb).any():
-                        print(np.nanmin(varb))
-                        print(np.nanmax(varb))
-                        print(np.nanmean(varb))
-                        print(varb.shape)
-                        print('%d unique elements.' % np.unique(varb).size)
+                    print('varb.dtype')
+                    print(varb.dtype)
+                    if varb.dtype.names is None:
+                        if not np.isfinite(varb).all():
+                            boolfini = np.isfinite(varb)
+                            indxfini = np.where(boolfini)
+                            indxinfi = np.where(~boolfini)[0]
+                            print('%d elements in total.' % varb.size)
+                            print('%d elements are not finite!' % indxinfi.size)
+                            if indxfini[0].size > 0:
+                                minmtemp = np.amin(varb[indxfini])
+                                maxmtemp = np.nanmax(varb[indxfini])
+                                meantemp = np.nanmean(varb[indxfini])
+                                print('Among %d finite samples, 0p: %g, 0.3p: %g, 5p: %g, 50p: %g, 95p: %g, 99.7p: %g, 100p: %g, mean: %g' % \
+                                                                                                                (indxfini[0].size, minmtemp, \
+                                                                                                                np.percentile(varb[indxfini], 0.3), \
+                                                                                                                np.percentile(varb[indxfini], 5.), \
+                                                                                                                np.percentile(varb[indxfini], 50.), \
+                                                                                                                np.percentile(varb[indxfini], 95.), \
+                                                                                                                np.percentile(varb[indxfini], 99.7), \
+                                                                                                                maxmtemp, meantemp, \
+                                                                                                                ))
+                        if np.isfinite(varb).any():
+                            print(np.nanmin(varb))
+                            print(np.nanmax(varb))
+                            print(np.nanmean(varb))
+                            print(varb.shape)
+                            print('%d unique elements.' % np.unique(varb).size)
+                    else:
+                        print('This is a numpy record!')
+                        for name in varb.dtype.names:
+                            print(name)
+                            summgene(varb[name])
+
                     print('')
             elif isinstance(varb, np.floating):
                 print('Numpy float with type %s' % type(varb))
@@ -1836,7 +1894,9 @@ def retr_indximagmaxm(data):
     return indxxdatmaxm, indxydatmaxm
 
 
-def plot_timeline(path, dictrows, \
+def plot_timeline(
+                  path, \
+                  dictrows, \
                   # separation in months between successive ticks on the horizontal axis
                   delttime=None, \
                   # number of tick marks along the horizontal axis
@@ -1955,7 +2015,7 @@ def plot_timeline(path, dictrows, \
     #listlabltick[kk] = astropy.time.Time(jdat, format='TimeYMDHMS').to_value('iso', subfmt='date')
     
     for kk, jdat in enumerate(listjdat):
-        print('fix this')
+        print('temp: Trucating the date labels...')
         listlabltick[kk] = astropy.time.Time(jdat, format='jd').to_value('iso', subfmt='date')[:-3]
     
     figr, axis = plt.subplots(1, figsize=sizefigr)
@@ -2217,11 +2277,15 @@ def read_fits(path, pathimag=None, full=False, typeverb=0):
         print('')
         print('Data:')
         if data is not None:
-            print('data.names')
-            print(data.names)
-            for name in data.names:
-                print(name)
-                summgene(data[name])
+            if isinstance(data, np.ndarray):
+                print('It is a numpy array')
+                summgene(data)
+            else:
+                print('data.names')
+                print(data.names)
+                for name in data.names:
+                    print(name)
+                    summgene(data[name])
         print('')
         print('')
         print('')
@@ -3018,7 +3082,9 @@ def icdf_self(paraunit, minmpara, maxmpara):
 
 
 def icdf_logt(paraunit, minmpara, maxmpara):
+    
     para = minmpara * np.exp(paraunit * np.log(maxmpara / minmpara))
+    
     return para
 
 
@@ -4084,6 +4150,10 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 # remove infinite samples
                 indx = np.where(np.isfinite(listpara[u][:, l]) & np.isfinite(listpara[u][:, k]))[0]
                 listparapair = listpara[u][indx, :]
+                print('listlablsamp[u]')
+                print(listlablsamp[u])
+                print('indx')
+                summgene(indx)
                 listlablsamppair = listlablsamp[u][indx]
                 listparapair = listparapair[:, np.array([l, k])]
                 
@@ -4256,7 +4326,12 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
 
 def retr_listvalutickmajr(minmlogt, maxmlogt):
     
-    listvalutickmajr = 10**(np.arange(np.floor(minmlogt), np.ceil(maxmlogt) + 1))
+    if np.ceil(maxmlogt) - np.floor(minmlogt) < 8:
+        diff = 1
+    else:
+        diff = 2
+
+    listvalutickmajr = 10**(np.arange(np.floor(minmlogt), np.ceil(maxmlogt) + 1, diff))
     
     return listvalutickmajr
 
@@ -4378,7 +4453,8 @@ def plot_hist_grid(path, listmantlabl, listpara, k, listlablparatotl, indxpopl, 
     if lablnumbsamp is not None:
         axis.set_ylabel(lablnumbsamp)
     elif lablsampgene is not None:
-        axis.set_ylabel(r'$N_{\rm{%s}}$' % lablsampgene)
+        #axis.set_ylabel(r'$N_{\rm{%s}}$' % lablsampgene)
+        axis.set_ylabel('Number of %s' % lablsampgene)
     
     if boolinte[k]:
         axis.xaxis.get_major_locator().set_params(integer=True)
@@ -4677,9 +4753,6 @@ def plot_grid(
                 if ((listpara[u][:, k] - listpara[u][:, k].astype(int)) != 0).any():
                     boolinte[k] = False
         
-        # limits that do not leave any room for white space which is good for histograms
-        limtrims = np.copy(limt)
-
         # sanity checks
         if booldiag:
             for k in indxpara:
@@ -4739,22 +4812,6 @@ def plot_grid(
                             print(limt[:, k])
                             raise Exception('')
 
-        if (listtypeplottdim == 'scat').any():
-            # update limits to leave white space in the rims which is good for scatter plots
-            for k in indxpara:
-                
-                if listscalpara[k] == 'self':
-                    if boolinte[k]:
-                        delt = 0.5
-                    else:
-                        delt = 0.05 * (limt[1, k] - limt[0, k])
-                    limt[0, k] -= delt
-                    limt[1, k] += delt
-                if listscalpara[k] == 'logt':
-                    fact = np.exp(0.05 * np.log(limt[1, k] / limt[0, k]))
-                    limt[0, k] /= fact
-                    limt[1, k] *= fact
-        
         # sanity checks
         if booldiag:
             for k in indxpara:
@@ -4769,6 +4826,68 @@ def plot_grid(
                     print('tdpy.plot_grid(): limit for parameter %d is infinite!' % k)
                     print('k')
                     print(k)
+                    print('numbpopl')
+                    print(numbpopl)
+                    for u in indxpopl:
+                        print('listindxgood[u][k]')
+                        summgene(listindxgood[u][k])
+                        print('listpara[u][:, k]')
+                        summgene(listpara[u][:, k])
+                    print('numbbinsplot')
+                    print(numbbinsplot)
+                    print('listlablpara[k]')
+                    print(listlablpara[k])
+                    print('listscalpara[k]')
+                    print(listscalpara[k])
+                    print('limt[:, k]')
+                    print(limt[:, k])
+                    raise Exception('')
+
+        if (listtypeplottdim == 'scat').any():
+            # update limits to leave white space in the rims which is good for scatter plots
+            for k in indxpara:
+                
+                if limt[0, k] == 1e100 and limt[1, k] == -1e100:
+                    continue
+
+                if listscalpara[k] == 'self':
+                    if boolinte[k]:
+                        delt = 0.5
+                    else:
+                        delt = 0.05 * (limt[1, k] - limt[0, k])
+                    limt[0, k] -= delt
+                    limt[1, k] += delt
+                if listscalpara[k] == 'logt':
+                    fact = np.exp(0.05 * np.log(limt[1, k] / limt[0, k]))
+                    limt[0, k] /= fact
+                    limt[1, k] *= fact
+        
+        ## if the limits are finite
+        #for k in indxpara:
+        #    if not np.isfinite(limt[:, k]).all():
+        #        print('The limits for parameter %s were not finite. Fixing them to [0, 1]...' % listnamepara[k])
+        #        limt[0, k] = 0.
+        #        limt[1, k] = 1.
+            
+        # limits that do not leave any room for white space which is good for histograms
+        limtrims = np.copy(limt)
+
+        # sanity checks
+        if booldiag:
+            for k in indxpara:
+                if not np.isfinite(limt[:, k]).all():
+                    print('')
+                    print('')
+                    print('')
+                    print('')
+                    print('')
+                    print('')
+                    print('')
+                    print('tdpy.plot_grid(): limit for parameter %d is infinite!' % k)
+                    print('k')
+                    print(k)
+                    print('numbpopl')
+                    print(numbpopl)
                     for u in indxpopl:
                         print('listindxgood[u][k]')
                         summgene(listindxgood[u][k])
@@ -4903,7 +5022,9 @@ def plot_grid(
         if numbpopl == 1:
             factulimyaxihist = 1.
         else:
-            factulimyaxihist = 200.
+            factulimyaxihist = 1.
+            # temp
+            #factulimyaxihist = 200.
 
         # one dimensional histograms
         for k in indxpara:
