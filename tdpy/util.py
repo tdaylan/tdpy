@@ -13,6 +13,8 @@ import pandas as pd
 
 # plotting
 import matplotlib
+matplotlib.rcParams['figure.dpi']= 200
+
 import matplotlib.pyplot as plt
 plt.rc('text', usetex=True)
 plt.rc('text.latex', preamble=r'\usepackage{amsmath}')
@@ -310,8 +312,20 @@ def icdf_self(paraunit, minm, maxm):
 
 
 def icdf_powr(paraunit, minm, maxm, slop):
+    '''
+    Inverse CDF for P(para) = (1 - slop) / (maxmpara^(1 - slop) - minmpara^(1 - slop)) * para^(-slop)
+    '''
     
     para = (paraunit * (maxm**(1. - slop) - minm**(1. - slop)) + minm**(1. - slop))**(1. / (1. - slop))
+    
+    return para
+
+
+def samp_powr(numbsamp, minm, maxm, slop):
+
+    paraunit = np.random.rand(numbsamp)
+    
+    para = icdf_powr(paraunit, minm, maxm, slop)
     
     return para
 
@@ -3279,7 +3293,11 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, namepara
 
 
 def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, \
-                        boolquan=True, listparadraw=None, listlabldraw=None, numbbinsplot=20, logthist=False, listcolrdraw=None):
+                        
+                        # Boolean flag to overplot quantiles
+                        boolplotquan=False, \
+                        
+                        listparadraw=None, listlabldraw=None, numbbinsplot=20, logthist=False, listcolrdraw=None):
     
     if not np.isfinite(listpara).all():
         return
@@ -3299,7 +3317,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, \
         bins = icdf_self(np.linspace(0., 1., numbbinsplot + 1), minmpara, maxmpara)
     limspara = np.array([minmpara, maxmpara])
         
-    if boolquan:
+    if boolplotquan:
         quanarry = sp.stats.mstats.mquantiles(listpara, prob=[0.025, 0.16, 0.84, 0.975])
 
     if scalpara == 'logt':
@@ -3325,7 +3343,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, \
             if listparadraw is not None:
                 for k in range(len(listparadraw)):
                     axis.axhline(listparadraw[k], label=listlabldraw[k], color=listcolrdraw[k], lw=3)
-            if boolquan:
+            if boolplotquan:
                 axis.axhline(quanarry[0], color='b', ls='--', lw=2)
                 axis.axhline(quanarry[1], color='b', ls='-.', lw=2)
                 axis.axhline(quanarry[2], color='b', ls='-.', lw=2)
@@ -3346,7 +3364,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, \
             if listparadraw is not None:
                 for k in range(len(listparadraw)):
                     axis.axvline(listparadraw[k], label=listlabldraw[k], color=listcolrdraw[k], lw=3)
-            if boolquan:
+            if boolplotquan:
                 axis.axvline(quanarry[0], color='b', ls='--', lw=2)
                 axis.axvline(quanarry[1], color='b', ls='-.', lw=2)
                 axis.axvline(quanarry[2], color='b', ls='-.', lw=2)
@@ -3386,7 +3404,11 @@ def plot_plot(path, xdat, ydat, lablxdat, lablydat, scalxaxi, titl=None, linesty
 
 
 def plot_hist( \
-              path, listpara, strg, titl=None, numbbins=20, truepara=None, boolquan=True, 
+              path, listpara, strg, titl=None, numbbins=20, truepara=None, \
+              
+              # Boolean flag to overplot quantiles
+              boolplotquan=False, 
+              
               # type of the file for plots
               typefileplot='pdf', \
                                             scalpara='self', listparadraw=None, listlabldraw=None, listcolrdraw=None):
@@ -3406,7 +3428,7 @@ def plot_hist( \
     if listparadraw is not None:
         for k in range(len(listparadraw)):
             axis.axvline(listparadraw[k], label=listlabldraw[k], color=listcolrdraw[k], lw=3)
-    if boolquan:
+    if boolplotquan:
         quanarry = sp.stats.mstats.mquantiles(listpara, prob=[0.025, 0.16, 0.84, 0.975])
         axis.axvline(quanarry[0], color='b', ls='--', lw=2)
         axis.axvline(quanarry[1], color='b', ls='-.', lw=2)
@@ -4069,8 +4091,8 @@ def setp_para_defa_wrap(gdat, strgmodl, strgvarb, valuvarb):
     setattr(gmod, strgvarb, valuvarbdefa)
 
 
-def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, \
-                            listlablpara, listtypeplottdim, indxpopl, listcolrpopl, listlablpopl, boolmakelegd, listsizepopl, bins=None):
+def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolplotquan, \
+                            listlablpara, listtypeplottdim, indxpopl, listcolrpopl, listmrkrpopl, listlablpopl, boolmakelegd, listsizepopl, bins=None):
                     
     for u in indxpopl:
         if indxpopl.size > 1:
@@ -4089,7 +4111,7 @@ def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, \
         for m in indxdraw:
             axis.axvline(listparadraw[m][k], color='r', lw=3)
     
-    if boolquan:
+    if boolplotquan:
         quan = np.empty(4)
         quan[0] = np.nanpercentile(listpara[0][:, k], 2.5)
         quan[1] = np.nanpercentile(listpara[0][:, k], 16.)
@@ -4111,8 +4133,8 @@ def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, \
     
                 
 
-def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolquan, \
-                            listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listcolrpopltdim, \
+def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, \
+                            listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listmrkrpopl, listcolrpopltdim, \
                                     listlablpopl, boolmakelegd, listlablsamp=None, bins=None, boolcbar=True, \
                                     ):
     
@@ -4142,7 +4164,7 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 print('Warning! Skipped the scatter plot because there are too many points to plot!')
                 return
 
-            axis.scatter(listpara[u][:, l], listpara[u][:, k], s=1, color=listcolrpopl[u], label=labl, alpha=alph)
+            axis.scatter(listpara[u][:, l], listpara[u][:, k], s=1, color=listcolrpopl[u], label=labl, alpha=alph, marker=listmrkrpopl[u])
         
             # add text labels on outliers
             if listlablsamp is not None and indxpopl.size == 1:
@@ -4206,7 +4228,7 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                     raise Exception('Unrecognized scaling: %s' % listscalpara[k])
                 
                 # place larger markers at the positions of the outliers
-                axis.scatter(listparapair[:, 0], listparapair[:, 1], s=3, color=listcolrpopl[u])
+                axis.scatter(listparapair[:, 0], listparapair[:, 1], s=3, color=listcolrpopl[u], marker=listmrkrpopl[u])
                 
                 print('Automatically positioning the annotations...')
                 # automatically position the annotations
@@ -4429,8 +4451,9 @@ def setp_axislogt(axis, limt, typeaxis, listmantlabl):
         axis.set_yticklabels(listlabltickminr, minor=True)
 
 
-def plot_hist_grid(path, listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, bins, listcolrpopl, listparadraw, lablnumbsamp, lablsampgene, boolinte, \
-                            boolmakelegd, listscalpara, factulimyaxihist, titl, plotsize, limt, limtrims, boolcumu=False):
+def plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, bins, \
+                                    listcolrpopl, listparadraw, lablnumbsamp, lablsampgene, boolinte, \
+                                    boolmakelegd, listscalpara, factulimyaxihist, titl, plotsize, limt, limtrims, boolcumu=False, path=None):
     
     figr, axis = plt.subplots(figsize=(plotsize, plotsize))
     for u in indxpopl:
@@ -4489,19 +4512,16 @@ def plot_hist_grid(path, listmantlabl, listpara, k, listlablparatotl, indxpopl, 
     if titl is not None:
         axis.set_title(titl)
     axis.set_xlim(limt[:, k]) 
-    print('Writing to %s...' % path)
     plt.tight_layout()
-    plt.savefig(path)
-    plt.close()
+    if path is not None:
+        print('Writing to %s...' % path)
+        plt.savefig(path)
+        plt.close()
+    else:
+        plt.show()
 
 
 def plot_grid(
-              # a string indicating the path of the folder in which to write the plot
-              pathbase, \
-              
-              # the base string to include in the file name
-              strgplot, \
-              
               # two dimensional numpy array of samples, where the first dimension is the sample and second dimension is the parameter
               listpara, \
               
@@ -4509,6 +4529,12 @@ def plot_grid(
               # Each element of the list should itself be list of two strings, where
               # the first string is the label for the parameter and the second string is the unit
               listlablpara, \
+              
+              # an optional string indicating the path of the folder in which to write the plot
+              pathbase=None, \
+              
+              # an optional base string to include in the file name
+              strgplot=None, \
               
               # the limits for the parameters
               limt=None, \
@@ -4523,13 +4549,10 @@ def plot_grid(
               typefileplot='png', \
               
               # Boolean flag to generate individual histograms
-              boolplothistodim=False, \
+              boolplothistodim=None, \
               
               # Boolean flag to generate individual pair-wise plots
               boolplotpair=False, \
-              
-              # Boolean flag to generate the lower-triangle plot
-              boolplottria=True, \
               
               # list of base file names for the individual histograms
               listnamepara=None, \
@@ -4542,6 +4565,9 @@ def plot_grid(
 
               # label to be used as subscript to denote the number of samples
               lablsampgene=None, \
+
+              # list of markers for populations
+              listmrkrpopl=None, \
 
               # list of colors for populations
               listcolrpopl=None, \
@@ -4583,7 +4609,7 @@ def plot_grid(
               numbbinsplot=40, \
 
               # Boolean flag to overplot quantiles
-              boolquan=None, \
+              boolplotquan=False, \
               
               # list of parameters to overplot
               listparadraw=None, \
@@ -4612,33 +4638,57 @@ def plot_grid(
     Make a corner plot of a multivariate distribution.
     '''
     
-    print('tdpy.plot_grid() initialized...')
+    if typeverb > 1:
+        print('tdpy.plot_grid() initialized...')
     
-    if not os.path.exists(pathbase):
-        os.system('mkdir -p %s' % pathbase)
+    if pathbase is not None:
+        if not os.path.exists(pathbase):
+            os.system('mkdir -p %s' % pathbase)
+    else:
+        path = None
 
-    # check inputs
-    if (boolplotpair or boolplothistodim) and listnamepara is None:
-        raise Exception('You should define listnamepara for individual and pairwise plots.')
-    
     # check whether there is a single population or multiple populations
     if isinstance(listpara, list):
         boolmpop = True
     else:
         boolmpop = False
         listpara = [listpara]
-    
-    if boolquan is None:
-        boolquan = not boolmpop
-    
+        
     # preclude quantile lines if there are multiple populations
-    if boolquan and boolmpop:
+    if boolplotquan and boolmpop:
         raise Exception('')
+    
+    if listpara[0].ndim == 1:
+        listpara[0] = listpara[0][:, None]
+        listlablpara = [listlablpara]
 
+    # temp: number of parameters should be able to be different for different populations
     numbpara = listpara[0].shape[1]
     indxpara = np.arange(numbpara)
     
+    if boolplothistodim is None:
+        if boolmpop:
+            boolplothistodim = False
+        else:
+            if numbpara == 1:
+                boolplothistodim = True
+            else:
+                boolplothistodim = False
+    
+    # Boolean flag to generate the lower-triangle plot
+    boolplottria = numbpara > 1
+    
+    if lablnumbsamp is None:
+        lablnumbsamp = 'Number of samples'
+
+    # check inputs
+    if (boolplotpair or boolplothistodim) and listnamepara is None and pathbase is not None:
+        raise Exception('You should define listnamepara for individual and pairwise plots.')
+    
     listlablparatotl = retr_labltotl(listlablpara)
+    
+    if listmrkrpopl is None:
+        listmrkrpopl = np.array(['o', 'x', '+', 'D', '^', '*'])
     
     if listcolrpopl is None:
         listcolrpopl = np.array(['g', 'b', 'purple', 'orange', 'pink', 'magenta'])
@@ -5031,26 +5081,31 @@ def plot_grid(
             if not boolparagood[k]:
                 continue
             
-            path = pathbase + 'hist_%s_%s.%s' % (listnamepara[k], strgplot, typefileplot)
-            if not os.path.exists(path):
-                plot_hist_grid(path, listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, \
-                                                    bins, listcolrpopl, listparadraw, lablnumbsamp, lablsampgene, boolinte, \
-                            boolmakelegd, listscalpara, factulimyaxihist, titl, plotsize, limt, limtrims, boolcumu=False)
+            if pathbase is not None:
+                path = pathbase + 'hist_%s_%s.%s' % (listnamepara[k], strgplot, typefileplot)
+            if not (pathbase is not None and os.path.exists(path)):
+                plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, \
+                                                bins, listcolrpopl, listparadraw, lablnumbsamp, lablsampgene, boolinte, \
+                                                boolmakelegd, listscalpara, factulimyaxihist, titl, plotsize, limt, limtrims, boolcumu=False, path=path)
             if listnamefeatcumu is not None:
                 if listnamepara[k] in listnamefeatcumu:
-                    path = pathbase + 'histcumu_%s_%s.%s' % (listnamepara[k], strgplot, typefileplot)
-                    if not os.path.exists(path):
-                        plot_hist_grid(path, listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, bins, \
-                                                        listcolrpopl, listparadraw, lablnumbsamp, lablsampgene, boolinte, \
-                            boolmakelegd, listscalpara, factulimyaxihist, titl, plotsize, limt, limtrims, boolcumu=True)
+                    if pathbase is not None:
+                        path = pathbase + 'histcumu_%s_%s.%s' % (listnamepara[k], strgplot, typefileplot)
+                    if not (pathbase is not None and os.path.exists(path)):
+                        plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, bins, \
+                                                    listcolrpopl, listparadraw, lablnumbsamp, lablsampgene, boolinte, \
+                                                    boolmakelegd, listscalpara, factulimyaxihist, titl, plotsize, limt, limtrims, boolcumu=True, path=path)
                     
-    print('Population sizes:')
     listsizepopl = []
     for u in indxpopl:
         listsizepopl.append(listpara[u][:, 0].size)
-        if listlablpopl is not None:
-            print(listlablpopl[u])
-        print(listsizepopl[u])
+    
+    if numbpopl > 1:
+        print('Number of samples in the populations:')
+        for u in indxpopl:
+            if listlablpopl is not None:
+                print(listlablpopl[u])
+            print(listsizepopl[u])
     
     # make pie-chart of the populations if populations are mutually-exclusive
     if boolpoplexcl:
@@ -5139,7 +5194,7 @@ def plot_grid(
                             axis = figr.add_subplot(111, projection=projection)
                             
                             plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, \
-                                        boolquan, listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listcolrpopltdim, \
+                                        boolplotquan, listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listcolrpopltdim, \
                                                            listlablpopl, boolmakelegd, bins=bins, listlablsamp=listlablsamptemp, boolcbar=True)
                             
                             if e == 0:
@@ -5169,10 +5224,10 @@ def plot_grid(
                     continue
 
                 if k == l:
-                    plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolquan, listlablpara, listtypeplottdim, indxpopl, \
-                                                                                    listcolrpopl, listlablpopl, boolmakelegd, listsizepopl, bins=bins)
+                    plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolplotquan, listlablpara, listtypeplottdim, indxpopl, \
+                                                                              listcolrpopl, listmrkrpopl, listlablpopl, boolmakelegd, listsizepopl, bins=bins)
                 else:
-                    plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolquan, listlablpara, \
+                    plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
                                              listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listcolrpopltdim, \
                                                                                                             listlablpopl, boolmakelegd, \
                                                                                                                                     bins=bins, boolcbar=False)
@@ -5191,11 +5246,16 @@ def plot_grid(
                 else:
                     if k != 0:
                         axis.set_yticklabels([])
+        
         figr.tight_layout()
         plt.subplots_adjust(wspace=0.05, hspace=0.05)
-        path = pathbase + 'pmar_%s_%s.%s' % (typeplottdim, strgplot, typefileplot)
-        print('Writing to %s...' % path)
-        figr.savefig(path, dpi=300)
-        plt.close(figr)
+        
+        if pathbase is not None:
+            path = pathbase + 'pmar_%s_%s.%s' % (typeplottdim, strgplot, typefileplot)
+            print('Writing to %s...' % path)
+            figr.savefig(path, dpi=300)
+            plt.close(figr)
+        else:
+            plt.show()
         
 
