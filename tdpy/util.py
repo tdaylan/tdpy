@@ -4099,7 +4099,9 @@ def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolplotquan, \
             labl = listlablpopl[u]
         else:
             labl = None
-        axis.hist(listpara[u][:, k], bins=bins[k], label=labl, color=listcolrpopl[u])
+        axis.hist(listpara[u][:, k], bins=bins[k], label=labl, \
+                                                               edgecolor=matplotlib.colors.to_rgba(listcolrpopl[u], 1.0), lw=2, ls='-', \
+                                                               facecolor=matplotlib.colors.to_rgba(listcolrpopl[u], 0.2))
     if boolmakelegd and indxpopl.size > 1:
         axis.legend(framealpha=1.)
     
@@ -4133,9 +4135,10 @@ def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolplotquan, \
     
                 
 
-def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, \
-                            listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listmrkrpopl, listcolrpopltdim, \
-                                    listlablpopl, boolmakelegd, listlablsamp=None, bins=None, boolcbar=True, \
+def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
+                                     listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
+                                     listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=None, \
+                                     listlablsamp=None, boolcbar=True, \
                                     ):
     
     if not np.isfinite(limt).all():
@@ -4467,8 +4470,9 @@ def plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, li
         else:
             labl = None
             alph = 1.
-        axis.hist(listpara[u][:, k], bins=bins[k], label=labl, edgecolor=matplotlib.colors.to_rgba(listcolrpopl[u], 1.0), lw=2, ls='-', \
-                                                               facecolor=matplotlib.colors.to_rgba(listcolrpopl[u], 0.2), cumulative=boolcumu)
+        axis.hist(listpara[u][:, k], bins=bins[k], label=labl, cumulative=boolcumu, \
+                                                               edgecolor=matplotlib.colors.to_rgba(listcolrpopl[u], 1.0), lw=2, ls='-', \
+                                                               facecolor=matplotlib.colors.to_rgba(listcolrpopl[u], 0.2))
     if listparadraw is not None:
         for m in indxdraw:
             axis.axvline(listparadraw[m][k], color='orange', lw=3)
@@ -4691,7 +4695,7 @@ def plot_grid(
         listmrkrpopl = np.array(['o', 'x', '+', 'D', '^', '*'])
     
     if listcolrpopl is None:
-        listcolrpopl = np.array(['g', 'b', 'purple', 'orange', 'pink', 'magenta'])
+        listcolrpopl = np.array(['g', 'r', 'b', 'purple', 'orange', 'pink', 'magenta'])
     
     if listcolrpopltdim is None:
         listcolrpopltdim = np.array(['Greens', 'Blues', 'Purples', 'Oranges'])
@@ -4730,19 +4734,24 @@ def plot_grid(
         print(numbpara)
         raise Exception('len(listscalpara) != numbpara')
     
+    # number of samples in each population
+    numbsamp = np.empty(numbpopl, dtype=int)
+    for u in indxpopl:
+        numbsamp[u] = listpara[u][:, 0].size
+
     # determine the type of 2-dimensional plots
-    if typeplottdim == 'scat' or typeplottdim == 'best':
+    if typeplottdim == 'scat' or numbpopl > 1:
         listtypeplottdim = np.array(['scat' for u in indxpopl])
-    if typeplottdim == 'hist':
+    elif typeplottdim == 'hist':
         listtypeplottdim = np.array(['hist' for u in indxpopl])
-    if typeplottdim == 'best':
+    elif typeplottdim == 'best':
         listtypeplottdim = np.array(listtypeplottdim)
-        numbsamp = np.empty(numbpopl, dtype=int)
-        for u in indxpopl:
-            numbsamp[u] = listpara[u][:, 0].size
         indxpoplmaxm = np.argmax(numbsamp)
         if numbsamp[indxpoplmaxm] >= 1e3:
             listtypeplottdim[indxpoplmaxm] = 'hist'
+    
+    # sort the populations in decreasing order of size
+    indxpopl = np.argsort(numbsamp)[::-1]
 
     listindxgood = [[[] for k in indxpara] for u in indxpopl]
     if limt is None:
@@ -5193,9 +5202,10 @@ def plot_grid(
                             figr = plt.figure(figsize=(plotsize, plotsize))
                             axis = figr.add_subplot(111, projection=projection)
                             
-                            plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, \
-                                        boolplotquan, listlablpara, listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listcolrpopltdim, \
-                                                           listlablpopl, boolmakelegd, bins=bins, listlablsamp=listlablsamptemp, boolcbar=True)
+                            plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
+                                                             listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
+                                                             listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=bins, \
+                                                             listlablsamp=listlablsamptemp, boolcbar=True)
                             
                             if e == 0:
                                 axis.set_xlim(limt[:, l])
@@ -5228,9 +5238,9 @@ def plot_grid(
                                                                               listcolrpopl, listmrkrpopl, listlablpopl, boolmakelegd, listsizepopl, bins=bins)
                 else:
                     plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
-                                             listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listcolrpopltdim, \
-                                                                                                            listlablpopl, boolmakelegd, \
-                                                                                                                                    bins=bins, boolcbar=False)
+                                                     listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
+                                                     listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=bins, \
+                                                     boolcbar=False)
                     
                     axis.set_xlim(limt[:, l])
                     axis.set_ylim(limt[:, k])
