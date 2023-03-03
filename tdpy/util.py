@@ -1327,7 +1327,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'booltran':
             listlablpara[k] = ['Whether transiting', '']
             listscalpara[k] = 'self'
-        elif listnamepara[k] == 'inso':
+        elif listnamepara[k] == 'irra':
             if boolmath:
                 listlablpara[k][0] = '$I_{irr}$'
             else:
@@ -4552,6 +4552,9 @@ def plot_grid(
               # type of the file for plots
               typefileplot='png', \
               
+              # Boolean flag to generate the lower-triangle plot
+              boolplottria=None, \
+
               # Boolean flag to generate individual histograms
               boolplothistodim=None, \
               
@@ -4679,8 +4682,8 @@ def plot_grid(
             else:
                 boolplothistodim = False
     
-    # Boolean flag to generate the lower-triangle plot
-    boolplottria = numbpara > 1
+    if boolplottria is None:
+        boolplottria = numbpara > 1
     
     if lablnumbsamp is None:
         lablnumbsamp = 'Number of samples'
@@ -4692,16 +4695,23 @@ def plot_grid(
     listlablparatotl = retr_labltotl(listlablpara)
     
     if listmrkrpopl is None:
-        listmrkrpopl = np.array(['o', 'x', '+', 'D', '^', '*'])
+        listmrkrpopl = np.array(['o', 'x', '+', 'D', '^', '*', '<', '>', 's', 'p'])
     
     if listcolrpopl is None:
-        listcolrpopl = np.array(['g', 'r', 'b', 'purple', 'orange', 'pink', 'magenta'])
+        listcolrpopl = np.array(['g', 'r', 'b', 'purple', 'orange', 'pink', 'magenta', 'olive', 'cyan', 'teal'])
     
     if listcolrpopltdim is None:
         listcolrpopltdim = np.array(['Greens', 'Blues', 'Purples', 'Oranges'])
     
     numbpopl = len(listpara)
     
+    if numbpopl > 10:
+        print('')
+        print('')
+        print('')
+        print('Number of populations must be less than or equal to 10.')
+        raise Exception('')
+
     if numbpopl > 1 and listlablpopl is None:
         print('listlablpopl should be defined when there are more than one populations.')
         raise Exception('')
