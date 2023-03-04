@@ -73,6 +73,7 @@ class gdatstrtpcat(object):
 def retr_dictstrg():
     
     dicttdpy = dict()
+    dicttdpy['raww'] = 'Raw'
     dicttdpy['lcur'] = 'LightCurve'
     dicttdpy['cosc'] = 'CompactObjectWithStellarCompanion'
     dicttdpy['psys'] = 'SystemOfPlanets'
