@@ -4526,14 +4526,45 @@ def plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, li
         plt.show()
 
 
+def retr_degrfromhang(strg, typefrst='hourangle'):
+
+    '''
+    Get the degree from an hour angle
+    '''
+
+    strgsplt = strg.split(':')
+
+    if strg == '' or len(strgsplt) != 3:
+        print('')
+        print('')
+        print('')
+        print('strg')
+        print(strg)
+        print('strgsplt')
+        print(strgsplt)
+        raise Exception('Input string has an issue.')
+    
+    degr = float(strgsplt[1]) / 60.
+    degr += float(strgsplt[2]) / 3600.
+    if typefrst == 'hourangle':
+        degr += 15 * float(strgsplt[0])
+    elif typefrst == 'degree':
+        degr += float(strgsplt[0])
+    
+    return degr
+
+
 def plot_grid(
-              # two dimensional numpy array of samples, where the first dimension is the sample and second dimension is the parameter
-              listpara, \
-              
               # a list with length equal to the number of parameters, 
               # Each element of the list should itself be list of two strings, where
               # the first string is the label for the parameter and the second string is the unit
               listlablpara, \
+              
+              # two dimensional numpy array of samples, where the first dimension is the sample and second dimension is the parameter
+              listpara=None, \
+              
+              # dictionary of of samples, where the key should match the label roots and the values should be numpy arrays of samples
+              dictpara=None, \
               
               # an optional string indicating the path of the folder in which to write the plot
               pathbase=None, \
@@ -4655,6 +4686,38 @@ def plot_grid(
     else:
         path = None
 
+    if not (dictpara is None and listpara is not None or dictpara is not None and listpara is None):
+        print('')
+        print('')
+        print('')
+        print('dictpara')
+        print(dictpara)
+        print('listpara')
+        print(listpara)
+        raise Exception('Either dictpara or listpara should be defined.')
+    elif listpara is None:
+        listkeys = list(dictpara.keys())
+        for keys in listkeys:
+            if isinstance(dictpara[keys], list):
+                dictpara[keys] = np.array(dictpara[keys])
+        listpara = np.empty((dictpara[listkeys[0]].size, len(listkeys)))
+        
+        listlablpararoot = []
+        for lablpara in listlablpara:
+            listlablpararoot.append(lablpara[0])
+
+        for k in range(len(listkeys)):
+            indxparathis = listlablpararoot.index(listkeys[k])
+            if isinstance(dictpara[listkeys[k]][0], str):
+                dictparathisuniq = np.unique(dictpara[listkeys[k]])
+                dictints = dict()
+                for n in range(dictparathisuniq.size):
+                    dictints[dictparathisuniq[n]] = n
+                for strg in dictpara[listkeys[k]]:
+                    listpara[:, indxparathis] = dictints[strg]
+            else:
+                listpara[:, indxparathis] = dictpara[listkeys[k]]
+
     # check whether there is a single population or multiple populations
     if isinstance(listpara, list):
         boolmpop = True
@@ -4756,11 +4819,13 @@ def plot_grid(
     elif typeplottdim == 'hist':
         listtypeplottdim = np.array(['hist' for u in indxpopl])
     elif typeplottdim == 'best':
-        listtypeplottdim = np.array(listtypeplottdim)
+        listtypeplottdim = np.empty(numbpopl, dtype=object)
         indxpoplmaxm = np.argmax(numbsamp)
         if numbsamp[indxpoplmaxm] >= 1e3:
             listtypeplottdim[indxpoplmaxm] = 'hist'
-    
+        else:
+            listtypeplottdim[indxpoplmaxm] = 'scat'
+
     # sort the populations in decreasing order of size
     indxpopl = np.argsort(numbsamp)[::-1]
 
@@ -4807,9 +4872,9 @@ def plot_grid(
                     print('')
                     print('')
                     print('')
-                    print('Warning! The lower and upper limits for parameters %s are the same: %g.' % (listnamepara[k], limt[0, k]))
-                    print('listnamepara[k]')
-                    print(listnamepara[k])
+                    print('listnamepara')
+                    #print(listnamepara)
+                    print('Warning! The lower and upper limits for parameters %s are the same: %g.' % (listlablpara[k][0], limt[0, k]))
                     print('listpara[u][:, k]')
                     summgene(listpara[u][:, k])
                     print('listpara[u][listindxgood[u][k], k]')
@@ -5029,7 +5094,7 @@ def plot_grid(
             if not boolparagood[k]:
                 continue
             
-            if boolinte[k]:
+            if boolinte[k] and int(limt[1, k] - limt[0, k]) < 1e7:
                 bins[k] = np.linspace(limt[0, k], limt[1, k], int(limt[1, k] - limt[0, k] + 1))
             
             else:
