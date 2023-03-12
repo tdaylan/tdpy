@@ -212,7 +212,7 @@ def cdfn_powr(parascal, minm, maxm, slop):
     return paraunit
 
 
-def cdfn_dpow(parascal, minm, maxm, brek, sloplowr, slopuppr):
+def cdfn_dpow(parascal, brek, sloplowr, slopuppr, minm, maxm):
     
     if np.isscalar(parascal):
         parascal = np.array([parascal])
@@ -322,6 +322,15 @@ def icdf_powr(paraunit, minm, maxm, slop):
     return para
 
 
+def samp_dpow(numbsamp, brek, sloplowr, slopuppr, minm, maxm):
+
+    paraunit = np.random.rand(numbsamp)
+    
+    para = icdf_powr(paraunit, brek, sloplowr, slopuppr, minm, maxm)
+    
+    return para
+
+
 def samp_powr(numbsamp, minm, maxm, slop):
 
     paraunit = np.random.rand(numbsamp)
@@ -331,7 +340,7 @@ def samp_powr(numbsamp, minm, maxm, slop):
     return para
 
 
-def icdf_dpow(paraunit, minm, maxm, brek, sloplowr, slopuppr):
+def icdf_dpow(paraunit, brek, sloplowr, slopuppr, minm, maxm):
     
     if np.isscalar(paraunit):
         paraunit = np.array([paraunit])
@@ -567,7 +576,7 @@ def plot_recaprec( \
                   # list of Booleans for all positive samples indicating whether they are relevant
                   boolreleposi=None, \
 
-                  strgplotextn='pdf', \
+                  strgplotextn='png', \
                   typeverb=1, \
                   numbbins=10, \
                   strgreca='Recall', \
@@ -1124,7 +1133,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             else:
                 listlablpara[k][0] = 'Planetary radius'
             listlablpara[k][1] = '$R_\oplus$'
-            listscalpara[k] = 'logt'
+            listscalpara[k] = 'self'
         elif listnamepara[k] == 'stdvradiplan':
             listlablpara[k] = ['$\sigma_{R_p}$', '$R_\oplus$']
             listscalpara[k] = 'self'
@@ -2274,6 +2283,8 @@ def read_fits(path, pathimag=None, full=False, typeverb=0):
     if pathimag != None:
         os.system('mkdir -p ' + pathimag)
     
+    typefileplot = 'png'
+
     print('Reading from %s...' % path)
     hdun = astropy.io.fits.open(path)
     numbhead = len(hdun)
@@ -2350,12 +2361,12 @@ def read_fits(path, pathimag=None, full=False, typeverb=0):
                     
                     axis.set_xlabel('%s' % (listtype[n]))
                     plt.tight_layout()
-                    path = pathimag + 'readfits_%s.pdf' % listtype[n]
+                    path = pathimag + 'readfits_%s.%s' % (listtype[n], typefileplot)
                     cmnd += ' ' + path
                     figr.savefig(path)
                     plt.close(figr)
         
-            cmnd += ' ' + pathimag + 'merg.pdf'
+            cmnd += ' ' + pathimag + 'merg.%s' % typefileplot
             os.system(cmnd)
 
     return listdata
@@ -3034,7 +3045,7 @@ def plot_fermsmth():
 
         plt.loglog(mpol, almcinpt, label='HealPix')
         plt.loglog(mpol, np.sqrt((2. * mpol + 1.) / 4. / np.pi), label='Analytic')
-        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/almcinpt.pdf'
+        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/almcinpt.%s' % typefileplot
         plt.legend(framealpha=1.)
         figr.savefig(path)
         plt.close(figr)
@@ -3044,7 +3055,7 @@ def plot_fermsmth():
             for m in indxevtt:
                 plt.loglog(mpol, almcoutp[i, :, m], label='$E=%.3g$, PSF%d' % (meanenerplot[i], indxevtt[m]))
         plt.legend(loc=3, framealpha=1.)
-        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/almcoutp.pdf'
+        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/almcoutp.%s' % typefileplot
         figr.savefig(path)
         plt.close(figr)
             
@@ -3053,7 +3064,7 @@ def plot_fermsmth():
             for m in indxevtt:
                 plt.loglog(mpol, tranfunc[i, :, m], label='$E=%.3g$, PSF%d' % (meanenerplot[i], indxevtt[m]))
         plt.legend(loc=3, framealpha=1.)
-        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/tranfunc.pdf'
+        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/tranfunc.%s' % typefileplot
         figr.savefig(path)
         plt.close(figr)
         
@@ -3079,15 +3090,15 @@ def plot_fermsmth():
         mapssmthgaus =  hp.sphtfunc.smoothing(mapstemp, sigma=np.deg2rad(0.5))
 
         # plot the maps
-        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/maps.pdf'
+        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/maps.%s' % typefileplot
         plot_maps(path, mapstemp, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
 
         for i in np.arange(meanenerplot.size):
             for m in indxevtt:
-                path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/mapssmthferm%d%d.pdf' % (i, m)
+                path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/mapssmthferm%d%d.%s' % (i, m, typefileplot)
                 plot_maps(path, mapssmthferm[i, :, m], minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
                 
-        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/mapssmthgaus.pdf'
+        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/mapssmthgaus.%s' % typefileplot
         plot_maps(path, mapssmthgaus, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
 
 
@@ -3247,7 +3258,7 @@ def plot_gmrb(path, gmrbstat):
     axis.set_title('Gelman-Rubin Convergence Test')
     axis.set_xlabel('PSRF')
     axis.set_ylabel('$N_p$')
-    figr.savefig(path + 'gmrb.pdf')
+    figr.savefig(path + 'gmrb.%s' % typefileplot)
     plt.close(figr)
 
 
@@ -3262,7 +3273,7 @@ def plot_atcr(path, atcr, timeatcr, strgextn=''):
     axis.text(0.8, 0.8, r'$\tau_{exp} = %.3g$' % timeatcr, ha='center', va='center', transform=axis.transAxes)
     axis.axhline(0., ls='--', alpha=0.5)
     plt.tight_layout()
-    pathplot = path + 'atcr%s.pdf' % strgextn
+    pathplot = path + 'atcr%s.%s' % (strgextn, typefileplot)
     figr.savefig(pathplot)
     plt.close(figr)
     
@@ -3289,7 +3300,7 @@ def plot_propeffi(path, numbswep, numbpara, listaccp, listindxparamodi, namepara
             histaccp = axis.hist(indxlistintc, binstime, color='g')
             axis.set_title(namepara[k])
     figr.subplots_adjust(hspace=0.3)
-    figr.savefig(path + 'propeffi.pdf')
+    figr.savefig(path + 'propeffi.%s' % typefileplot)
     plt.close(figr)
 
 
@@ -3373,7 +3384,7 @@ def plot_trac(path, listpara, labl, truepara=None, scalpara='self', titl=None, \
                 
     figr.subplots_adjust()#top=0.9, wspace=0.4, bottom=0.2)
 
-    figr.savefig(path + '_trac.pdf')
+    figr.savefig(path + '_trac.%s' % typefileplot)
     plt.close(figr)
 
 
@@ -3400,19 +3411,30 @@ def plot_plot(path, xdat, ydat, lablxdat, lablydat, scalxaxi, titl=None, linesty
     if titl is not None:
         axis.set_title(titl)
     plt.tight_layout()
-    figr.savefig(path + '.pdf')
+    figr.savefig(path)
     plt.close(figr)
 
 
 def plot_hist( \
-              path, listpara, strg, titl=None, numbbins=20, truepara=None, \
+              path, \
+              listpara, \
+              strg, \
+              titl=None, \
+              numbbins=20, \
+              truepara=None, \
               
               # Boolean flag to overplot quantiles
               boolplotquan=False, 
               
               # type of the file for plots
-              typefileplot='pdf', \
-                                            scalpara='self', listparadraw=None, listlabldraw=None, listcolrdraw=None):
+              typefileplot='png', \
+              
+              scalpara='self', \
+              listparadraw=None, \
+              listlabldraw=None, \
+              listcolrdraw=None, \
+
+             ):
 
     minmvarb = np.amin(listpara)
     maxmvarb = np.amax(listpara)
@@ -4570,7 +4592,7 @@ def plot_grid(
               pathbase=None, \
               
               # an optional base string to include in the file name
-              strgplot=None, \
+              strgextn=None, \
               
               # the limits for the parameters
               limt=None, \
@@ -4585,13 +4607,13 @@ def plot_grid(
               typefileplot='png', \
               
               # Boolean flag to generate the lower-triangle plot
-              boolplottria=None, \
+              boolplottria=False, \
 
               # Boolean flag to generate individual histograms
               boolplothistodim=None, \
               
               # Boolean flag to generate individual pair-wise plots
-              boolplotpair=False, \
+              boolplotpair=None, \
               
               # list of base file names for the individual histograms
               listnamepara=None, \
@@ -4737,17 +4759,11 @@ def plot_grid(
     numbpara = listpara[0].shape[1]
     indxpara = np.arange(numbpara)
     
-    if boolplothistodim is None:
-        if boolmpop:
-            boolplothistodim = False
-        else:
-            if numbpara == 1:
-                boolplothistodim = True
-            else:
-                boolplothistodim = False
+    if boolplotpair is None:
+        boolplotpair = not boolplottria
     
-    if boolplottria is None:
-        boolplottria = numbpara > 1
+    if boolplothistodim is None:
+        boolplothistodim = not boolplottria
     
     if lablnumbsamp is None:
         lablnumbsamp = 'Number of samples'
@@ -5167,7 +5183,7 @@ def plot_grid(
                 continue
             
             if pathbase is not None:
-                path = pathbase + 'hist_%s_%s.%s' % (listnamepara[k], strgplot, typefileplot)
+                path = pathbase + 'hist_%s_%s.%s' % (listnamepara[k], strgextn, typefileplot)
             if not (pathbase is not None and os.path.exists(path)):
                 plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, \
                                                 bins, listcolrpopl, listparadraw, lablnumbsamp, lablsampgene, boolinte, \
@@ -5175,7 +5191,7 @@ def plot_grid(
             if listnamefeatcumu is not None:
                 if listnamepara[k] in listnamefeatcumu:
                     if pathbase is not None:
-                        path = pathbase + 'histcumu_%s_%s.%s' % (listnamepara[k], strgplot, typefileplot)
+                        path = pathbase + 'histcumu_%s_%s.%s' % (listnamepara[k], strgextn, typefileplot)
                     if not (pathbase is not None and os.path.exists(path)):
                         plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, bins, \
                                                     listcolrpopl, listparadraw, lablnumbsamp, lablsampgene, boolinte, \
@@ -5224,7 +5240,7 @@ def plot_grid(
         axis.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
         if titl is not None:
             axis.set_title(titl)
-        path = pathbase + 'pies_%s.%s' % (strgplot, typefileplot)
+        path = pathbase + 'pies_%s.%s' % (strgextn, typefileplot)
         print('Writing to %s...' % path)
         
         figr.savefig(path, bbox_inches='tight')
@@ -5271,7 +5287,7 @@ def plot_grid(
                             projection = 'aitoff'
                             strgiter = '_aito'
                         path = pathbase + 'pmar_%s_%s_%s_%s%s%s.%s' % (typeplottdim, listnamepara[k], \
-                                                    listnamepara[l], strgplot, strgtext, strgiter, typefileplot)
+                                                    listnamepara[l], strgextn, strgtext, strgiter, typefileplot)
                         
                         if not os.path.exists(path):
                         
@@ -5337,7 +5353,7 @@ def plot_grid(
         plt.subplots_adjust(wspace=0.05, hspace=0.05)
         
         if pathbase is not None:
-            path = pathbase + 'pmar_%s_%s.%s' % (typeplottdim, strgplot, typefileplot)
+            path = pathbase + 'pmar_%s_%s.%s' % (typeplottdim, strgextn, typefileplot)
             print('Writing to %s...' % path)
             figr.savefig(path, dpi=300)
             plt.close(figr)
