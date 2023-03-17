@@ -212,7 +212,13 @@ def cdfn_powr(parascal, minm, maxm, slop):
     return paraunit
 
 
-def cdfn_dpow(parascal, brek, sloplowr, slopuppr, minm, maxm):
+def cdfn_dpow(parascal, brek, sloplowr, slopuppr, minm=None, maxm=None):
+    
+    if minm is None:
+        minm = -np.inf
+    
+    if maxm is None:
+        maxm = np.inf
     
     if np.isscalar(parascal):
         parascal = np.array([parascal])
@@ -322,11 +328,17 @@ def icdf_powr(paraunit, minm, maxm, slop):
     return para
 
 
-def samp_dpow(numbsamp, brek, sloplowr, slopuppr, minm, maxm):
+def samp_dpow(numbsamp, brek, sloplowr, slopuppr, minm=None, maxm=None):
 
+    if minm is None:
+        minm = -np.inf
+    
+    if maxm is None:
+        maxm = np.inf
+    
     paraunit = np.random.rand(numbsamp)
     
-    para = icdf_powr(paraunit, brek, sloplowr, slopuppr, minm, maxm)
+    para = icdf_dpow(paraunit, brek, sloplowr, slopuppr, minm, maxm)
     
     return para
 
@@ -340,7 +352,13 @@ def samp_powr(numbsamp, minm, maxm, slop):
     return para
 
 
-def icdf_dpow(paraunit, brek, sloplowr, slopuppr, minm, maxm):
+def icdf_dpow(paraunit, brek, sloplowr, slopuppr, minm=None, maxm=None):
+    
+    if minm is None:
+        minm = -np.inf
+    
+    if maxm is None:
+        maxm = np.inf
     
     if np.isscalar(paraunit):
         paraunit = np.array([paraunit])
@@ -547,7 +565,7 @@ def retr_kdeg(listsamp, varb, stdv):
 
 def plot_recaprec( \
                   # base path for placing the plots
-                  pathimag, \
+                  pathvisu, \
                   
                   # a string describing the run
                   strgextn, \
@@ -713,7 +731,7 @@ def plot_recaprec( \
                 axis.plot(meanvarb, metr[c, :] * 100.)
                 axis.set_xlabel(listlablvarbtemp[k])
                 axis.set_ylabel(lablyaxi)
-                path = pathimag + '%s_%s_%s.%s' % (strgmetr, namepara, strgextn, strgplotextn) 
+                path = pathvisu + '%s_%s_%s.%s' % (strgmetr, namepara, strgextn, strgplotextn) 
                 print('Writing to %s...' % path)
                 plt.savefig(path)
                 plt.close()
@@ -723,7 +741,7 @@ def plot_recaprec( \
                 axis.errorbar(meanvarb, metr[c, :], marker='o', uplims=boolupprlimt)
                 axis.set_ylabel('Occurence rate')
                 axis.set_xlabel(listlablvarbreletotl[k])
-                path = pathimag + 'occu_%s_%s.%s' % (namepara, strgextn, strgplotextn) 
+                path = pathvisu + 'occu_%s_%s.%s' % (namepara, strgextn, strgplotextn) 
                 print('Writing to %s...' % path)
                 plt.savefig(path)
                 plt.close()
@@ -788,7 +806,7 @@ def retr_nfwp(nfwg, numbside, norm=None):
 
     edengridtotl = sum(edengrid**2, axis=0)
 
-    if norm != None:
+    if norm is not None:
         jgahp = np.argsort(gahp)
         edengridtotl /= interp1d(gahp[jgahp], edengridtotl[jgahp])(5.)
         
@@ -828,13 +846,13 @@ class varb(object):
         self.para = []
         self.scal = []
         self.strg = []
-        if numb != None:
+        if numb is not None:
             self.numb = numb
 
     
     def defn_para(self, name, minm, maxm, numb=None, strg='', scal='self'):
         
-        if numb != None:
+        if numb is not None:
             numbtemp = numb
         else:
             numbtemp = self.numb
@@ -1512,7 +1530,7 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None, boolshowuniq=Fa
         if boolshowuniq:
             show_uniq(varb)
         if boolslin:
-            if namevarb != None:
+            if namevarb is not None:
                 namevarb = '%s: ' % namevarb
             else:
                 namevarb = ''
@@ -1610,7 +1628,7 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None, boolshowuniq=Fa
 
 def retr_p4dm_spec(anch, part='el'):
     
-    pathimag, pathdata = retr_path('tdpy')
+    pathvisu, pathdata = retr_path('tdpy')
     if part == 'el':
         strg = 'AtProduction_positrons'
     if part == 'ph':
@@ -1646,11 +1664,11 @@ def show_prog(cntr, maxmcntr, thiscntr, nprog=20, indxprocwork=None, showmemo=Fa
 
     nextcntr = int(nprog * float(cntr + 1) / maxmcntr) * 100 / nprog
     if nextcntr > thiscntr:
-        if indxprocwork != None:
+        if indxprocwork is not None:
             print('Process %d is %3d%% completed.' % (indxprocwork, nextcntr))
         else:
             print('%3d%% completed.' % nextcntr)
-        if accp != None:
+        if accp is not None:
             print('Acceptance ratio: %.3g%%' % accp)
             print('Acceptance through prior boundaries: %.3g%%' % accpprio)
         thiscntr = nextcntr
@@ -1750,7 +1768,7 @@ def retr_strgmemo(memo):
 
 def retr_axis(minm=None, maxm=None, numb=None, bins=None, scal='self'):
     
-    if bins == None:
+    if bins is None:
         if scal == 'self':
             bins = np.linspace(minm, maxm, numb + 1)
             mean = (bins[1:] + bins[:-1]) / 2.
@@ -1805,10 +1823,10 @@ def retr_mapsplnkfreq(indxpixloutprofi=None, numbsideoutp=256, indxfreqrofi=None
     
     indxpixloutp = np.arange(numbsideoutp)
 
-    if indxfreqrofi == None:
+    if indxfreqrofi is None:
         indxfreqrofi = indxfreq
 
-    if indxpixloutprofi == None:
+    if indxpixloutprofi is None:
         indxpixloutprofi = indxpixloutp
 
     rtag = '_%04d' % (numbsideoutp)
@@ -1862,7 +1880,7 @@ def retr_mapsplnkfreq(indxpixloutprofi=None, numbsideoutp=256, indxfreqrofi=None
                         freqband = 1e2 * velolght * pf.open(path + '%s.fits' % strg)[strgextn].data['WAVENUMBER'][1:]
                     tranband = pf.open(path + '%s.fits' % strg)[strgextn].data['TRANSMISSION'][1:]
                     indxfreqbandgood = np.where(tranband > 1e-6)[0]
-                    indxfreqbandgood = np.arange(amin(indxfreqbandgood), amax(indxfreqbandgood) + 1)
+                    indxfreqbandgood = np.arange(np.amin(indxfreqbandgood), np.amax(indxfreqbandgood) + 1)
         
                     # calculate the unit conversion factor
                     freqscal = consplnk * freqband[indxfreqbandgood] / consbolt / tempcmbr
@@ -2106,17 +2124,17 @@ def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, \
     else:
         listydat = ydat
   
-    if yerr != None and not isinstance(ydat, list):
+    if yerr is not None and not isinstance(ydat, list):
         listyerr = [yerr]
     else:
         listyerr = yerr
 
     numbelem = len(listydat)
     
-    if listlinestyl == None:
+    if listlinestyl is None:
         listlinestyl = [None for k in range(numbelem)]
 
-    if listlegd == None:
+    if listlegd is None:
         listlegd = [None for k in range(numbelem)]
 
     if not isinstance(xdat, list):
@@ -2124,7 +2142,7 @@ def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, \
     else:
         listxdat = xdat
     
-    if plottype == None:
+    if plottype is None:
         listplottype = ['line' for k in range(numbelem)]
     elif not isinstance(plottype, list):
         listplottype = [plottype]
@@ -2144,12 +2162,12 @@ def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, \
             deltxdat = xdat[1] - xdat[0]
             axis.bar(xdat - deltxdat / 2., ydat, deltxdat, color=colr, alpha=alph, label=legd)
         else:
-            if listyerr != None:
+            if listyerr is not None:
                 axis.errorbar(xdat, ydat, yerr=listyerr[k], color=colr, lw=2, alpha=alph, label=legd, ls=listlinestyl[k])
             else:
                 axis.plot(xdat, ydat, color=colr, lw=2, alpha=alph, label=legd, ls=listlinestyl[k])
     
-    if listlegd != None:
+    if listlegd is not None:
         axis.legend(framealpha=1.)
 
     if scalxdat == 'logt':
@@ -2157,9 +2175,9 @@ def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, \
     if scalydat == 'logt':
         axis.set_yscale('log')
     
-    if limtxdat == None:
+    if limtxdat is None:
         limtxdat = [np.amin(np.concatenate(listxdat)), np.amax(np.concatenate(listxdat))]
-    if limtydat == None:
+    if limtydat is None:
         limtydat = [np.amin(np.concatenate(listydat)), np.amax(np.concatenate(listydat))]
     
     if drawdiag:
@@ -2168,19 +2186,19 @@ def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, \
     axis.set_xlim(limtxdat)
     axis.set_ylim(limtydat)
     
-    if listhlin != None:
+    if listhlin is not None:
         if isscalar(listhlin):
             listhlin = [listhlin]
         for k in range(len(listhlin)):
             axis.axhline(listhlin[k], ls='--', alpha=0.2, color=colr)
     
-    if listvlinfrst != None:
+    if listvlinfrst is not None:
         if isscalar(listvlinfrst):
             listvlinfrst = [listvlinfrst]
         for k in range(len(listvlinfrst)):
             axis.axvline(listvlinfrst[k], ls='--', alpha=0.2, color=colr)
     
-    if listvlinseco != None:
+    if listvlinseco is not None:
         if isscalar(listvlinseco):
             listvlinseco = [listvlinseco]
         for k in range(len(listvlinseco)):
@@ -2275,26 +2293,25 @@ def retr_strgtimestmp():
     return strgtimestmp
 
 
-def read_fits(path, pathimag=None, full=False, typeverb=0):
+def read_fits(path, pathvisu=None, typeverb=0):
     '''
     Read FITS file
     '''
     
-    if pathimag != None:
-        os.system('mkdir -p ' + pathimag)
+    if pathvisu is not None:
+        os.system('mkdir -p ' + pathvisu)
     
     typefileplot = 'png'
 
     print('Reading from %s...' % path)
     hdun = astropy.io.fits.open(path)
     numbhead = len(hdun)
-    listdata = []
+    dictdata = []
     for k in range(numbhead):
         head = hdun[k].header
         data = hdun[k].data
 
         print('Extension %d...' % k)
-        listdata.append(data)
 
         print('Header:')
         print(repr(head))
@@ -2312,18 +2329,19 @@ def read_fits(path, pathimag=None, full=False, typeverb=0):
                 for name in data.names:
                     print(name)
                     summgene(data[name])
+                    
+                    dictdata['Extension%d_%s' % (k, name)].append(data)
         print('')
         print('')
         print('')
         print('')
         print('')
         print('')
-        continue
 
-        if data == None:
+        if data is None:
             continue
 
-        numb = len(list(head.keys()))
+        numbkeyshead = len(list(head.keys()))
         listkeys = list(head.keys())
         listvalu = list(head.values())
         #print('listkeys')
@@ -2340,42 +2358,55 @@ def read_fits(path, pathimag=None, full=False, typeverb=0):
         listform = []
         listunit = []
        
-        for n in range(numb):
-            if listkeys[n].startswith('TTYPE'):
-                listtype.append(listvalu[n])
-            if listkeys[n].startswith('TFORM'):
-                listform.append(listvalu[n])
-            if listkeys[n].startswith('TUNIT'):
-                listunit.append(listvalu[n])
-
-        if pathimag != None:
+        print('listkeys')
+        print(listkeys)
+        if k > 0:
+            for n in range(numbkeyshead):
+                if listkeys[n].startswith('TTYPE'):
+                    listtype.append(listvalu[n])
+                if listkeys[n].startswith('TUNIT'):
+                    listunit.append(listvalu[n])
+                else:
+                    listunit.append('')
+                if listkeys[n].startswith('TFORM'):
+                    listform.append(listvalu[n])
+        
+        print('len(listtype)')
+        print(len(listtype))
+        print('len(listunit)')
+        print(len(listunit))
+        if len(listunit) != len(listtype):
+            print('')
+            print('')
+            print('')
+            raise Exception('')
+        
+        if pathvisu is not None:
             cmnd = 'convert -density 300'
-    
             for n in range(len(listtype)):
-                if not listform[n].endswith('A') and isfinite(data[listtype[n]]).all():
+                if not listform[n].endswith('A') and np.isfinite(data[listtype[n]]).all():
                     figr, axis = plt.subplots()
-                    bins = np.linspace(amin(data[listtype[n]]), amax(data[listtype[n]]), 100)
+                    bins = np.linspace(np.amin(data[listtype[n]]), np.amax(data[listtype[n]]), 100)
                     axis.hist(data[listtype[n]], bins=bins)
-                    #axis.set_xlabel('%s [%s]' % (listtype[n], listunit[n]))
                     axis.set_yscale('log')
                     
-                    axis.set_xlabel('%s' % (listtype[n]))
+                    lablaxis = '%s' % listtype[n]
+                    if listunit[n] != '':
+                        lablaxis += ' [%s]' % listunit[n]
+                    axis.set_xlabel(lablaxis)
                     plt.tight_layout()
-                    path = pathimag + 'readfits_%s.%s' % (listtype[n], typefileplot)
+                    path = pathvisu + 'hist_%s.%s' % (listtype[n], typefileplot)
                     cmnd += ' ' + path
                     figr.savefig(path)
                     plt.close(figr)
-        
-            cmnd += ' ' + pathimag + 'merg.%s' % typefileplot
-            os.system(cmnd)
 
-    return listdata
+    return dictdata
 
 
 def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=None, maxmlgal=None, minmbgal=None, maxmbgal=None, \
                                                                                         resi=False, satu=False, numbsidelgal=None, numbsidebgal=None, igal=False):
    
-    if minmlgal == None:
+    if minmlgal is None:
         if not igal:
             minmlgal = -180.
             minmbgal = -90.
@@ -2389,16 +2420,16 @@ def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpix
             
     asperati = (maxmbgal - minmbgal) / (maxmlgal - minmlgal)
     
-    if indxpixlrofi != None:
+    if indxpixlrofi is not None:
         mapstemp = np.zeros(numbpixl)
         mapstemp[indxpixlrofi] = maps
         maps = mapstemp
     else:
         numbpixl = maps.size
     
-    if numbsidelgal == None:
+    if numbsidelgal is None:
         numbsidelgal = min(4 * int((maxmlgal - minmlgal) / np.rad2deg(np.sqrt(4. * np.pi / numbpixl))), 2000)
-    if numbsidebgal == None:
+    if numbsidebgal is None:
         numbsidebgal = min(4 * int((maxmbgal - minmbgal) / np.rad2deg(np.sqrt(4. * np.pi / numbpixl))), 2000)
     
     # saturate the map
@@ -2408,7 +2439,7 @@ def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpix
         if not resi:
             satu = 0.1 * amax(maps)
         else:
-            satu = 0.1 * min(np.fabs(amin(maps)), amax(maps))
+            satu = 0.1 * min(np.fabs(np.amin(maps)), np.amax(maps))
             maps[np.where(maps < -satu)] = -satu
         maps[np.where(maps > satu)] = satu
 
@@ -2432,12 +2463,12 @@ def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpix
         factsrnk = 0.8
     figr, axis = plt.subplots(figsize=(sizefigr, asperati * sizefigr))
     if resi:
-        valu = max(np.fabs(amin(cart)), np.fabs(amax(cart)))
+        valu = max(np.fabs(np.amin(cart)), np.fabs(np.amax(cart)))
         imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none', vmin=-valu, vmax=valu)
     else:
         imag = plt.imshow(cart, origin='lower', cmap=cmap, extent=exttrofi, interpolation='none')
     
-    if scat != None:
+    if scat is not None:
         numbscat = len(scat)
         for k in range(numbscat):
             axis.scatter(scat[k][0], scat[k][1])
@@ -2505,7 +2536,7 @@ def retr_isot(binsener, numbside=256):
     sbrtisottemp = isotdata[:, 1] * 1e3 # [1/cm^2/s/sr/GeV]
     
     # sampling energy grid
-    binsenersamp = np.logspace(np.log10(amin(binsener)), np.log10(amax(binsener)), numbsamp * numbener)
+    binsenersamp = np.logspace(np.log10(np.amin(binsener)), np.log10(np.amax(binsener)), numbsamp * numbener)
     
     # interpolate the surface brightness over the sampling energy grid
     sbrtisottemp = interp(binsenersamp, enerisot, sbrtisottemp)
@@ -2522,15 +2553,15 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
                                                                                                             numbsidelgal=None, numbsidebgal=None):
    
     shap = hmap.shape
-    if indxpixlrofi == None:
+    if indxpixlrofi is None:
         numbpixlinpt = shap[0]
         numbsideinpt = int(np.sqrt(numbpixlinpt / 12.))
     else:
         numbpixlinpt = numbsideinpt**2 * 12
     
-    if numbsidelgal == None:
+    if numbsidelgal is None:
         numbsidelgal = 4 * int((maxmlgal - minmlgal) / np.rad2deg(np.sqrt(4. * np.pi / numbpixlinpt)))
-    if numbsidebgal == None:
+    if numbsidebgal is None:
         numbsidebgal = 4 * int((maxmbgal - minmbgal) / np.rad2deg(np.sqrt(4. * np.pi / numbpixlinpt)))
     
     lgcr = np.linspace(minmlgal, maxmlgal, numbsidelgal)
@@ -2545,7 +2576,7 @@ def retr_cart(hmap, indxpixlrofi=None, numbsideinpt=None, minmlgal=-180., maxmlg
     
     indxpixlmesh = hp.ang2pix(numbsideinpt, np.pi / 2. - np.deg2rad(bgcrmesh), np.deg2rad(lgcrmesh))
     
-    if indxpixlrofi == None:
+    if indxpixlrofi is None:
         indxpixltemp = indxpixlmesh
     else:
         pixlcnvt = np.zeros(numbpixlinpt, dtype=int) - 1
@@ -2595,7 +2626,7 @@ def retr_sbrtfdfm(binsener, numbside=256, vfdm=7):
     
     sbrtfdfm = np.empty((numbener, numbpixl))
     numbsampbins = 10
-    enersamp = np.logspace(np.log10(amin(binsener)), np.log10(amax(binsener)), numbsampbins * numbener)
+    enersamp = np.logspace(np.log10(np.amin(binsener)), np.log10(np.amax(binsener)), numbsampbins * numbener)
     
     sbrtfdfmheal = interpolate.interp1d(enerfdfm, sbrtfdfmheal, axis=0)(enersamp)
     for i in range(numbener):
@@ -2632,7 +2663,7 @@ def plot_braz(axis, xdat, ydat, yerr=None, numbsampdraw=0, lcol='yellow', dcol='
         for k in range(1, numbsampdraw):
             axis.plot(xdat, ydat[jsampdraw[k], :], alpha=0.1, color='b')
 
-    if yerr != None:
+    if yerr is not None:
         axis.plot(xdat, ydat - yerr[0, :], color=dcol, alpha=alpha)
         line, = axis.plot(xdat, ydat, color=mcol, label=labl, alpha=alpha)
         axis.plot(xdat, ydat + yerr[1, :], color=dcol, alpha=alpha)
@@ -2806,23 +2837,23 @@ def retr_path(strg, pathextndata=None, pathextnimag=None, rtag=None, onlyimag=Fa
 
     if not onlyimag:
         pathdata = pathbase
-        if pathextndata != None:
+        if pathextndata is not None:
             pathdata += pathextndata
         pathdata += 'data/'
         os.system('mkdir -p %s' % pathdata)
     if not onlydata:        
-        pathimag = pathbase
-        if pathextnimag != None:
-            pathimag += pathextnimag
-        pathimag += 'imag/'
-        if rtag != None:
-            pathimag += rtag + '/'
-        os.system('mkdir -p %s' % pathimag)
+        pathvisu = pathbase
+        if pathextnimag is not None:
+            pathvisu += pathextnimag
+        pathvisu += 'visuals/'
+        if rtag is not None:
+            pathvisu += rtag + '/'
+        os.system('mkdir -p %s' % pathvisu)
 
     if not onlyimag and not onlydata:
-        return pathimag, pathdata
+        return pathvisu, pathdata
     elif onlyimag:
-        return pathimag
+        return pathvisu
     else:
         return pathdata
 
@@ -2849,10 +2880,10 @@ def smth_heal(maps, scalsmth, mpol=False, retrfull=False, numbsideoutp=None, ind
     mpolgrid, temp = hp.Alm.getlm(lmax=maxmmpol)
     mpol = np.arange(maxmmpol + 1.)
     
-    if numbsideoutp == None:
+    if numbsideoutp is None:
         numbsideoutp = numbside
     
-    if indxpixlmask != None:
+    if indxpixlmask is not None:
         mapsoutp = copy(maps)
         mapsoutp[indxpixlmask] = hp.UNSEEN
         mapsoutp = hp.ma(mapsoutp)
@@ -2877,7 +2908,7 @@ def smth_ferm(mapsinpt, meanener, recotype, maxmmpol=None, makeplot=False, kernt
 
     numbpixl = mapsinpt.shape[1]
     numbside = int(np.sqrt(numbpixl / 12))
-    if maxmmpol == None:
+    if maxmmpol is None:
         maxmmpol = 3 * numbside - 1
 
     numbener = meanener.size
@@ -3045,7 +3076,7 @@ def plot_fermsmth():
 
         plt.loglog(mpol, almcinpt, label='HealPix')
         plt.loglog(mpol, np.sqrt((2. * mpol + 1.) / 4. / np.pi), label='Analytic')
-        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/almcinpt.%s' % typefileplot
+        path = os.environ["FERM_IGAL_DATA_PATH"] + '/visuals/almcinpt.%s' % typefileplot
         plt.legend(framealpha=1.)
         figr.savefig(path)
         plt.close(figr)
@@ -3055,7 +3086,7 @@ def plot_fermsmth():
             for m in indxevtt:
                 plt.loglog(mpol, almcoutp[i, :, m], label='$E=%.3g$, PSF%d' % (meanenerplot[i], indxevtt[m]))
         plt.legend(loc=3, framealpha=1.)
-        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/almcoutp.%s' % typefileplot
+        path = os.environ["FERM_IGAL_DATA_PATH"] + '/visuals/almcoutp.%s' % typefileplot
         figr.savefig(path)
         plt.close(figr)
             
@@ -3064,7 +3095,7 @@ def plot_fermsmth():
             for m in indxevtt:
                 plt.loglog(mpol, tranfunc[i, :, m], label='$E=%.3g$, PSF%d' % (meanenerplot[i], indxevtt[m]))
         plt.legend(loc=3, framealpha=1.)
-        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/tranfunc.%s' % typefileplot
+        path = os.environ["FERM_IGAL_DATA_PATH"] + '/visuals/tranfunc.%s' % typefileplot
         figr.savefig(path)
         plt.close(figr)
         
@@ -3090,15 +3121,15 @@ def plot_fermsmth():
         mapssmthgaus =  hp.sphtfunc.smoothing(mapstemp, sigma=np.deg2rad(0.5))
 
         # plot the maps
-        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/maps.%s' % typefileplot
+        path = os.environ["FERM_IGAL_DATA_PATH"] + '/visuals/maps.%s' % typefileplot
         plot_maps(path, mapstemp, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
 
         for i in np.arange(meanenerplot.size):
             for m in indxevtt:
-                path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/mapssmthferm%d%d.%s' % (i, m, typefileplot)
+                path = os.environ["FERM_IGAL_DATA_PATH"] + '/visuals/mapssmthferm%d%d.%s' % (i, m, typefileplot)
                 plot_maps(path, mapssmthferm[i, :, m], minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
                 
-        path = os.environ["FERM_IGAL_DATA_PATH"] + '/imag/mapssmthgaus.%s' % typefileplot
+        path = os.environ["FERM_IGAL_DATA_PATH"] + '/visuals/mapssmthgaus.%s' % typefileplot
         plot_maps(path, mapssmthgaus, minmlgal=minmlgal, maxmlgal=maxmlgal, minmbgal=minmbgal, maxmbgal=maxmbgal)
 
 
@@ -3528,7 +3559,7 @@ def retr_icdf(cdfn, scalpara, minm, maxm):
     return icdf
 
 
-def opti(pathimag, retr_llik, minmpara, maxmpara, numbtopp=3, numbiter=5):
+def opti(pathvisu, retr_llik, minmpara, maxmpara, numbtopp=3, numbiter=5):
 
     numbsamp = 4
     indxsamp = np.arange(numbsamp)
@@ -3757,9 +3788,9 @@ def samp( \
 
     if pathbase is not None:
         pathbasesamp = pathbase + '%s/' % typesamp
-        pathimag = pathbasesamp + 'imag/'
+        pathvisu = pathbasesamp + 'visuals/'
         pathdata = pathbasesamp + 'data/'
-        os.system('mkdir -p %s' % pathimag)
+        os.system('mkdir -p %s' % pathvisu)
         os.system('mkdir -p %s' % pathdata)
 
     # plotting
@@ -3962,7 +3993,7 @@ def samp( \
                 
             indxsampwalk = np.arange(numbsampwalk)
             
-            if boolplot and pathimag is not None:
+            if boolplot and pathvisu is not None:
                 # plot the posterior
                 ### trace
                 figr, axis = plt.subplots(numbpara + 1, 1, figsize=(12, (numbpara + 1) * 4))
@@ -3978,7 +4009,7 @@ def samp( \
                         labl += ' [%s]' % listlablpara[k][1]
                     axis[k+1].axvline(numbsampburnwalk, color='k')
                     axis[k+1].set_ylabel(labl)
-                path = pathimag + 'trac%s.%s' % (strgextn, typefileplot)
+                path = pathvisu + 'trac%s.%s' % (strgextn, typefileplot)
                 if typeverb == 1:
                     print('Writing to %s...' % path)
                 plt.savefig(path)
@@ -3998,16 +4029,16 @@ def samp( \
                         if listlablpara[k][1] != '':
                             labl += ' [%s]' % listlablpara[k][1]
                         axis[k+1].set_ylabel(labl)
-                    path = pathimag + 'tracgood%s.%s' % (strgextn, typefileplot)
+                    path = pathvisu + 'tracgood%s.%s' % (strgextn, typefileplot)
                     if typeverb == 1:
                         print('Writing to %s...' % path)
                     plt.savefig(path)
                     plt.close()
         
-        if boolplot and pathimag is not None:
+        if boolplot and pathvisu is not None:
             ## joint PDF
             strgplot = 'postparafitt' + strgextn
-            plot_grid(pathimag, strgplot, listparafitt, listlablpara, numbbinsplot=numbbins)
+            plot_grid(pathvisu, strgplot, listparafitt, listlablpara, numbbinsplot=numbbins)
             
             # derived
             if dictlablscalparaderi is not None:
@@ -4018,9 +4049,9 @@ def samp( \
                 listlablparatotl = listlablpara + listlablparaderi
                 listparatotl = np.concatenate([listparafitt, listparaderi], 1)
                 strgplot = 'postparaderi' + strgextn
-                plot_grid(pathimag, strgplot, listparaderi, listlablparaderi, numbbinsplot=numbbins)
+                plot_grid(pathvisu, strgplot, listparaderi, listlablparaderi, numbbinsplot=numbbins)
                 strgplot = 'postparatotl' + strgextn
-                plot_grid(pathimag, strgplot, listparatotl, listlablparatotl, numbbinsplot=numbbins)
+                plot_grid(pathvisu, strgplot, listparatotl, listlablparatotl, numbbinsplot=numbbins)
             else:
                 listparatotl = listparafitt
         
@@ -4374,6 +4405,12 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
 
 def retr_listvalutickmajr(minmlogt, maxmlogt):
     
+    print('retr_listvalutickmajr')
+    print('minmlogt')
+    print(minmlogt)
+    print('maxmlogt')
+    print(maxmlogt)
+
     if np.ceil(maxmlogt) - np.floor(minmlogt) < 8:
         diff = 1
     else:
@@ -4381,6 +4418,15 @@ def retr_listvalutickmajr(minmlogt, maxmlogt):
 
     listvalutickmajr = 10**(np.arange(np.floor(minmlogt), np.ceil(maxmlogt) + 1, diff))
     
+    print('listvalutickmajr')
+    print(listvalutickmajr)
+    if len(listvalutickmajr) < 3:
+        print('')
+        print('')
+        print('')
+        print('Inadequate major ticks')
+        raise Exception('')
+
     return listvalutickmajr
 
 
@@ -4461,20 +4507,23 @@ def setp_axislogt(axis, limt, typeaxis, listmantlabl):
     minm = limt[0]
     maxm = limt[1]
     
-    listvalutickmajr, listlabltickmajr, listvalutickminr, listlabltickminr = retr_valulabltick(minm, maxm, 'logt', listmantlabl=listmantlabl)
+    if maxm / minm > 10:
+        listvalutickmajr, listlabltickmajr, listvalutickminr, listlabltickminr = retr_valulabltick(minm, maxm, 'logt', listmantlabl=listmantlabl)
 
-    if typeaxis == 'x':
-        axis.set_xscale('log', base=10)
-        axis.set_xticks(listvalutickmajr)
-        axis.set_xticklabels(listlabltickmajr)
-        axis.set_xticks(listvalutickminr, minor=True)
-        axis.set_xticklabels(listlabltickminr, minor=True)
+        if typeaxis == 'x':
+            axis.set_xscale('log', base=10)
+            axis.set_xticks(listvalutickmajr)
+            axis.set_xticklabels(listlabltickmajr)
+            axis.set_xticks(listvalutickminr, minor=True)
+            axis.set_xticklabels(listlabltickminr, minor=True)
+        else:
+            axis.set_yscale('log', base=10)
+            axis.set_yticks(listvalutickmajr)
+            axis.set_yticklabels(listlabltickmajr)
+            axis.set_yticks(listvalutickminr, minor=True)
+            axis.set_yticklabels(listlabltickminr, minor=True)
     else:
-        axis.set_yscale('log', base=10)
-        axis.set_yticks(listvalutickmajr)
-        axis.set_yticklabels(listlabltickmajr)
-        axis.set_yticks(listvalutickminr, minor=True)
-        axis.set_yticklabels(listlabltickminr, minor=True)
+        print('The parameter has a log scaling, but its values do not cover an order of magnitude. Falling back to linear stretch...')
 
 
 def plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, bins, \
@@ -5114,7 +5163,7 @@ def plot_grid(
                 bins[k] = np.linspace(limt[0, k], limt[1, k], int(limt[1, k] - limt[0, k] + 1))
             
             else:
-                if listscalpara[k] == 'self' or listscalpara[k] == 'gaus':
+                if listscalpara[k] == 'self' or listscalpara[k] == 'gaus' or listscalpara[k] == 'logt' and limt[1, k] < 10 * limt[0, k]:
                     bins[k] = icdf_self(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
                 elif listscalpara[k] == 'logt':
                     bins[k] = icdf_logt(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
