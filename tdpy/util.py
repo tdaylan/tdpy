@@ -918,6 +918,8 @@ def retr_factconv():
     
     # Astronomical Unit in kilometers
     dictfact['aukm'] = 149597870700
+    
+    dictfact['factnewtlght'] = 2.09e13 # Msun / pc
 
     return dictfact
 
