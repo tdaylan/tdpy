@@ -141,10 +141,13 @@ def time_func_verb(func, *args):
 def retr_specbbod(tmpt, wlen):
     '''
     Calculate the spectrum of a blackbody
+    wlen in microns
     '''
     
     #0.0143877735e6 # [um K]
-    spec = 3.742e11 / wlen**5 / (np.exp(0.0143877735e6 / (wlen * tmpt)) - 1.)
+    #spec = 3.742e11 / wlen**5 / (np.exp(0.0143877735e6 / (wlen * tmpt)) - 1.)
+    
+    spec = 3.3e-7 * 3.742e11 / wlen**5 / (np.exp(0.0143877735e6 / (wlen * tmpt)) - 1.) # [W/m^s/s/nm]
     
     return spec
 
@@ -4407,12 +4410,6 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
 
 def retr_listvalutickmajr(minmlogt, maxmlogt):
     
-    print('retr_listvalutickmajr')
-    print('minmlogt')
-    print(minmlogt)
-    print('maxmlogt')
-    print(maxmlogt)
-
     if np.ceil(maxmlogt) - np.floor(minmlogt) < 8:
         diff = 1
     else:
@@ -4420,14 +4417,11 @@ def retr_listvalutickmajr(minmlogt, maxmlogt):
 
     listvalutickmajr = 10**(np.arange(np.floor(minmlogt), np.ceil(maxmlogt) + 1, diff))
     
-    print('listvalutickmajr')
-    print(listvalutickmajr)
     if len(listvalutickmajr) < 3:
         print('')
         print('')
         print('')
-        print('Inadequate major ticks')
-        raise Exception('')
+        raise Exception('Inadequate major ticks')
 
     return listvalutickmajr
 
