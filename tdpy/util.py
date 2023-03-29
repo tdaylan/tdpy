@@ -1972,6 +1972,14 @@ def plot_timeline(
     listcolrrows = [[] for k in indxrows]
     for k in indxrows:
         
+        if not 'listelem' in dictrows[listnamerows[k]]:
+            print('')
+            print('')
+            print('')
+            print('dictrows[listnamerows[k]]')
+            print(dictrows[listnamerows[k]])
+            raise Exception('Each dictionary in dictrows should itself be a dictionary with key "listelem".')
+
         if 'size' in dictrows[listnamerows[k]]:
             listsizerows[k] = dictrows[listnamerows[k]]['size']
         else:
