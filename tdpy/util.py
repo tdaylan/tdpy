@@ -598,7 +598,14 @@ def plot_recaprec( \
                   boolreleposi=None, \
 
                   strgplotextn='png', \
+              
+                  # type of verbosity
+                  ## -1: absolutely no text
+                  ##  0: no text output except critical warnings
+                  ##  1: minimal description of the execution
+                  ##  2: detailed description of the execution
                   typeverb=1, \
+                  
                   numbbins=10, \
                   strgreca='Recall', \
                   listparadete=None, \
@@ -1358,7 +1365,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             listlablpara[k] = ['$\cos i$', '']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'booltran':
-            listlablpara[k] = ['Whether transiting', '']
+            listlablpara[k] = ['Is transiting?', '']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'irra':
             if boolmath:
@@ -1800,7 +1807,7 @@ def retr_psfngausnorm(angl):
     return norm
 
 
-def retr_mapspnts(lgal, bgal, stdv, flux, numbside=256, typeverb=0):
+def retr_mapspnts(lgal, bgal, stdv, flux, numbside=256, typeverb=1):
     
     # lgal, bgal and stdv are in degrees
     numbpnts = lgal.size
@@ -2306,7 +2313,7 @@ def retr_strgtimestmp():
     return strgtimestmp
 
 
-def read_fits(path, pathvisu=None, typeverb=0):
+def read_fits(path, pathvisu=None, typeverb=1):
     '''
     Read FITS file
     '''
@@ -3590,21 +3597,6 @@ def opti(pathvisu, retr_llik, minmpara, maxmpara, numbtopp=3, numbiter=5):
     #listpara = np.empty((0, numbpara))
     
     for i in indxiter:
-        print('i')
-        print(i)
-        #print('listllik')
-        #print(listllik)
-        #print('listpara')
-        #print(listpara)
-        
-        print('listfact')
-        print(listfact)
-        print('listparacent')
-        print(listparacent)
-        print('listllikmaxmseed')
-        print(listllikmaxmseed)
-        print('listopen')
-        print(listopen)
         if i == 0:
             minmparatemp = minmpara
             maxmparatemp = maxmpara
@@ -3617,22 +3609,14 @@ def opti(pathvisu, retr_llik, minmpara, maxmpara, numbtopp=3, numbiter=5):
         else:
             indxopen = np.where(listopen)[0]
             thisindxseed = np.random.choice(indxopen)
-            print('thisindxseed')
-            print(thisindxseed)
             maxmparatemp = listparacent[thisindxseed] + listfact[thisindxseed] * (maxmpara - listparacent[thisindxseed])
             minmparatemp = listparacent[thisindxseed] - listfact[thisindxseed] * (listparacent[thisindxseed] - minmpara)
-        print('thisindxseed')
-        print(thisindxseed)
         para = np.random.rand(numbpara * numbsamp).reshape((numbsamp, numbpara)) * (maxmpara[None, :] - minmpara[None, :]) + minmpara[None, :]
-        print('para')
-        print(para)
         
-        print('Evaluating samples...')
+        print('Evaluating log-likelihoods...')
         llik = np.empty(numbsamp)
         for k in indxsamp:
             llik[k] = retr_llik(para[k, :])
-        print('llik')
-        print(llik)
         listllikmaxmseed[thisindxseed] = np.amax(llik)
         
         # add new seeds
@@ -3654,21 +3638,6 @@ def opti(pathvisu, retr_llik, minmpara, maxmpara, numbtopp=3, numbiter=5):
         #listllik = np.concatenate((listllik, llik))
         #listpara = np.concatenate((listpara, para), 0)
         
-        #print('listllik')
-        #print(listllik)
-        #print('listpara')
-        #print(listpara)
-        print('listfact')
-        print(listfact)
-        print('listparacent')
-        print(listparacent)
-        print('listllikmaxmseed')
-        print(listllikmaxmseed)
-        print('listopen')
-        print(listopen)
-        print('')
-        print('')
-        print('')
         if not np.array(listopen).any():
             break
     
@@ -3736,29 +3705,43 @@ def samp( \
          numbsamppostwalk=None, \
 
          meangauspara=None, \
+         
          stdvgauspara=None, \
+         
          retr_lpri=None, \
+         
          # Boolean flag to turn on multiprocessing
          boolmult=False, \
+         
          # burn-in
          ## number of samples in a precursor run whose final state will be used as the initial state of the actual sampler
          numbsampburnwalkinit=0, \
+         
          ## number of initial samples to be burned
          numbsampburnwalk=0, \
+         
          # function to return derived variables from the parameter vector
          retr_dictderi=None, \
+         
          # dictionary of labels and scalings for derived parameters
          dictlablscalparaderi=None, \
+         
          # Boolean flag to diagnose the code
          booldiag=True, \
+         
          # a string used to save and retrieve results
          strgextn='', \
+         
          typesamp='mcmc', \
 
          # type of the file for plots
          typefileplot='png', \
          
-         # verbosity level
+         # type of verbosity
+         ## -1: absolutely no text
+         ##  0: no text output except critical warnings
+         ##  1: minimal description of the execution
+         ##  2: detailed description of the execution
          typeverb=1, \
         ):
     '''
@@ -3906,7 +3889,10 @@ def samp( \
             if booldiag:
                 if numbsampwalk == 0:
                     raise Exception('')
-        
+            
+            if typeverb >= 1:
+                print('Running emcee...')
+            
             if boolmult:
                 pool = multiprocessing.Pool(processes=multiprocessing.cpu_count()-1)
             else:
@@ -4734,7 +4720,11 @@ def plot_grid(
               # a list of pairs of feature names, which enforces the given order (first item y-axis, second item y-axis)
               listnameordrpair=None, \
 
-              # verbosity level
+              # type of verbosity
+              ## -1: absolutely no text
+              ##  0: no text output except critical warnings
+              ##  1: minimal description of the execution
+              ##  2: detailed description of the execution
               typeverb=1, \
               
               # type of the two-dimensional plots
