@@ -597,7 +597,7 @@ def plot_recaprec( \
                   # list of Booleans for all positive samples indicating whether they are relevant
                   boolreleposi=None, \
 
-                  strgplotextn='png', \
+                  typefileplot='png', \
               
                   # type of verbosity
                   ## -1: absolutely no text
@@ -741,7 +741,7 @@ def plot_recaprec( \
                 axis.plot(meanvarb, metr[c, :] * 100.)
                 axis.set_xlabel(listlablvarbtemp[k])
                 axis.set_ylabel(lablyaxi)
-                path = pathvisu + '%s_%s_%s.%s' % (strgmetr, namepara, strgextn, strgplotextn) 
+                path = pathvisu + '%s_%s_%s.%s' % (strgmetr, namepara, strgextn, typefileplot) 
                 print('Writing to %s...' % path)
                 plt.savefig(path)
                 plt.close()
@@ -751,7 +751,7 @@ def plot_recaprec( \
                 axis.errorbar(meanvarb, metr[c, :], marker='o', uplims=boolupprlimt)
                 axis.set_ylabel('Occurence rate')
                 axis.set_xlabel(listlablvarbreletotl[k])
-                path = pathvisu + 'occu_%s_%s.%s' % (namepara, strgextn, strgplotextn) 
+                path = pathvisu + 'occu_%s_%s.%s' % (namepara, strgextn, typefileplot) 
                 print('Writing to %s...' % path)
                 plt.savefig(path)
                 plt.close()
@@ -4036,8 +4036,8 @@ def samp( \
         
         if boolplot and pathvisu is not None:
             ## joint PDF
-            strgplot = 'postparafitt' + strgextn
-            plot_grid(pathvisu, strgplot, listparafitt, listlablpara, numbbinsplot=numbbins)
+            strgextn = 'postparafitt' + strgextn
+            plot_grid(listlablpara, pathbase=pathvisu, strgextn=strgextn, listpara=listparafitt, numbbinsplot=numbbins)
             
             # derived
             if dictlablscalparaderi is not None:
@@ -4047,10 +4047,10 @@ def samp( \
                     listlablparaderi.append(dictlablscalparaderi[name][0])
                 listlablparatotl = listlablpara + listlablparaderi
                 listparatotl = np.concatenate([listparafitt, listparaderi], 1)
-                strgplot = 'postparaderi' + strgextn
-                plot_grid(pathvisu, strgplot, listparaderi, listlablparaderi, numbbinsplot=numbbins)
-                strgplot = 'postparatotl' + strgextn
-                plot_grid(pathvisu, strgplot, listparatotl, listlablparatotl, numbbinsplot=numbbins)
+                strgextn = 'postparaderi' + strgextn
+                plot_grid(listlablparaderi, pathbase=pathvisu, strgextn=strgextn, listpara=listparaderi, numbbinsplot=numbbins)
+                strgextn = 'postparatotl' + strgextn
+                plot_grid(listlablparatotl, pathbase=pathvisu, strgextn=strgextn, listpara=listparatotl, numbbinsplot=numbbins)
             else:
                 listparatotl = listparafitt
         
