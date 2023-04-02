@@ -4037,7 +4037,7 @@ def samp( \
         if boolplot and pathvisu is not None:
             ## joint PDF
             strgextn = 'postparafitt' + strgextn
-            plot_grid(listlablpara, pathbase=pathvisu, strgextn=strgextn, listpara=listparafitt, numbbinsplot=numbbins)
+            plot_grid(listlablpara, pathbase=pathvisu, listnamepara=listnamepara, strgextn=strgextn, listpara=listparafitt, numbbinsplot=numbbins)
             
             # derived
             if dictlablscalparaderi is not None:
@@ -4046,9 +4046,10 @@ def samp( \
                 for name in listnameparaderi:
                     listlablparaderi.append(dictlablscalparaderi[name][0])
                 listlablparatotl = listlablpara + listlablparaderi
+                listnameparatotl = listnamepara + listnameparaderi
                 listparatotl = np.concatenate([listparafitt, listparaderi], 1)
                 strgextn = 'postparaderi' + strgextn
-                plot_grid(listlablparaderi, pathbase=pathvisu, strgextn=strgextn, listpara=listparaderi, numbbinsplot=numbbins)
+                plot_grid(listlablparaderi, pathbase=pathvisu, strgextn=strgextn, listnameparaderi=listnameparaderi, listpara=listparaderi, numbbinsplot=numbbins)
                 strgextn = 'postparatotl' + strgextn
                 plot_grid(listlablparatotl, pathbase=pathvisu, strgextn=strgextn, listpara=listparatotl, numbbinsplot=numbbins)
             else:
@@ -4813,7 +4814,7 @@ def plot_grid(
 
     # check inputs
     if (boolplotpair or boolplothistodim) and listnamepara is None and pathbase is not None:
-        raise Exception('You should define listnamepara for individual and pairwise plots.')
+        raise Exception('You should provide the argument listnamepara to make individual histograms and pairwise scatter plots.')
     
     listlablparatotl = retr_labltotl(listlablpara)
     
