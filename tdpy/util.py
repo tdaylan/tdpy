@@ -1951,6 +1951,8 @@ def retr_indximagmaxm(data):
 def plot_timeline(
                   path, \
                   dictrows, \
+                  # optional list of row names in order to determine the order
+                  listnamerows=None, \
                   # separation in months between successive ticks on the horizontal axis
                   delttime=None, \
                   # number of tick marks along the horizontal axis
@@ -1969,7 +1971,12 @@ def plot_timeline(
     if sizefigr is None:
         sizefigr = (8., 4.)
 
-    listnamerows = list(dictrows.keys())
+    if listnamerows is None:
+        listnamerows = list(dictrows.keys())
+    else:
+        if set(listnamerows) != set(dictrows.keys()):
+            raise Exception('')
+
     numbrows = len(dictrows)
     indxrows = np.arange(numbrows)
     minmjdat = 1e100
@@ -2057,8 +2064,6 @@ def plot_timeline(
         
         while True:
             strgtimethis = astropy.time.Time(jdatinitintg + cntr * 365.25, format='jd').to_value('iso', subfmt='date')
-            print('strgtimethis')
-            print(strgtimethis)
             
             #strgtimeinit = str(strgtimethis)
             #strgtimefinl = str(strgtimethis)
