@@ -1,5 +1,6 @@
 # utilities
-import os, time, datetime
+import os, time, datetime, dateutil
+
 import pickle
 from tqdm import tqdm
 
@@ -1163,7 +1164,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             else:
                 listlablpara[k][0] = 'Planetary radius'
             listlablpara[k][1] = '$R_\oplus$'
-            listscalpara[k] = 'self'
+            listscalpara[k] = 'logt'
         elif listnamepara[k] == 'stdvradiplan':
             listlablpara[k] = ['$\sigma_{R_p}$', '$R_\oplus$']
             listscalpara[k] = 'self'
@@ -1953,6 +1954,15 @@ def plot_timeline(
                   dictrows, \
                   # optional list of row names in order to determine the order
                   listnamerows=None, \
+                  # type of date ticks
+                  ## 'yearly': every year
+                  ## 'quarterly': every year
+                  ## 'bimonthly': every two months
+                  ## 'monthly': every month
+                  ## 'daily': every day
+                  ## 'delttime': specific time difference separately provided in delttime
+                  ## 'numbtime': numbtime ticks equally spaced
+                  typetickdate=None, \
                   # separation in months between successive ticks on the horizontal axis
                   delttime=None, \
                   # number of tick marks along the horizontal axis
@@ -2043,16 +2053,89 @@ def plot_timeline(
     
     #dicttemp['init']['year'] = 
     limtjdat = [minmjdat, maxmjdat]
-    if delttime is not None:
+    
+    if typetickdate is None:
+        deltjdat = maxmjdat - minmjdat
+        if deltjdat > 780:
+            typetickdate = 'yearly'
+        elif deltjdat > 180:
+            typetickdate = 'quarterly'
+        elif deltjdat > 120:
+            typetickdate = 'bimonthly'
+        elif deltjdat > 60:
+            typetickdate = 'monthly'
+        elif deltjdat > 15:
+            typetickdate = 'weekly'
+        else:
+            typetickdate = 'daily'
+    if typetickdate in ['daily', 'monthly', 'quarterly', 'bimonthly', 'yearly']:
+        # string holding the first date
+        strgtimeminm = astropy.time.Time(minmjdat, format='jd').to_value('iso', subfmt='date')
+        # string holding the last date
+        strgtimemaxm = astropy.time.Time(maxmjdat, format='jd').to_value('iso', subfmt='date')
+        
+        # make the axis start in the beginning of the month
+        if typetickdate in ['monthly', 'quarterly', 'bimonthly']:
+            strgtimeminm = strgtimeminm[:-3] + '-01'
+            if typetickdate == 'monthly':
+                numbmont = 1
+            if typetickdate == 'bimonthly':
+                numbmont = 2
+            if typetickdate == 'quarterly':
+                numbmont = 3
+            strgtimemaxm = (datetime.datetime.strptime(strgtimemaxm, "%Y-%m-%d") + \
+                                dateutil.relativedelta.relativedelta(months=numbmont)).strftime("%Y-%m-%d")[:-3] + '-01'
+
+        # make the axis start in the beginning of the year
+        if typetickdate in ['yearly']:
+            strgtimeminm = strgtimeminm[:-6] + '-01-01'
+            strgtimemaxm = (datetime.datetime.strptime(strgtimemaxm, "%Y-%m-%d") + dateutil.relativedelta.relativedelta(months=12)).strftime("%Y-%m-%d")[:-6] + '-01-01'
+        
+        objtdateminm = datetime.datetime.strptime(strgtimeminm, "%Y-%m-%d")
+        objtdatemaxm = datetime.datetime.strptime(strgtimemaxm, "%Y-%m-%d")
+        
+        # determine the tick separation
+        if typetickdate == 'daily':
+            objtdatedelt = datetime.timedelta(days=1)
+        elif typetickdate == 'weekly':
+            objtdatedelt = datetime.timedelta(days=7)
+        elif typetickdate == 'monthly':
+            objtdatedelt = dateutil.relativedelta.relativedelta(months=1)
+        elif typetickdate == 'bimonthly':
+            objtdatedelt = dateutil.relativedelta.relativedelta(months=2)
+        elif typetickdate == 'quarterly':
+            objtdatedelt = dateutil.relativedelta.relativedelta(months=3)
+        elif typetickdate == 'yearly':
+            objtdatedelt = dateutil.relativedelta.relativedelta(months=12)
+        else:
+            print('')
+            print('')
+            print('')
+            raise Exception('typetickdate is not correctly defined.')
+        
+        liststrgtime = []
+        objtdate = objtdateminm
+        while objtdate <= objtdatemaxm:
+            strgtimetemp = objtdate.strftime("%Y-%m-%d")
+            liststrgtime.append(strgtimetemp)
+            objtdate += objtdatedelt
+            
+        listjdat = astropy.time.Time(liststrgtime, format='iso').jd
+
+    elif delttime is not None:
         listjdat = np.arange(minmjdat, maxmjdat, delttime / 12. * 365.25)
     elif numbtime is not None:
         listjdat = np.linspace(minmjdat, maxmjdat, numbtime)
     else:
+        print('')
+        print('')
+        print('')
         print('delttime')
         print(delttime)
         print('numbtime')
         print(numbtime)
-        raise Exception('')
+        raise Exception('typetickdate is undefined or delttime and numbtime are None.')
+    
     listlabltick = [[] for jdat in listjdat]
     
     listjdatvert = []
@@ -2079,12 +2162,15 @@ def plot_timeline(
                 break
             cntr += 1
 
+    # to be deleted
     #listlabltick[kk] = astropy.time.Time(jdat, format='TimeYMDHMS').to_value('iso', subfmt='date')
-    
     for kk, jdat in enumerate(listjdat):
-        print('temp: Trucating the date labels...')
-        listlabltick[kk] = astropy.time.Time(jdat, format='jd').to_value('iso', subfmt='date')[:-3]
-    
+        listlabltick[kk] = astropy.time.Time(jdat, format='jd').to_value('iso', subfmt='date')
+        if typetickdate in ['monthly', 'quarterly', 'bimonthly']:
+            listlabltick[kk] = listlabltick[kk][:-3]
+        if typetickdate in ['yearly']:
+            listlabltick[kk] = listlabltick[kk][:-6]
+
     figr, axis = plt.subplots(1, figsize=sizefigr)
     
     ydattext = 0.
@@ -2131,7 +2217,6 @@ def plot_timeline(
     limtydat = [minmydat, maxmydat]
     axis.set_yticks(listtick)
     axis.set_yticklabels(listlablrows)
-    axis.set_xlim(limtjdat)
     axis.set_ylim(limtydat)
     axis.set_xlabel('Time')
     print('Writing to %s...' % path)
@@ -2329,12 +2414,12 @@ def read_fits(path, pathvisu=None, typeverb=1):
     typefileplot = 'png'
 
     print('Reading from %s...' % path)
-    hdun = astropy.io.fits.open(path)
-    numbhead = len(hdun)
+    listhdun = astropy.io.fits.open(path)
+    numbhead = len(listhdun)
     dictdata = []
     for k in range(numbhead):
-        head = hdun[k].header
-        data = hdun[k].data
+        head = listhdun[k].header
+        data = listhdun[k].data
 
         print('Extension %d...' % k)
 
@@ -2425,7 +2510,7 @@ def read_fits(path, pathvisu=None, typeverb=1):
                     figr.savefig(path)
                     plt.close(figr)
 
-    return dictdata
+    return listhdun, dictdata
 
 
 def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=None, maxmlgal=None, minmbgal=None, maxmbgal=None, \
@@ -4234,10 +4319,6 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 # remove infinite samples
                 indx = np.where(np.isfinite(listpara[u][:, l]) & np.isfinite(listpara[u][:, k]))[0]
                 listparapair = listpara[u][indx, :]
-                print('listlablsamp[u]')
-                print(listlablsamp[u])
-                print('indx')
-                summgene(indx)
                 listlablsamppair = listlablsamp[u][indx]
                 listparapair = listparapair[:, np.array([l, k])]
                 
@@ -4378,7 +4459,7 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
 
         else:
             hist = np.histogram2d(listpara[u][:, l], listpara[u][:, k], bins=binstemp)[0]
-            objtaxispcol = axis.pcolor(bins[l], bins[k], hist.T, cmap=listcolrpopltdim[u], label=labl)
+            objtaxispcol = axis.pcolor(bins[l], bins[k], hist.T, cmap=listcolrpopltdim[u], label=labl, norm=matplotlib.colors.LogNorm())
     
     if boolcbar and (listtypeplottdim == 'hist').any():
         cbar = plt.colorbar(objtaxispcol)
@@ -4553,9 +4634,7 @@ def plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, li
     
     if boolinte[k]:
         axis.xaxis.get_major_locator().set_params(integer=True)
-
-    if boolmakelegd and indxpopl.size > 1:
-        axis.legend(framealpha=1.)
+    
     if listscalpara[k] == 'logt':
         setp_axislogt(axis, limtrims[:, k], 'x', listmantlabl)
     limtyaxi = axis.get_ylim()
@@ -4577,6 +4656,12 @@ def plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, li
             llimyaxihist = None
         limtyaxiprim = [llimyaxihist, limtyaxi[1] * factulimyaxihist]
         axis.set_ylim(limtyaxiprim)
+        ncollegd = 1
+    else:
+        ncollegd = 1
+    
+    if boolmakelegd and indxpopl.size > 1:
+        axis.legend(framealpha=1., ncol=ncollegd)
 
     if boolyaxilogt:
         axis.set_yscale('log')
@@ -4689,6 +4774,12 @@ def plot_grid(
               
               # list of feature names for which a cumulative histogram will be made
               listnamefeatcumu=None, \
+              
+              # type of grouping for populations
+              ## 'together': populations are overplotted together
+              ## 'individual': populations are separately plotted on common axes
+              ## 'both': both
+              typepgrp='together', \
 
               # list of pairs of feature names to be skipped
               listnamefeatskip=None, \
@@ -5222,9 +5313,7 @@ def plot_grid(
         if numbpopl == 1:
             factulimyaxihist = 1.
         else:
-            factulimyaxihist = 1.
-            # temp
-            #factulimyaxihist = 200.
+            factulimyaxihist = 100.
 
         # one dimensional histograms
         for k in indxpara:
@@ -5361,52 +5450,75 @@ def plot_grid(
                             print('Writing to %s...' % path)
                             figr.savefig(path, bbox_inches='tight')
                             plt.close(figr)
-                        
+    
+    # number of population groups
+    if typepgrp == 'together':
+        numbpgrp = 1
+    elif typepgrp == 'individual':
+        numbpgrp = numbpopl
+    elif typepgrp == 'both':
+        numbpgrp = numbpopl + 1
+    else:
+        print('')
+        print('')
+        print('')
+        raise Exception('typepgrp can only be "together", "individual", or "all".')
+    indxpgrp = np.arange(numbpgrp)
+    
     if boolplottria:
-        figr, axgr = plt.subplots(numbpara, numbpara, figsize=(0.6*plotsize*numbpara, 0.6*plotsize*numbpara))
-        if numbpara == 1:
-            axgr = [[axgr]]
-        for k, axrw in enumerate(axgr):
-            for l, axis in enumerate(axrw):
-                if not boolparagood[k] or not boolparagood[l]:
-                    continue
-                if k < l:
-                    axis.axis('off')
-                    continue
+        
+        for ou in indxpgrp:
+            if typepgrp == 'together' or ou == numbpopl:
+                strgpgrp = ''
+                indxpopltemp = indxpopl
+            elif typepgrp == 'individual':
+                strgpgrp = '_%s' % listlablpopl[ou]
+                indxpopltemp = np.array([ou])
 
-                if k == l:
-                    plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolplotquan, listlablpara, listtypeplottdim, indxpopl, \
-                                                                              listcolrpopl, listmrkrpopl, listlablpopl, boolmakelegd, listsizepopl, bins=bins)
-                else:
-                    plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
-                                                     listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
-                                                     listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=bins, \
-                                                     boolcbar=False)
+            figr, axgr = plt.subplots(numbpara, numbpara, figsize=(0.6*plotsize*numbpara, 0.6*plotsize*numbpara))
+            if numbpara == 1:
+                axgr = [[axgr]]
+            for k, axrw in enumerate(axgr):
+                for l, axis in enumerate(axrw):
+                    if not boolparagood[k] or not boolparagood[l]:
+                        continue
+                    if k < l:
+                        axis.axis('off')
+                        continue
+
+                    if k == l:
+                        plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolplotquan, listlablpara, listtypeplottdim, indxpopltemp, \
+                                                                                  listcolrpopl, listmrkrpopl, listlablpopl, boolmakelegd, listsizepopl, bins=bins)
+                    else:
+                        plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
+                                                         listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopltemp, listcolrpopl, \
+                                                         listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=bins, \
+                                                         boolcbar=False)
+                        
+                        axis.set_xlim(limt[:, l])
+                        axis.set_ylim(limt[:, k])
                     
-                    axis.set_xlim(limt[:, l])
-                    axis.set_ylim(limt[:, k])
-                
+                        
+                    if k == numbpara - 1:
+                        axis.set_xlabel(listlablparatotl[l])
+                    else:
+                        axis.set_xticklabels([])
                     
-                if k == numbpara - 1:
-                    axis.set_xlabel(listlablparatotl[l])
-                else:
-                    axis.set_xticklabels([])
-                
-                if (l == 0 and k != 0):
-                    axis.set_ylabel(listlablparatotl[k])
-                else:
-                    if k != 0:
-                        axis.set_yticklabels([])
-        
-        figr.tight_layout()
-        plt.subplots_adjust(wspace=0.05, hspace=0.05)
-        
-        if pathbase is not None:
-            path = pathbase + 'pmar_%s_%s.%s' % (typeplottdim, strgextn, typefileplot)
-            print('Writing to %s...' % path)
-            figr.savefig(path, dpi=300)
-            plt.close(figr)
-        else:
-            plt.show()
+                    if (l == 0 and k != 0):
+                        axis.set_ylabel(listlablparatotl[k])
+                    else:
+                        if k != 0:
+                            axis.set_yticklabels([])
+            
+            figr.tight_layout()
+            plt.subplots_adjust(wspace=0.05, hspace=0.05)
+            
+            if pathbase is not None:
+                path = pathbase + 'pmar_%s_%s%s.%s' % (typeplottdim, strgextn, strgpgrp, typefileplot)
+                print('Writing to %s...' % path)
+                figr.savefig(path, dpi=300)
+                plt.close(figr)
+            else:
+                plt.show()
         
 
