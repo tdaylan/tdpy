@@ -5322,16 +5322,16 @@ def plot_grid(
             
             if pathbase is not None:
                 path = pathbase + 'hist_%s_%s.%s' % (listnamepara[k], strgextn, typefileplot)
-            if not (pathbase is not None and os.path.exists(path)):
-                plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, \
+                if not os.path.exists(path):
+                    plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, \
                                                 bins, listcolrpopl, listparadraw, lablnumbsamp, lablsampgene, boolinte, \
                                                 boolmakelegd, listscalpara, factulimyaxihist, titl, plotsize, limt, limtrims, boolcumu=False, path=path)
             if listnamefeatcumu is not None:
                 if listnamepara[k] in listnamefeatcumu:
                     if pathbase is not None:
                         path = pathbase + 'histcumu_%s_%s.%s' % (listnamepara[k], strgextn, typefileplot)
-                    if not (pathbase is not None and os.path.exists(path)):
-                        plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, bins, \
+                        if not os.path.exists(path):
+                            plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, bins, \
                                                     listcolrpopl, listparadraw, lablnumbsamp, lablsampgene, boolinte, \
                                                     boolmakelegd, listscalpara, factulimyaxihist, titl, plotsize, limt, limtrims, boolcumu=True, path=path)
                     
@@ -5411,7 +5411,7 @@ def plot_grid(
                         if boolskip:
                             continue
                     
-                    if not (listnamepara[l] == 'rascstar' and listnamepara[k] == 'declstar'):
+                    if listnamepara is None or not (listnamepara[l] == 'rascstar' and listnamepara[k] == 'declstar'):
                         numbiter = 1
                     else:
                         numbiter = 2
@@ -5424,32 +5424,33 @@ def plot_grid(
                         if e == 1:
                             projection = 'aitoff'
                             strgiter = '_aito'
-                        path = pathbase + 'pmar_%s_%s_%s_%s%s%s.%s' % (typeplottdim, listnamepara[k], \
+                        if pathbase is not None:
+                            path = pathbase + 'pmar_%s_%s_%s_%s%s%s.%s' % (typeplottdim, listnamepara[k], \
                                                     listnamepara[l], strgextn, strgtext, strgiter, typefileplot)
                         
-                        if not os.path.exists(path):
-                        
-                            figr = plt.figure(figsize=(plotsize, plotsize))
-                            axis = figr.add_subplot(111, projection=projection)
+                            if not os.path.exists(path):
                             
-                            plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
-                                                             listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
-                                                             listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=bins, \
-                                                             listlablsamp=listlablsamptemp, boolcbar=True)
-                            
-                            if e == 0:
-                                axis.set_xlim(limt[:, l])
-                                axis.set_ylim(limt[:, k])
+                                figr = plt.figure(figsize=(plotsize, plotsize))
+                                axis = figr.add_subplot(111, projection=projection)
+                                
+                                plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
+                                                                 listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
+                                                                 listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=bins, \
+                                                                 listlablsamp=listlablsamptemp, boolcbar=True)
+                                
+                                if e == 0:
+                                    axis.set_xlim(limt[:, l])
+                                    axis.set_ylim(limt[:, k])
                 
-                            axis.set_xlabel(listlablparatotl[l])
-                            axis.set_ylabel(listlablparatotl[k])
-                            
-                            if titl is not None:
-                                axis.set_title(titl)
-                            
-                            print('Writing to %s...' % path)
-                            figr.savefig(path, bbox_inches='tight')
-                            plt.close(figr)
+                                axis.set_xlabel(listlablparatotl[l])
+                                axis.set_ylabel(listlablparatotl[k])
+                                
+                                if titl is not None:
+                                    axis.set_title(titl)
+                                
+                                print('Writing to %s...' % path)
+                                figr.savefig(path, bbox_inches='tight')
+                                plt.close(figr)
     
     # number of population groups
     if typepgrp == 'together':
