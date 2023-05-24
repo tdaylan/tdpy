@@ -1483,7 +1483,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         else:
             listlablpara[k] = [''.join(listnamepara[k].split('_')), '']
             listscalpara[k] = 'self'
-            print('Warning! Unrecognized parameter name: %s' % listnamepara[k])
+            print('Warning! Unrecognized parameter name: %s. Setting the label to the name of the parameter.' % listnamepara[k])
         
         if len(listscalpara[k]) == 0:
             print('')
@@ -5082,10 +5082,6 @@ def plot_grid(
                             print('')
                             print('')
                             print('')
-                            print('')
-                            print('')
-                            print('')
-                            print('')
                             print('tdpy.plot_grid(): limit for parameter %d is infinite!' % k)
                             print('k')
                             print(k)
@@ -5101,7 +5097,9 @@ def plot_grid(
                             print(listscalpara[k])
                             print('limt[:, k]')
                             print(limt[:, k])
-                            raise Exception('')
+                            print('minmtemp')
+                            print(minmtemp)
+                            raise Exception('not np.isfinite(limt[:, k]).all() or minmtemp < 1e-100 and minmtemp > 0.')
 
         # sanity checks
         if booldiag:
