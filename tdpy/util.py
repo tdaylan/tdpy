@@ -4994,29 +4994,23 @@ def plot_grid(
         boolinte = [[] for k in indxpara]
         for k in indxpara:
             for u in indxpopl:
+                boolsampfini = np.isfinite(listpara[u][:, k])
                 if listscalpara[k] == 'logt':
-                    boolsampfini = np.isfinite(listpara[u][:, k])
                     boolsampposi = listpara[u][:, k] > 0
                     listindxgood[u][k] = np.where(boolsampposi & boolsampfini)[0]
                     if (listpara[u][boolsampfini, k] <= 0).any():
                         print('')
                         print('')
                         print('')
-                        print('')
-                        print('tdpy.plot_grid(): Parameter %d (%s) has a log scaling but also nonpositive elements!' % (k, listlablpara[k]))
                         print('listpara[u][:, k]')
                         summgene(listpara[u][:, k])
                         print('listindxgood[u][k]')
                         summgene(listindxgood[u][k])
                         print('np.where(boolsampfini)[0]')
                         summgene(np.where(boolsampfini)[0])
-                        print('')
-                        print('')
-                        print('')
-                        print('')
-                        #raise Exception('')
+                        raise Exception('tdpy.plot_grid(): Parameter %d (%s) has a log scaling but also nonpositive elements!' % (k, listlablpara[k]))
                 else:
-                    listindxgood[u][k] = np.arange(listpara[u][:, k].size)
+                    listindxgood[u][k] = np.where(boolsampfini)[0]
             
                 if listindxgood[u][k].size > 0:
                     limt[0, k] = min(limt[0, k], np.nanmin(listpara[u][listindxgood[u][k], k], 0))
