@@ -4489,19 +4489,30 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
         setp_axislogt(axis, limt[:, k], 'y', listmantlabl)
     
 
-def retr_listvalutickmajr(minmlogt, maxmlogt):
+def retr_listvalutickmajr(minmlogt, maxmlogt, scal):
     
     if np.ceil(maxmlogt) - np.floor(minmlogt) < 8:
         diff = 1
     else:
         diff = 2
-
-    listvalutickmajr = 10**(np.arange(np.floor(minmlogt), np.ceil(maxmlogt) + 1, diff))
     
-    if len(listvalutickmajr) < 3:
+    arry = np.arange(np.floor(minmlogt), np.ceil(maxmlogt) + 1, diff)
+    
+    if scal == 'logt' or scal == 'powr':
+        listvalutickmajr = 10**arry
+    elif scal == 'asnh':
+        listvalutickmajr = np.sinh(arry)
+    elif scal == 'self':
+        raise Exception('This function is not supposed to be used for linear scaling.')
+    else:
+        raise Exception('Scaling is not recognized.')
+
+    if len(listvalutickmajr) < 2:
         print('')
         print('')
         print('')
+        print('listvalutickmajr')
+        print(listvalutickmajr)
         raise Exception('Inadequate major ticks')
 
     return listvalutickmajr
@@ -4534,7 +4545,7 @@ def retr_valulabltick( \
     
     # determine major ticks and labels
     ## list of values for the major ticks
-    listvalutickmajr = retr_listvalutickmajr(minm, maxm)
+    listvalutickmajr = retr_listvalutickmajr(minm, maxm, scal)
     ## list of labels for the major ticks
     listlabltickmajr = [retr_lablmexp(listvalutickmajr[a]) for a in range(len(listvalutickmajr))]
     
@@ -4550,7 +4561,7 @@ def retr_valulabltick( \
     listmantminr = np.arange(2., 10.)
     listexpominr = np.arange(np.floor(minm), np.ceil(maxm) + 1)
     
-    # list of values for the minor ticks
+    ## list of values for the minor ticks
     listvalutickminr = []
     listvalutickminrlabl = []
     indxlablmant = []
@@ -4570,7 +4581,7 @@ def retr_valulabltick( \
     listvalutickminr = np.array(listvalutickminr)
     listvalutickminr = np.sort(listvalutickminr)
     
-    # list of labels for the minor ticks
+    ## list of labels for the minor ticks
     listlabltickminr = np.empty_like(listvalutickminr, dtype=object)
     listlabltickminr[:] = ''
     for a in range(len(listvalutickminrlabl)):
