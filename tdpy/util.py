@@ -1032,7 +1032,7 @@ def sign_code(axis, typesigncode):
                                                                         transform=axis.transAxes, color='firebrick', ha='right', size='small')
 
 
-def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldiag=True, typelang='English', boolmath=False):
+def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldiag=True, typelang='English', boolmath=False, typedist='pc'):
     
     if dictdefa is not None:
         if not isinstance(dictdefa, dict):
@@ -1210,6 +1210,9 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'metastar':
             listlablpara[k] = ['[M/H]', '']
             listscalpara[k] = 'self'
+        elif listnamepara[k] == 'ecce':
+            listlablpara[k] = ['$e$', '']
+            listscalpara[k] = 'self'
         elif listnamepara[k] == 'esmm':
             listlablpara[k] = ['Emission Spectroscopy Metric (ESM)', '']
             listscalpara[k] = 'logt'
@@ -1335,8 +1338,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                 listlablpara[k][0] = '$d$'
             else:
                 listlablpara[k][0] = 'Distance'
-            #listlablpara[k][1] = 'pc'
-            listlablpara[k][1] = 'Mpc'
+            listlablpara[k][1] = typedist
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'noisphot':
             listlablpara[k] = ['Photometric Noise', 'ppt']
@@ -4995,6 +4997,14 @@ def plot_grid(
 
     # sort the populations in decreasing order of size
     indxpopl = np.argsort(numbsamp)[::-1]
+
+    for k in indxpara:
+        for u in indxpopl:
+            boolsampfini = np.isfinite(listpara[u][:, k])
+            if listscalpara[k] == 'logt' and (listpara[u][boolsampfini, k] <= 0).any():
+                print('Warning! Parameter %d (%s) has a log scaling but also nonpositive elements!' % (k, listlablpara[k]))
+                print('Will reset its scaling to linear (self)...')
+                listscalpara[k] = 'self'
 
     listindxgood = [[[] for k in indxpara] for u in indxpopl]
     if limt is None:
