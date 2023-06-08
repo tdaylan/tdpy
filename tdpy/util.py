@@ -4912,20 +4912,26 @@ def plot_grid(
     numbpara = listpara[0].shape[1]
     indxpara = np.arange(numbpara)
     
+    if (boolplotpair or boolplothistodim) and listnamepara is None and pathbase is not None:
+        raise Exception('If individual histograms or pairwise scatter plots are to be written to the disk, then listnamepara and pathbase must be provided.')
+    
     if boolplotpair is None:
-        boolplotpair = not boolplottria
+        boolplotpair = not boolplottria and not (listnamepara is None and pathbase is not None)
     
     if boolplothistodim is None:
-        boolplothistodim = not boolplottria
+        boolplothistodim = not boolplottria and not (listnamepara is None and pathbase is not None)
     
     if lablnumbsamp is None:
         lablnumbsamp = 'Number of samples'
 
     # check inputs
     if (boolplotpair or boolplothistodim) and listnamepara is None and pathbase is not None:
-        raise Exception('You should provide the argument listnamepara to make individual histograms and pairwise scatter plots.')
+        raise Exception('You should provide the argument listnamepara to write individual histograms and pairwise scatter plots to the disk.')
     
-    listlablparatotl = retr_labltotl(listlablpara)
+    if len(listlablpara[0]) == 2 and isinstance(listlablpara[0][0], str) and isinstance(listlablpara[0][1], str):
+        listlablparatotl = retr_labltotl(listlablpara)
+    else:
+        listlablparatotl = listlablpara
     
     if listmrkrpopl is None:
         listmrkrpopl = np.array(['o', 'x', '+', 'D', '^', '*', '<', '>', 's', 'p'])
