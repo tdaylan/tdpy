@@ -3818,6 +3818,9 @@ def samp( \
          # dictionary of labels and scalings for derived parameters
          dictlablscalparaderi=None, \
          
+         # Boolean flag to use tqdm to report the percentage of completion
+         booltqdm=True, \
+
          # Boolean flag to diagnose the code
          booldiag=True, \
          
@@ -3967,7 +3970,7 @@ def samp( \
                     parainit[k][m] = icdf_logt(paraunit, meanpara[m], gauspara[m])
 
         if typesamp == 'mcmc':
-            if typeverb > 0:
+            if booltqdm:
                 progress = True
             else:
                 progress = False
