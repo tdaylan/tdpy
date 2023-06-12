@@ -75,6 +75,7 @@ def retr_dictstrg():
     
     dicttdpy = dict()
     dicttdpy['raww'] = 'Raw'
+    dicttdpy['tser'] = 'TimeSeries'
     dicttdpy['lcur'] = 'LightCurve'
     dicttdpy['cosc'] = 'CompactObjectWithStellarCompanion'
     dicttdpy['psys'] = 'SystemOfPlanets'
@@ -1433,33 +1434,44 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                 listlablpara[k][0] = 'Companion radius'
             listlablpara[k][1] = '$R_\oplus$'
             listscalpara[k] = 'logt'
-        
-        # orbital parameters for each component
-        elif listnamepara[k][:7] == 'radicom' and len(listnamepara[k]) == 8 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
-            listlablpara[k] = ['$R_{%s}$' % listnamepara[k][7], '']
-            listscalpara[k] = 'logt'
-        elif listnamepara[k][:7] == 'rratcom' and len(listnamepara[k]) == 8 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
-            listlablpara[k] = ['$R_{%s}/R_\star$' % listnamepara[k][7], '']
-            listscalpara[k] = 'self'
-        elif listnamepara[k][:7] == 'rsmacom' and len(listnamepara[k]) == 8 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
-            listlablpara[k] = ['$(R_\star+R_{%s})/a$' % listnamepara[k][7], '']
-            listscalpara[k] = 'self'
-        elif listnamepara[k][:7] == 'cosicom' and len(listnamepara[k]) == 8 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
-            listlablpara[k] = ['$\cos i_{%s}$' % listnamepara[k][7], '']
-            listscalpara[k] = 'self'
-        elif listnamepara[k][:11] == 'epocmtracom' and len(listnamepara[k]) == 12 and (listnamepara[k][11].isnumeric() or listnamepara[k][11] == 'p'):
-            listlablpara[k] = ['$T_{0;%s}$' % listnamepara[k][11], 'BJD']
-            listscalpara[k] = 'self'
-        elif listnamepara[k][:7] == 'pericom' and len(listnamepara[k]) == 8 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
-            listlablpara[k] = ['$P_{%s}$' % listnamepara[k][7], 'days']
-            listscalpara[k] = 'self'
-        elif listnamepara[k][:11] == 'massplancom' and len(listnamepara[k]) == 12 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
-            listlablpara[k] = ['$M_{%s}$' % listnamepara[k][11], '$M_\oplus$']
-            listscalpara[k] = 'self'
         elif listnamepara[k] == 'masscomp':
             listlablpara[k] = ['$M_{C}$', '$M_\odot$']
             listscalpara[k] = 'self'
         
+        # orbital parameters for each component
+        elif (listnamepara[k][-1].isnumeric() and listnamepara[k][-4:-1] == 'com'):
+            if listnamepara[k][:-1] == 'typebrgtcom':
+                listlablpara[k] = ['Type of brightness for companion %s' % listnamepara[k][-1], '']
+                listscalpara[k] = None
+            elif listnamepara[k][:-1] == 'radicom':
+                listlablpara[k] = ['$R_{%s}$' % listnamepara[k][7], '']
+                listscalpara[k] = 'logt'
+            elif listnamepara[k][:-1] == 'rratcom':
+                listlablpara[k] = ['$R_{%s}/R_\star$' % listnamepara[k][7], '']
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'rsmacom':
+                listlablpara[k] = ['$(R_\star+R_{%s})/a$' % listnamepara[k][7], '']
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'cosicom':
+                listlablpara[k] = ['$\cos i_{%s}$' % listnamepara[k][7], '']
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'epocmtracom' and len(listnamepara[k]) == 12 and (listnamepara[k][11].isnumeric() or listnamepara[k][11] == 'p'):
+                listlablpara[k] = ['$T_{0;%s}$' % listnamepara[k][11], 'BJD']
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'pericom':
+                listlablpara[k] = ['$P_{%s}$' % listnamepara[k][7], 'days']
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'massplancom' and len(listnamepara[k]) == 12 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
+                listlablpara[k] = ['$M_{%s}$' % listnamepara[k][11], '$M_\oplus$']
+                listscalpara[k] = 'self'
+            else:
+                print('')
+                print('')
+                print('')
+                print('listnamepara[k]')
+                print(listnamepara[k])
+                raise Exception('listnamepara[k] undefined.')
+
         elif listnamepara[k] == 'depttran' or listnamepara[k] == 'depttrancomp':
             if boolmath:
                 listlablpara[k][0] = '$\delta_{tr}$'
@@ -1487,7 +1499,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             listscalpara[k] = 'self'
             print('Warning! Unrecognized parameter name: %s. Setting the label to the name of the parameter.' % listnamepara[k])
         
-        if len(listscalpara[k]) == 0:
+        if listscalpara[k] is not None and len(listscalpara[k]) == 0:
             print('')
             print('')
             print('')
@@ -4177,6 +4189,7 @@ def samp( \
 
     else:
         if typeverb > 0:
+            print('A previous run has been found. Will retrieve results from this run.')
             print('Reading from %s...' % pathdict)
         dictsamp = pd.read_csv(pathdict).to_dict(orient='list')
         for name in dictsamp.keys():
@@ -4915,14 +4928,14 @@ def plot_grid(
     numbpara = listpara[0].shape[1]
     indxpara = np.arange(numbpara)
     
-    if (boolplotpair or boolplothistodim) and listnamepara is None and pathbase is not None:
-        raise Exception('If individual histograms or pairwise scatter plots are to be written to the disk, then listnamepara and pathbase must be provided.')
-    
     if boolplotpair is None:
         boolplotpair = not boolplottria and not (listnamepara is None and pathbase is not None)
     
     if boolplothistodim is None:
         boolplothistodim = not boolplottria and not (listnamepara is None and pathbase is not None)
+    
+    if (boolplotpair or boolplothistodim) and listnamepara is None and pathbase is not None:
+        raise Exception('If individual histograms or pairwise scatter plots are to be written to the disk, then listnamepara and pathbase must be provided.')
     
     if lablnumbsamp is None:
         lablnumbsamp = 'Number of samples'
