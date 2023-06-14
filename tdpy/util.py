@@ -4206,6 +4206,17 @@ def samp( \
     return dictsamp
 
 
+def retr_boolsubb(listtotl, listsubb):
+
+    numbtotl = len(listtotl)
+    boollygo = np.ones(numbtotl, dtype=bool)
+    for k in range(numbtotl):
+        if listtotl[k] in listsubb:
+            boollygo[k] = False
+    
+    return boollygo
+
+
 def setp_para_defa(gdat, strgmodl, strgvarb, valuvarb):
     
     if strgmodl == 'fitt' or strgmodl == 'true':
