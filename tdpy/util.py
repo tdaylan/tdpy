@@ -1156,6 +1156,98 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             listlablpara[k] = ['Area to be searched', 'degree$^2$']
             listscalpara[k] = 'self'
         
+        elif listnamepara[k] == 'velodisp':
+            if boolmath:
+                labl = '$\sigma_{v}$'
+            else:
+                labl = 'Velocity dispersion'
+            listlablpara[k] = [labl, 'km/s']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'massstel':
+            if boolmath:
+                labl = '$M_{str}$'
+            else:
+                labl = 'Stellar mass'
+            listlablpara[k] = [labl, 'M$_{\odot}$']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'angleins':
+            if boolmath:
+                labl = r'$\theta_E$'
+            else:
+                labl = 'Einstein radius'
+            listlablpara[k] = [labl, 'arcsec']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'redssour':
+            if boolmath:
+                labl = '$z_s$'
+            else:
+                labl = 'Source galaxy redshift'
+            listlablpara[k] = [labl, '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'redslens':
+            if boolmath:
+                labl = '$z_l$'
+            else:
+                labl = 'Lens galaxy redshift'
+            listlablpara[k] = [labl, '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'xposlens':
+            if boolmath:
+                labl = '$x_l$'
+            else:
+                labl = 'x-position of the lens galaxy'
+            listlablpara[k] = [labl, 'arcsec']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'yposlens':
+            if boolmath:
+                labl = '$y_l$'
+            else:
+                labl = 'y-position of the lens galaxy'
+            listlablpara[k] = [labl, 'arcsec']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'xpossour':
+            if boolmath:
+                labl = '$x_s$'
+            else:
+                labl = 'x-position of the source galaxy'
+            listlablpara[k] = [labl, 'arcsec']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'ypossour':
+            if boolmath:
+                labl = '$y_s$'
+            else:
+                labl = 'y-position of the source galaxy'
+            listlablpara[k] = [labl, 'arcsec']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'maxmdistimag':
+            if boolmath:
+                labl = '$R_{im}$'
+            else:
+                labl = 'Distance between most distant images'
+            listlablpara[k] = [labl, 'arcsec']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'numbimag':
+            if boolmath:
+                labl = '$N_{im}$'
+            else:
+                labl = 'Number of images'
+            listlablpara[k] = [labl, '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'magnsour':
+            if boolmath:
+                labl = '$\mu_{sour}$'
+            else:
+                labl = 'Magnification of the source'
+            listlablpara[k] = [labl, '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'magtsourF062':
+            if boolmath:
+                labl = '$m_{s,F062}$'
+            else:
+                labl = 'Source magnitude, F062'
+            listlablpara[k] = [labl, '']
+            listscalpara[k] = 'self'
+        
         elif listnamepara[k] == 'ratimass':
             listlablpara[k] = ['$q$', '']
             listscalpara[k] = 'self'
@@ -4209,10 +4301,10 @@ def samp( \
 def retr_boolsubb(listtotl, listsubb):
 
     numbtotl = len(listtotl)
-    boollygo = np.ones(numbtotl, dtype=bool)
+    boollygo = np.zeros(numbtotl, dtype=bool)
     for k in range(numbtotl):
         if listtotl[k] in listsubb:
-            boollygo[k] = False
+            boollygo[k] = True
     
     return boollygo
 
