@@ -1168,7 +1168,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                 labl = '$M_{str}$'
             else:
                 labl = 'Stellar mass'
-            listlablpara[k] = [labl, 'M$_{\odot}$']
+            listlablpara[k] = [labl, '$10^{12}$ M$_{\odot}$']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'angleins':
             if boolmath:
@@ -1245,6 +1245,20 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                 labl = '$m_{s,F062}$'
             else:
                 labl = 'Source magnitude, F062'
+            listlablpara[k] = [labl, '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'magtlensF062':
+            if boolmath:
+                labl = '$m_{l,F062}$'
+            else:
+                labl = 'Lens magnitude, F062'
+            listlablpara[k] = [labl, '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'magtsourMagnifiedF062':
+            if boolmath:
+                labl = '$m_{s,mag,F062}$'
+            else:
+                labl = 'Magnified source magnitude, F062'
             listlablpara[k] = [labl, '']
             listscalpara[k] = 'self'
         
