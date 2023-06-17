@@ -1240,25 +1240,28 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                 labl = 'Magnification of the source'
             listlablpara[k] = [labl, '']
             listscalpara[k] = 'self'
-        elif listnamepara[k] == 'magtsourF062':
+        elif listnamepara[k].startswith('magtsour') and listnamepara[k][-4] == 'F' and listnamepara[k][-3:].isnumeric():
+            nameband = listnamepara[k][-4:]
             if boolmath:
-                labl = '$m_{s,F062}$'
+                labl = '$m_{s,%s}$' % nameband
             else:
-                labl = 'Source magnitude, F062'
+                labl = 'Source magnitude, %s' % nameband
             listlablpara[k] = [labl, '']
             listscalpara[k] = 'self'
-        elif listnamepara[k] == 'magtlensF062':
+        elif listnamepara[k].startswith('magtlens') and listnamepara[k][-4] == 'F' and listnamepara[k][-3:].isnumeric():
+            nameband = listnamepara[k][-4:]
             if boolmath:
-                labl = '$m_{l,F062}$'
+                labl = '$m_{l,%s}$' % nameband
             else:
-                labl = 'Lens magnitude, F062'
+                labl = 'Lens magnitude, %s' % nameband
             listlablpara[k] = [labl, '']
             listscalpara[k] = 'self'
-        elif listnamepara[k] == 'magtsourMagnifiedF062':
+        elif listnamepara[k].startswith('magtsourMagnified') and listnamepara[k][-4] == 'F' and listnamepara[k][-3:].isnumeric():
+            nameband = listnamepara[k][-4:]
             if boolmath:
-                labl = '$m_{s,mag,F062}$'
+                labl = '$m_{s,mag,%s}$' % nameband
             else:
-                labl = 'Magnified source magnitude, F062'
+                labl = 'Magnified source magnitude, %s' % nameband
             listlablpara[k] = [labl, '']
             listscalpara[k] = 'self'
         
@@ -4415,7 +4418,7 @@ def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolplotquan, \
                 
 
 def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
-                                     listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
+                                     listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listmsizpopl, \
                                      listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=None, \
                                      listlablsamp=None, boolcbar=True, \
                                     ):
@@ -4435,7 +4438,7 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
             
         if indxpopl.size > 1:
             labl = listlablpopl[u]
-            alph = 0.5
+            alph = 1.
         else:
             labl = None
             alph = 1.
@@ -4446,7 +4449,7 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 print('Warning! Skipped the scatter plot because there are too many points to plot!')
                 return
 
-            axis.scatter(listpara[u][:, l], listpara[u][:, k], s=1, color=listcolrpopl[u], label=labl, alpha=alph, marker=listmrkrpopl[u])
+            axis.scatter(listpara[u][:, l], listpara[u][:, k], s=listmsizpopl[u], color=listcolrpopl[u], label=labl, alpha=alph, marker=listmrkrpopl[u])
         
             # add text labels on outliers
             if listlablsamp is not None and indxpopl.size == 1:
@@ -4906,6 +4909,9 @@ def plot_grid(
               # list of markers for populations
               listmrkrpopl=None, \
 
+              # list of marker sizes for populations
+              listmsizpopl=None, \
+
               # list of colors for populations
               listcolrpopl=None, \
 
@@ -5071,6 +5077,9 @@ def plot_grid(
     
     if listcolrpopl is None:
         listcolrpopl = np.array(['g', 'r', 'b', 'purple', 'orange', 'pink', 'magenta', 'olive', 'cyan', 'teal'])
+    
+    if listmsizpopl is None:
+        listmsizpopl = np.array([1] * 100)
     
     if listcolrpopltdim is None:
         listcolrpopltdim = np.array(['Greens', 'Blues', 'Purples', 'Oranges'])
@@ -5586,7 +5595,7 @@ def plot_grid(
                                 axis = figr.add_subplot(111, projection=projection)
                                 
                                 plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
-                                                                 listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, \
+                                                                 listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listmsizpopl, \
                                                                  listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=bins, \
                                                                  listlablsamp=listlablsamptemp, boolcbar=True)
                                 
@@ -5644,7 +5653,7 @@ def plot_grid(
                                                                                   listcolrpopl, listmrkrpopl, listlablpopl, boolmakelegd, listsizepopl, bins=bins)
                     else:
                         plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
-                                                         listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopltemp, listcolrpopl, \
+                                                         listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopltemp, listcolrpopl, listmsizpopl, \
                                                          listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=bins, \
                                                          boolcbar=False)
                         
