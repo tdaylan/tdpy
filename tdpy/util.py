@@ -154,6 +154,13 @@ def retr_specbbod(tmpt, wlen):
     return spec
 
 
+def retr_offstime(time):
+    
+    timeoffs = int(np.amin(time) / 1000.) * 1000.
+    
+    return timeoffs
+
+
 def calc_visitarg(rasctarg, decltarg, latiobvt, longobvt, strgtimeobvtyear, listdelttimeobvtyear, heigobvt=None):
     '''
     Calculate the visibility of a celestial target.
@@ -1424,6 +1431,16 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'numbplanstar':
             listlablpara[k] = ['$N_{p}$', '']
             listscalpara[k] = 'self'
+        # 
+        elif listnamepara[k] == 'rateppcr':
+            listlablpara[k] = ['Rate of planet-planet crossings', 'day$^{-1}$']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'numbppcr':
+            listlablpara[k] = ['Number of planet-planet crossings', '']
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'minmcompdist':
+            listlablpara[k] = ['Minimum distance between crossings', 'R$_*$']
+            listscalpara[k] = 'logt'
         # number of transiting planets per star
         elif listnamepara[k] == 'numbplantranstar':
             listlablpara[k] = ['$N_{pt}$', '']
@@ -1548,30 +1565,62 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             listscalpara[k] = 'self'
         
         # orbital parameters for each component
-        elif (listnamepara[k][-1].isnumeric() and listnamepara[k][-4:-1] == 'com'):
+        elif listnamepara[k][-1].isnumeric() and listnamepara[k][-4:-1] == 'com' or listnamepara[k].endswith('comp'):
+            if listnamepara[k][-1].isnumeric() and listnamepara[k][-4:-1] == 'com':
+                boolnume = True
+            else:
+                boolnume = False
+            
+            if boolmath:
+                if boolnume:
+                    strgnume = '_{%s}' % listnamepara[k][-1]
+                else:
+                    strgnume = ''
+            else:
+                if boolnume:
+                    strgnume = ', companion %d' % listnamepara[k][-1]
+                else:
+                    strgnume = ''
+                
             if listnamepara[k][:-1] == 'typebrgtcom':
-                listlablpara[k] = ['Type of brightness for companion %s' % listnamepara[k][-1], '']
+                listlablpara[k] = ['Type of brightness for companion%s' % listnamepara[k][-1], '']
                 listscalpara[k] = None
+            elif listnamepara[k][:-1] == 'rotacom':
+                listlablpara[k] = ['Orbital rotation%s' % strgnume, '']
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'factnonkcom':
+                listlablpara[k] = ['Non-Keplerianity factor%s' % strgnume, '']
+                listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'radicom':
-                listlablpara[k] = ['$R_{%s}$' % listnamepara[k][7], '']
+                listlablpara[k] = ['$R_{%s}$' % listnamepara[k][-1], '']
                 listscalpara[k] = 'logt'
             elif listnamepara[k][:-1] == 'rratcom':
-                listlablpara[k] = ['$R_{%s}/R_\star$' % listnamepara[k][7], '']
+                listlablpara[k] = ['$R_{%s}/R_\star$' % listnamepara[k][-1], '']
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'rsmacom':
-                listlablpara[k] = ['$(R_\star+R_{%s})/a$' % listnamepara[k][7], '']
+                listlablpara[k] = ['$(R_\star+R_{%s})/a$' % listnamepara[k][-1], '']
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'cosicom':
-                listlablpara[k] = ['$\cos i_{%s}$' % listnamepara[k][7], '']
+                listlablpara[k] = ['$\cos i%s$' % strgnume, '']
                 listscalpara[k] = 'self'
-            elif listnamepara[k][:-1] == 'epocmtracom' and len(listnamepara[k]) == 12 and (listnamepara[k][11].isnumeric() or listnamepara[k][11] == 'p'):
-                listlablpara[k] = ['$T_{0;%s}$' % listnamepara[k][11], 'BJD']
+            elif listnamepara[k][:-1] == 'epocmtracom':
+                if boolnume:
+                    listlablpara[k] = ['$T_{0;%s}$' % listnamepara[k][-1], 'BJD']
+                else:
+                    listlablpara[k] = ['$T_{0}$', 'BJD']
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'pericom':
-                listlablpara[k] = ['$P_{%s}$' % listnamepara[k][7], 'days']
+                listlablpara[k] = ['$P_{%s}$' % listnamepara[k][-1], 'days']
                 listscalpara[k] = 'self'
-            elif listnamepara[k][:-1] == 'massplancom' and len(listnamepara[k]) == 12 and (listnamepara[k][7].isnumeric() or listnamepara[k][7] == 'p'):
-                listlablpara[k] = ['$M_{%s}$' % listnamepara[k][11], '$M_\oplus$']
+            elif listnamepara[k][:-1] == 'depttrancom':
+                if boolmath:
+                    listlablpara[k][0] = '$\delta%s$' % strgnume
+                else:
+                    listlablpara[k][0] = 'Transit depth%s' % strgnume
+                listlablpara[k][1] = 'ppt'
+                listscalpara[k] = 'logt'
+            elif listnamepara[k][:-1] == 'massplancom':
+                listlablpara[k] = ['$M_{%s}$' % listnamepara[k][-1], '$M_\oplus$']
                 listscalpara[k] = 'self'
             else:
                 print('')
@@ -1581,13 +1630,6 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                 print(listnamepara[k])
                 raise Exception('listnamepara[k] undefined.')
 
-        elif listnamepara[k] == 'depttran' or listnamepara[k] == 'depttrancomp':
-            if boolmath:
-                listlablpara[k][0] = '$\delta_{tr}$'
-            else:
-                listlablpara[k][0] = 'Transit depth'
-            listlablpara[k][1] = 'ppt'
-            listscalpara[k] = 'logt'
         elif listnamepara[k] == 's2nr':
             listlablpara[k] = ['S/N', '']
             listscalpara[k] = 'logt'
@@ -3504,6 +3546,42 @@ def retr_timeatcr(listpara, typeverb=1, atcrtype='maxm'):
             return np.zeros((1, numbpara)), 0.
     else:
         return atcr, timeatcr
+
+
+def retr_timeunitdays(time):
+    
+    if time < 0:
+        raise Exception('')
+
+    if time > 1.:
+        facttime = 1.
+        lablunittime = 'days'
+    elif time == 1.:
+        facttime = 1.
+        lablunittime = 'day'
+    elif time > 1. / 24.:
+        facttime = 24.
+        lablunittime = 'hours'
+    elif time == 1. / 24.:
+        facttime = 24.
+        lablunittime = 'hour'
+    elif time > 1. / (24. * 60.):
+        facttime = 24. * 60.
+        lablunittime = 'minutes'
+    elif time == 1. / (24. * 60.):
+        facttime = 24. * 60.
+        lablunittime = 'minute'
+    elif time > 1. / (24. * 3600.):
+        facttime = 24. * 3600.
+        lablunittime = 'seconds'
+    elif time == 1. / (24. * 3600.):
+        facttime = 24. * 3600.
+        lablunittime = 'second'
+    elif time < 1. / (24. * 3600.):
+        facttime = 24. * 3600.
+        lablunittime = 'seconds'
+
+    return facttime, lablunittime
 
 
 def retr_numbsamp(numbswep, numbburn, factthin):
