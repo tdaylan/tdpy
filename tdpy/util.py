@@ -71,6 +71,18 @@ class gdatstrtpcat(object):
         super(gdatstrt, self).__setattr__(attr, valu)
 
 
+def retr_dictlabl():
+    
+    dicttdpy = dict()
+    dicttdpy['TimeSeries'] = 'Time series'
+    dicttdpy['LightCurve'] = 'Light curve'
+    dicttdpy['CompactObjectWithStellarCompanion'] = 'Compact Object with stellar companion'
+    dicttdpy['PlanetarySystem'] = 'Planetary system'
+    dicttdpy['PlanetarySystemWithPhaseCurve'] = 'Planetary system with phase curve'
+
+    return dicttdpy
+
+
 def retr_dictstrg():
     
     dicttdpy = dict()
@@ -78,7 +90,7 @@ def retr_dictstrg():
     dicttdpy['tser'] = 'TimeSeries'
     dicttdpy['lcur'] = 'LightCurve'
     dicttdpy['cosc'] = 'CompactObjectWithStellarCompanion'
-    dicttdpy['psys'] = 'SystemOfPlanets'
+    dicttdpy['PlanetarySystem'] = 'SystemOfPlanets'
     dicttdpy['psyspcur'] = 'SystemOfPlanetsWithPhaseCurve'
     dicttdpy['psysdiskedgehori'] = 'SystemOfPlanetsWithEdgeOnHorizontalDisks'
 
