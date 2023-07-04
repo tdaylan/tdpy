@@ -1590,7 +1590,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                     strgnume = ''
             else:
                 if boolnume:
-                    strgnume = ', companion %d' % listnamepara[k][-1]
+                    strgnume = ', companion %s' % listnamepara[k][-1]
                 else:
                     strgnume = ''
                 
