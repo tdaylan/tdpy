@@ -1042,12 +1042,19 @@ def retr_dictturk():
     return dictturk
 
 
-def sign_code(axis, typesigncode):
+def sign_code(axis, typesigncode, typeplotback='white'):
     '''
     Sign the axis to indicate the generating code.
     ''' 
+    
+    if typeplotback == 'white':
+        edgecolor = 'black'
+        facecolor = typeplotback
+    elif typeplotback == 'black':
+        edgecolor = 'white'
+        facecolor = typeplotback
 
-    bbox = dict(boxstyle='round', ec='k', fc='white')
+    bbox = dict(boxstyle='round', edgecolor=edgecolor, facecolor=facecolor)
     axis.text(0.97, 0.05, r'github.com/tdaylan/\textbf{%s}' % (typesigncode), bbox=bbox, \
                                                                         transform=axis.transAxes, color='firebrick', ha='right', size='small')
 
@@ -1528,13 +1535,6 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'perilspeprim':
             listlablpara[k] = ['$P_{LS,max}$', 'days']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'peri' or listnamepara[k] == 'pericomp' or listnamepara[k] == 'periplan':
-            if boolmath:
-                listlablpara[k][0] = '$P$'
-            else:
-                listlablpara[k][0] = 'Orbital period'
-            listlablpara[k][1] = 'days'
-            listscalpara[k] = 'logt'
         elif listnamepara[k] == 'masscomp':
             listlablpara[k] = ['$M_{comp}$', '$M_\odot$']
             listscalpara[k] = 'logt'
@@ -1622,7 +1622,18 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                     listlablpara[k] = ['$T_{0}$', 'BJD']
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'pericom':
-                listlablpara[k] = ['$P_{%s}$' % listnamepara[k][-1], 'days']
+                if boolmath:
+                    listlablpara[k] = '$P_{%s}$' % strgnume
+                else:
+                    listlablpara[k] = 'Orbital period%s' % strgnume
+                listlablpara[k][1] = 'days'
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'eccecom':
+                if boolmath:
+                    listlablpara[k] = '$e_{%s}$' % strgnume
+                else:
+                    listlablpara[k] = 'Eccentricity%s' % strgnume
+                listlablpara[k][1] = ''
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'depttrancom':
                 if boolmath:
@@ -2150,6 +2161,10 @@ def plot_timeline(
                   typetimeshow=None, \
                   # a list of times and labels to highligh with vertical lines
                   listjdatlablhigh=None, \
+                  
+                  # type of plot background
+                  typeplotback='white', \
+
                   ):
     '''
     Make a timeline (Gantt) chart
@@ -2350,6 +2365,13 @@ def plot_timeline(
 
     figr, axis = plt.subplots(1, figsize=sizefigr)
     
+    if typeplotback == 'white':
+        edgecolor = 'black'
+        color = 'black'
+    elif typeplotback == 'black':
+        edgecolor = 'white'
+        color = 'white'
+
     ydattext = 0.
     listtick = [[] for k in indxrows]
     for k in indxrows:
@@ -2361,13 +2383,13 @@ def plot_timeline(
             
             xdattext = jdatfrst + 0.5 * (jdatseco - jdatfrst)
             
-            axis.barh(ydattext, jdatseco - jdatfrst, left=jdatfrst, color=listcolrrows[k], height=listsizerows[k], edgecolor='k', alpha=0.5)
+            axis.barh(ydattext, jdatseco - jdatfrst, left=jdatfrst, color=listcolrrows[k], height=listsizerows[k], edgecolor=edgecolor, alpha=0.5)
             
             listlablxaxi = axis.set_xticks(listjdat, rotation=45)
             
             axis.set_xticklabels(listlabltick)
             
-            axis.text(xdattext, ydattext, dictrows[listnamerows[k]]['listelem'][l][2], color='k', ha='center', va='center')
+            axis.text(xdattext, ydattext, dictrows[listnamerows[k]]['listelem'][l][2], color=color, ha='center', va='center')
         
         if k == 0:
             minmydat = ydattext - 0.5 * listsizerows[k]
@@ -2936,7 +2958,7 @@ def plot_matr(axis, xdat, ydat, labl, loc=1):
 
     line = []
     for k in np.arange(3):
-        line.append(plt.Line2D((0,1),(0,0), color='k', ls=listlinestyl[k]))
+        line.append(plt.Line2D((0,1),(0,0), color='black', ls=listlinestyl[k]))
     for l in range(3):
         line.append(plt.Line2D((0,1),(0,0), color=listcolr[l]))
     axis.legend(line, labl, loc=loc, ncol=2, framealpha=1.)
@@ -3755,7 +3777,7 @@ def plot_plot(path, xdat, ydat, lablxdat, lablydat, scalxaxi, titl=None, linesty
             linestyl = '-'
         else:
             linestyl = '--'
-        axis.plot(xdat, ydat, ls=linestyl, color='k', **args)
+        axis.plot(xdat, ydat, ls=linestyl, color='black', **args)
         # temp
         #axis.plot(xdat, ydat, ls=linestyl[k], color=colr[k], label=legd[k], **args)
     axis.set_ylabel(lablydat)
@@ -4304,7 +4326,7 @@ def samp( \
                 figr, axis = plt.subplots(numbpara + 1, 1, figsize=(12, (numbpara + 1) * 4))
                 for i in indxwalk:
                     axis[0].plot(indxsampwalk, listlposwalk[i, :])
-                axis[0].axvline(numbsampburnwalk, color='k')
+                axis[0].axvline(numbsampburnwalk, color='black')
                 axis[0].set_ylabel('log P')
                 for k in indxpara:
                     for i in indxwalk:
@@ -4312,7 +4334,7 @@ def samp( \
                     labl = listlablpara[k][0]
                     if listlablpara[k][1] != '':
                         labl += ' [%s]' % listlablpara[k][1]
-                    axis[k+1].axvline(numbsampburnwalk, color='k')
+                    axis[k+1].axvline(numbsampburnwalk, color='black')
                     axis[k+1].set_ylabel(labl)
                 path = pathvisu + 'trac%s.%s' % (strgextn, typefileplot)
                 if typeverb == 1:
