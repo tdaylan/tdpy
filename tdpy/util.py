@@ -1507,9 +1507,6 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'numbtran':
             listlablpara[k] = ['$N_{tr}$', '']
             listscalpara[k] = 'self'
-        elif listnamepara[k] == 'incl' or listnamepara[k] == 'inclcomp':
-            listlablpara[k] = ['$i$', 'degree']
-            listscalpara[k] = 'self'
         elif listnamepara[k] == 'cosi':
             listlablpara[k] = ['$\cos i$', '']
             listscalpara[k] = 'self'
@@ -1578,6 +1575,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         
         # orbital parameters for each component
         elif listnamepara[k][-1].isnumeric() and listnamepara[k][-4:-1] == 'com' or listnamepara[k].endswith('comp'):
+            listlablpara[k] = [[], []]
             if listnamepara[k][-1].isnumeric() and listnamepara[k][-4:-1] == 'com':
                 boolnume = True
             else:
@@ -1623,17 +1621,38 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'pericom':
                 if boolmath:
-                    listlablpara[k] = '$P_{%s}$' % strgnume
+                    listlablpara[k][0] = '$P_{%s}$' % strgnume
                 else:
-                    listlablpara[k] = 'Orbital period%s' % strgnume
+                    listlablpara[k][0] = 'Orbital period%s' % strgnume
                 listlablpara[k][1] = 'days'
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'eccecom':
                 if boolmath:
-                    listlablpara[k] = '$e_{%s}$' % strgnume
+                    listlablpara[k][0] = '$e_{%s}$' % strgnume
                 else:
-                    listlablpara[k] = 'Eccentricity%s' % strgnume
+                    listlablpara[k][0] = 'Eccentricity%s' % strgnume
                 listlablpara[k][1] = ''
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'arpacom':
+                if boolmath:
+                    listlablpara[k][0] = '$\omega_{%s}$' % strgnume
+                else:
+                    listlablpara[k][0] = 'Argument of periapsis%s' % strgnume
+                listlablpara[k][1] = 'deg'
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'inclcom':
+                if boolmath:
+                    listlablpara[k][0] = '$i_{%s}$' % strgnume
+                else:
+                    listlablpara[k][0] = 'Inclination%s' % strgnume
+                listlablpara[k][1] = 'deg'
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'loancom':
+                if boolmath:
+                    listlablpara[k][0] = '$\Omega_{%s}$' % strgnume
+                else:
+                    listlablpara[k][0] = 'Longitude of ascending node%s' % strgnume
+                listlablpara[k][1] = 'deg'
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'depttrancom':
                 if boolmath:
