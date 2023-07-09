@@ -2157,8 +2157,12 @@ def retr_indximagmaxm(data):
 
 
 def plot_timeline(
-                  path, \
                   dictrows, \
+                  
+                  pathbase=None, \
+
+                  strgplot=None, \
+
                   # optional list of row names in order to determine the order
                   listnamerows=None, \
                   # type of date ticks
@@ -2184,6 +2188,8 @@ def plot_timeline(
                   # type of plot background
                   typeplotback='white', \
 
+                  ## file type of the plot
+                  typefileplot='png', \
                   ):
     '''
     Make a timeline (Gantt) chart
@@ -2207,13 +2213,15 @@ def plot_timeline(
     listcolrrows = [[] for k in indxrows]
     for k in indxrows:
         
-        if not 'listelem' in dictrows[listnamerows[k]]:
+        if not 'listdictelem' in dictrows[listnamerows[k]]:
             print('')
             print('')
             print('')
+            print('listnamerows[k]')
+            print(listnamerows[k])
             print('dictrows[listnamerows[k]]')
             print(dictrows[listnamerows[k]])
-            raise Exception('Each dictionary in dictrows should itself be a dictionary with key "listelem".')
+            raise Exception('Each dictionary in dictrows should itself be a dictionary with keys "dictlistelem".')
 
         if 'size' in dictrows[listnamerows[k]]:
             listsizerows[k] = dictrows[listnamerows[k]]['size']
@@ -2230,9 +2238,9 @@ def plot_timeline(
         else:
             listlablrows[k] = listnamerows[k]
             
-        for l in range(len(dictrows[listnamerows[k]]['listelem'])):
-            minmjdat = min(minmjdat, astropy.time.Time(dictrows[listnamerows[k]]['listelem'][l][0], format='iso').jd)
-            maxmjdat = max(maxmjdat, astropy.time.Time(dictrows[listnamerows[k]]['listelem'][l][1], format='iso').jd)
+        for l in range(len(dictrows[listnamerows[k]]['listdictelem'])):
+            minmjdat = min(minmjdat, astropy.time.Time(dictrows[listnamerows[k]]['listdictelem'][l]['limtdate'][0], format='iso').jd)
+            maxmjdat = max(maxmjdat, astropy.time.Time(dictrows[listnamerows[k]]['listdictelem'][l]['limtdate'][1], format='iso').jd)
     
     #dicttemp = dict()
     #dicttemp['init'] = dict()
@@ -2281,6 +2289,8 @@ def plot_timeline(
             typetickdate = 'daily'
     if typetickdate in ['daily', 'monthly', 'quarterly', 'bimonthly', 'yearly']:
         # string holding the first date
+        print('minmjdat')
+        print(minmjdat)
         strgtimeminm = astropy.time.Time(minmjdat, format='jd').to_value('iso', subfmt='date')
         # string holding the last date
         strgtimemaxm = astropy.time.Time(maxmjdat, format='jd').to_value('iso', subfmt='date')
@@ -2359,88 +2369,109 @@ def plot_timeline(
         while True:
             strgtimethis = astropy.time.Time(jdatinitintg + cntr * 365.25, format='jd').to_value('iso', subfmt='date')
             
-            #strgtimeinit = str(strgtimethis)
-            #strgtimefinl = str(strgtimethis)
-            strgtimeinit = strgtimethis[:4] + '-06-01'
-            strgtimefinl = strgtimethis[:4] + '-08-31'
-            jdatinit = astropy.time.Time(strgtimeinit, format='iso').jd
-            jdatfinl = astropy.time.Time(strgtimefinl, format='iso').jd
-            if jdatinit < maxmjdat:
-                listjdatvert.append(jdatinit)
-            if jdatfinl < maxmjdat:
-                listjdatvert.append(jdatfinl)
-            if jdatfinl > maxmjdat:
-                break
+            for aa in range(6, 10):
+                strgtime = strgtimethis[:4] + '-0%d-01' % aa
+                jdat = astropy.time.Time(strgtime, format='iso').jd
+                if jdat < maxmjdat:
+                    listjdatvert.append(jdat)
+            
             cntr += 1
+            
+            if jdat > maxmjdat:
+                break
+            
+            if cntr > 1000:
+                raise Exception('')
 
-    # to be deleted
-    #listlabltick[kk] = astropy.time.Time(jdat, format='TimeYMDHMS').to_value('iso', subfmt='date')
     for kk, jdat in enumerate(listjdat):
         listlabltick[kk] = astropy.time.Time(jdat, format='jd').to_value('iso', subfmt='date')
         if typetickdate in ['monthly', 'quarterly', 'bimonthly']:
             listlabltick[kk] = listlabltick[kk][:-3]
         if typetickdate in ['yearly']:
             listlabltick[kk] = listlabltick[kk][:-6]
-
-    figr, axis = plt.subplots(1, figsize=sizefigr)
-    
+        
     if typeplotback == 'white':
         edgecolor = 'black'
-        color = 'black'
+        textcolor = 'black'
     elif typeplotback == 'black':
         edgecolor = 'white'
-        color = 'white'
+        textcolor = 'white'
 
-    ydattext = 0.
-    listtick = [[] for k in indxrows]
-    for k in indxrows:
-        
-        for l in range(len(dictrows[listnamerows[k]]['listelem'])):
-            
-            jdatfrst = astropy.time.Time(dictrows[listnamerows[k]]['listelem'][l][0], format='iso').jd
-            jdatseco = astropy.time.Time(dictrows[listnamerows[k]]['listelem'][l][1], format='iso').jd
-            
-            xdattext = jdatfrst + 0.5 * (jdatseco - jdatfrst)
-            
-            axis.barh(ydattext, jdatseco - jdatfrst, left=jdatfrst, color=listcolrrows[k], height=listsizerows[k], edgecolor=edgecolor, alpha=0.5)
-            
-            listlablxaxi = axis.set_xticks(listjdat, rotation=45)
-            
-            axis.set_xticklabels(listlabltick)
-            
-            axis.text(xdattext, ydattext, dictrows[listnamerows[k]]['listelem'][l][2], color=color, ha='center', va='center')
-        
-        if k == 0:
-            minmydat = ydattext - 0.5 * listsizerows[k]
-        if k == numbrows - 1:
-            maxmydat = ydattext + 0.5 * listsizerows[k]
-        
-        listtick[k] = ydattext
+    deltjdat = maxmjdat - minmjdat
+    listjdatbins = np.arange(minmjdat, maxmjdat+1, 2. * 365.)
+    numbplot = listjdatbins.size
+    indxplot = np.arange(numbplot)
+    for o in indxplot:
+        if numbplot > 1:
+            strgiter = '_%d' % o
+        else:
+            strgiter = ''
+        path = '%s%s%s.%s' % (pathbase, strgplot, strgiter, typefileplot)
 
-        if k < numbrows - 1:
-            ydattext += 0.5 * (listsizerows[k] + listsizerows[k+1])
-    
-    for jdatvert in listjdatvert:
-        axis.axvline(jdatvert, ls='--', color='gray', alpha=0.4)
-    
-    if listjdatlablhigh is not None:
-        for jdatlabl in listjdatlablhigh:
-            if jdatlabl == 'now':
-                jdat = astropy.time.Time.now().jd
-            else:
-                jdat = astropy.time.Time(jdatlabl[0], format='iso').jd
-            axis.axvline(jdat, ls='--')
-            axis.text(jdat, -1, jdatlabl[1], ha='center', va='center')
-    
-    limtydat = [minmydat, maxmydat]
-    axis.set_yticks(listtick)
-    axis.set_yticklabels(listlablrows)
-    axis.set_ylim(limtydat)
-    axis.set_xlabel('Time')
-    print('Writing to %s...' % path)
-    plt.tight_layout()
-    plt.savefig(path, dpi=300)
-    plt.close()
+        figr, axis = plt.subplots(1, figsize=sizefigr)
+        
+        ydattext = 0.
+        listtick = [[] for k in indxrows]
+        for k in indxrows:
+            
+            for l in range(len(dictrows[listnamerows[k]]['listdictelem'])):
+                
+                jdatfrst = astropy.time.Time(dictrows[listnamerows[k]]['listdictelem'][l]['limtdate'][0], format='iso').jd
+                jdatseco = astropy.time.Time(dictrows[listnamerows[k]]['listdictelem'][l]['limtdate'][1], format='iso').jd
+                
+                if o == 0 or (jdatfrst < listjdatbins[o-1] and jdatseco > listjdatbins[o-1]) or \
+                             (jdatseco > listjdatbins[o] and jdatfrst < listjdatbins[o]) or \
+                             (jdatseco < listjdatbins[o] and jdatfrst > listjdatbins[o-1]):
+                    
+                    xdattext = jdatfrst + 0.5 * (jdatseco - jdatfrst)
+                    
+                    if 'colr' in dictrows[listnamerows[k]]['listdictelem'][l]:
+                        color = dictrows[listnamerows[k]]['listdictelem'][l]['colr']
+                    else:
+                        color = listcolrrows[k]
+                    axis.barh(ydattext, jdatseco - jdatfrst, left=jdatfrst, color=color, height=listsizerows[k], edgecolor=edgecolor, alpha=0.5)
+                    
+                    listlablxaxi = axis.set_xticks(listjdat, rotation=45)
+                    
+                    axis.set_xticklabels(listlabltick)
+                    
+                    axis.text(xdattext, ydattext, dictrows[listnamerows[k]]['listdictelem'][l]['strg'], color=textcolor, ha='center', va='center')
+            
+            if k == 0:
+                minmydat = ydattext - 0.5 * listsizerows[k]
+            if k == numbrows - 1:
+                maxmydat = ydattext + 0.5 * listsizerows[k]
+            
+            listtick[k] = ydattext
+
+            if k < numbrows - 1:
+                ydattext += 0.5 * (listsizerows[k] + listsizerows[k+1])
+        
+        for jdatvert in listjdatvert:
+            axis.axvline(jdatvert, ls='--', color='gray', alpha=0.4)
+        
+        if listjdatlablhigh is not None:
+            for jdatlabl in listjdatlablhigh:
+                if jdatlabl == 'now':
+                    jdat = astropy.time.Time.now().jd
+                else:
+                    jdat = astropy.time.Time(jdatlabl[0], format='iso').jd
+                axis.axvline(jdat, ls='-.', lw=1, color='black')
+                axis.text(jdat, numbrows, jdatlabl[1], ha='center', va='center')
+        
+        limtydat = [minmydat, maxmydat]
+        axis.set_yticks(listtick)
+        axis.set_yticklabels(listlablrows)
+        axis.set_ylim(limtydat)
+        axis.set_xlabel('Time')
+        
+        #if o > 0:
+        #    axis.set_xlim([listjdatbins[o-1], listjdatbins[o]])
+        
+        print('Writing to %s...' % path)
+        plt.tight_layout()
+        plt.savefig(path, dpi=300)
+        plt.close()
 
 
 def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, \
