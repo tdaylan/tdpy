@@ -1611,7 +1611,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                 listlablpara[k] = ['$(R_\star+R_{%s})/a$' % listnamepara[k][-1], '']
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'cosicom':
-                listlablpara[k] = ['$\cos i%s$' % strgnume, '']
+                listlablpara[k] = ['$\cos i$%s' % strgnume, '']
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'epocmtracom':
                 if boolnume:
