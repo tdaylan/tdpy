@@ -2402,6 +2402,11 @@ def plot_timeline(
     numbplot = listjdatbins.size
     indxplot = np.arange(numbplot)
     for o in indxplot:
+        
+        # skip the time-restricted iterations for the moment
+        if o > 0:
+            continue
+
         if numbplot > 1:
             strgiter = '_%d' % o
         else:
