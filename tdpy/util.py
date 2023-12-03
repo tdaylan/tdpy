@@ -1749,8 +1749,8 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None, boolshowuniq=Fa
         print('Type is dict with keys:')
         print(list(varb.keys()))
         for name in varb:
-            print('key %s:' % name)
-            summgene(varb[name])
+            print('Recursively calling summgene() for key "%s":' % name)
+            summgene(varb[name], boolshowlong=boolshowlong)
             
     elif isinstance(varb, list):
         print('Type is list with length %d.' % len(varb))
