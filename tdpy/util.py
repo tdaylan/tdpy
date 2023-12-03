@@ -992,6 +992,15 @@ def retr_dictturk():
     dictturk['Exoplanets with precise mass'] = 'Kütle ölçümü hassas olan ötegezegenler'
     dictturk['Exoplanets with weak mass'] = 'Kütle ölçümü zayıf olan ötegezegenler'
     dictturk['Young'] = 'Genç'
+    
+    dictturk['Exoplanets with precise masses'] = 'Hassas kütleli ötegezegenler'
+
+    dictturk['TESS discoveries'] = 'TESS keşifleri'
+    dictturk['Kepler discoveries'] = 'Kepler keşifleri'
+
+    dictturk['High TSM or ESM'] = 'Yüksek TSM veya ESM'
+    dictturk['High TSM or ESM \& Precise mass'] = 'Yüksek TSM veya ESM \& hassas kütle'
+    
     dictturk['Old'] = 'Yaşlı'
     dictturk['Discovery Year'] = 'Keşif Yılı'
     dictturk['Discovered by TESS'] = 'TESS tarafından keşfedilen'
@@ -1059,7 +1068,7 @@ def sign_code(axis, typesigncode, typeplotback='white'):
                                                                         transform=axis.transAxes, color='firebrick', ha='right', size='small')
 
 
-def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldiag=True, typelang='English', boolmath=False, typedist='pc'):
+def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldiag=True, typelang='English', boolmath=False, typedist='pc', strgelem='comp'):
     
     if dictdefa is not None:
         if not isinstance(dictdefa, dict):
@@ -1301,7 +1310,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                 listlablpara[k][0] = 'Planetary radius'
             listlablpara[k][1] = '$R_\oplus$'
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'stdvradiplan':
+        elif listnamepara[k] == 'stdvradi%s' % strgelem:
             listlablpara[k] = ['$\sigma_{R_p}$', '$R_\oplus$']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'radistar':
@@ -1313,7 +1322,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'massplan':
             listlablpara[k] = ['$M_p$', '$M_\oplus$']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'stdvmassplan':
+        elif listnamepara[k] == 'stdvmass%s' % strgelem:
             listlablpara[k] = ['$\sigma_{M_p}$', '$M_\oplus$']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'masssyst':
@@ -1331,7 +1340,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'densstar':
             listlablpara[k] = ['$d_\star$', 'g cm$^{-3}$']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'tmptplan':
+        elif listnamepara[k] == 'tmpt%s' % strgelem:
             listlablpara[k] = ['$T_p$', 'K']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'lumistar':
@@ -1361,13 +1370,16 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'tsmmacwg':
             listlablpara[k] = ['TSM$_{ACWG}$', '']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'densplan' or listnamepara[k] == 'denscomp':
+        elif listnamepara[k] == 'logg%s' % strgelem:
+            listlablpara[k] = ['$\log g_p$', '']
+            listscalpara[k] = 'self'
+        elif listnamepara[k] == 'dens%s' % strgelem:
             listlablpara[k] = ['d', 'g cm$^{-3}$']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'epocmtratess':
             listlablpara[k] = ['$T_0$', 'BJD-2457000']
             listscalpara[k] = 'self'
-        elif listnamepara[k] == 'offsphascomp':
+        elif listnamepara[k] == 'offsphas%s' % strgelem:
             listlablpara[k] = ['$\phi_{off}$', '$^\circ$']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'epocmtra':
@@ -1435,20 +1447,16 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             listlablpara[k] = ['TESS Magnitude', '']
             listscalpara[k] = 'self'
         # number of companions per star
-        elif listnamepara[k] == 'numbcompstar':
+        elif listnamepara[k] == 'numb%sstar' % strgelem:
             listlablpara[k] = ['$N_{c}$', '']
             listscalpara[k] = 'self'
         # mean number of companions per star
-        elif listnamepara[k] == 'numbcompstarmean':
+        elif listnamepara[k] == 'numb%sstarmean' % strgelem:
             listlablpara[k] = ['$\mu_{c}$', '']
             listscalpara[k] = 'self'
         # number of transiting companions per star
-        elif listnamepara[k] == 'numbcomptranstar':
+        elif listnamepara[k] == 'numb%stranstar' % strgelem:
             listlablpara[k] = ['$N_{ct}$', '']
-            listscalpara[k] = 'self'
-        # number of planets per star
-        elif listnamepara[k] == 'numbplanstar':
-            listlablpara[k] = ['$N_{p}$', '']
             listscalpara[k] = 'self'
         # 
         elif listnamepara[k] == 'rateppcr':
@@ -1532,13 +1540,13 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'perilspeprim':
             listlablpara[k] = ['$P_{LS,max}$', 'days']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'masscomp':
+        elif listnamepara[k] == 'mass%s' % strgelem:
             listlablpara[k] = ['$M_{comp}$', '$M_\odot$']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'masstotl':
             listlablpara[k] = ['$M_{tot}$', '$M_\odot$']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'smax' or listnamepara[k] == 'smaxcomp':
+        elif listnamepara[k] == 'smax' or listnamepara[k] == 'smax%s' % strgelem:
             listlablpara[k] = ['$a$', 'AU']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'rsma':
@@ -1553,23 +1561,23 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
         elif listnamepara[k] == 'amplslen':
             listlablpara[k] = ['$A_{SL}$', 'ppt']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'duratrancomp' or listnamepara[k] == 'duratrancomptotl' or listnamepara[k] == 'duratrantotl':
+        elif listnamepara[k] == 'duratran%s' % strgelem or listnamepara[k] == 'duratran%stotl' % strgelem or listnamepara[k] == 'duratrantotl':
             listlablpara[k] = ['Total Transit Duration', 'hours']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'typebrgtcomp':
+        elif listnamepara[k] == 'typebrgt%s' % strgelem:
             listlablpara[k] = ['Brightness Type of the Companion', '']
             listscalpara[k] = 'self'
-        elif listnamepara[k] == 'duratrancompfull':
+        elif listnamepara[k] == 'duratran%sfull' % strgelem:
             listlablpara[k] = ['Full Transit Duration', 'hours']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'radicomp':
+        elif listnamepara[k] == 'radi%s' % strgelem:
             if boolmath:
                 listlablpara[k][0] = '$R_c$'
             else:
                 listlablpara[k][0] = 'Companion radius'
             listlablpara[k][1] = '$R_\oplus$'
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'masscomp':
+        elif listnamepara[k] == 'mass%s' % strgelem:
             listlablpara[k] = ['$M_{C}$', '$M_\odot$']
             listscalpara[k] = 'self'
         
@@ -1625,7 +1633,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                 else:
                     listlablpara[k][0] = 'Orbital period%s' % strgnume
                 listlablpara[k][1] = 'days'
-                listscalpara[k] = 'self'
+                listscalpara[k] = 'logt'
             elif listnamepara[k][:-1] == 'eccecom':
                 if boolmath:
                     listlablpara[k][0] = '$e_{%s}$' % strgnume
@@ -1723,7 +1731,10 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
     return listlablpara, listscalpara, listlablrootpara, listlablunitpara, listlabltotlpara
 
 
-def summgene(varb, boolslin=False, namevarb=None, varbcomp=None, boolshowuniq=False):
+def summgene(varb, boolslin=False, namevarb=None, varbcomp=None, boolshowuniq=False, \
+             # Boolean flag to show the contents of an array in detail
+             boolshowlong=True, \
+            ):
     '''
     Output to the command line the content of a varible including its type and summary statistics
     '''
@@ -1737,6 +1748,10 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None, boolshowuniq=Fa
     if isinstance(varb, dict):
         print('Type is dict with keys:')
         print(list(varb.keys()))
+        for name in varb:
+            print('key %s:' % name)
+            summgene(varb[name])
+            
     elif isinstance(varb, list):
         print('Type is list with length %d.' % len(varb))
         #if isinstance(varb[0], str):
@@ -1746,7 +1761,7 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None, boolshowuniq=Fa
     
     elif isinstance(varb, tuple):
         print('Type is tuple with length %d.' % len(varb))
-    else:
+    elif boolshowlong:
         if boolshowuniq:
             show_uniq(varb)
         if boolslin:
@@ -1986,25 +2001,60 @@ def retr_strgmemo(memo):
     return strgmemo
 
 
-def retr_axis(minm=None, maxm=None, numb=None, bins=None, scal='self'):
+def retr_axis(minm=None, maxm=None, limt=None, numbpntsgrid=None, midpgrid=None, binsgrid=None, listsamp=None, scalpara='self', boolinte=None):
     
-    if bins is None:
-        if scal == 'self':
-            bins = np.linspace(minm, maxm, numb + 1)
-            mean = (bins[1:] + bins[:-1]) / 2.
-        else:
-            bins = np.logspace(np.log10(minm), np.log10(maxm), numb + 1)
-            mean = np.sqrt(bins[1:] * bins[:-1])
-    else:
-        if scal == 'self':
-            mean = (bins[1:] + bins[:-1]) / 2.
-        else:
-            mean = np.sqrt(bins[1:] * bins[:-1])
-        numb = mean.size
+    if limt is None:
+        limt = np.arange(2)
+    
+    if boolinte is None:
+        raise Exception('To be implemented')
+    
+    if midpgrid is not None:
+        numbpntsgrid = midpgrid.size
+    elif binsgrid is None:
+        if listsamp is not None:
+            if minm is not None or maxm is not None:
+                raise Exception('')
+
+            minm = np.amin(listsamp)
+            maxm = np.amax(listsamp)
         
-    indx = np.arange(numb)
-   
-    return bins, mean, diff(bins), numb, indx
+        if maxm is not None:
+            limt[1] = maxm
+            limt[0] = minm
+        if boolinte and int(limt[1] - limt[0]) < 1e7:
+            binsgrid = np.linspace(limt[0] - 0.5, limt[1] + 0.5, int(limt[1] - limt[0] + 2))
+            midpgrid = (binsgrid[1:] + binsgrid[:-1]) / 2.
+            numbpntsgrid = binsgrid.size - 1
+        else:
+            if numbpntsgrid is None:
+                numbpntsgrid = 100
+            binsgridunif = np.linspace(0., 1., numbpntsgrid + 1)
+            meanunif = (binsgridunif[1:] + binsgridunif[:-1]) / 2.
+            if scalpara == 'self' or scalpara == 'gaus' or scalpara == 'logt' and limt[1] < 10 * limt[0]:
+                binsgrid = icdf_self(binsgridunif, limt[0], limt[1])
+                midpgrid = icdf_self(meanunif, limt[0], limt[1])
+            elif scalpara == 'logt':
+                binsgrid = icdf_logt(binsgridunif, limt[0], limt[1])
+                midpgrid = icdf_logt(meanunif, limt[0], limt[1])
+            elif scalpara == 'atan':
+                binsgrid = icdf_atan(binsgridunif, limt[0], limt[1])
+                midpgrid = icdf_atan(meanunif, limt[0], limt[1])
+            else:
+                raise Exception('Unrecognized scaling: %s' % scalpara)
+            
+    else:
+        if scalpara == 'self':
+            midpgrid = (binsgrid[1:] + binsgrid[:-1]) / 2.
+        else:
+            midpgrid = np.sqrt(binsgrid[1:] * binsgrid[:-1])
+        numbpntsgrid = midpgrid.size
+    
+    indxpntsgrid = np.arange(numbpntsgrid)
+    
+    deltgrid = binsgrid[1:] - binsgrid[:-1]
+
+    return binsgrid, midpgrid, deltgrid, numbpntsgrid, indxpntsgrid
 
 
 def retr_psfngausnorm(angl):
@@ -2233,6 +2283,7 @@ def plot_timeline(
         else:
             listcolrrows[k] = 'gray'
         
+        # check if there is a row-wide label
         if 'labl' in dictrows[listnamerows[k]]:
             listlablrows[k] = dictrows[listnamerows[k]]['labl']
         else:
@@ -2287,10 +2338,12 @@ def plot_timeline(
             typetickdate = 'weekly'
         else:
             typetickdate = 'daily'
+    
+    print('typetickdate')
+    print(typetickdate)
+
     if typetickdate in ['daily', 'monthly', 'quarterly', 'bimonthly', 'yearly']:
         # string holding the first date
-        print('minmjdat')
-        print(minmjdat)
         strgtimeminm = astropy.time.Time(minmjdat, format='jd').to_value('iso', subfmt='date')
         # string holding the last date
         strgtimemaxm = astropy.time.Time(maxmjdat, format='jd').to_value('iso', subfmt='date')
@@ -2310,8 +2363,12 @@ def plot_timeline(
         # make the axis start in the beginning of the year
         if typetickdate in ['yearly']:
             strgtimeminm = strgtimeminm[:-6] + '-01-01'
+            
+            #strgtimemaxm = '%4d-12-31' % int(strgtimemaxm[:4])
             strgtimemaxm = (datetime.datetime.strptime(strgtimemaxm, "%Y-%m-%d") + dateutil.relativedelta.relativedelta(months=12)).strftime("%Y-%m-%d")[:-6] + '-01-01'
-        
+            print('strgtimemaxm')
+            print(strgtimemaxm)
+
         objtdateminm = datetime.datetime.strptime(strgtimeminm, "%Y-%m-%d")
         objtdatemaxm = datetime.datetime.strptime(strgtimemaxm, "%Y-%m-%d")
         
@@ -2522,6 +2579,10 @@ def plot_gene(path, xdat, ydat, yerr=None, scalxdat=None, scalydat=None, \
         legd = listlegd[k]
         if plottype == 'scat':
             axis.scatter(xdat, ydat, color=colr, alpha=alph, label=legd, s=2)
+        elif plottype == 'kdee':
+            raise Exception('To be implemented')
+            deltxdat = xdat[1] - xdat[0]
+            axis.bar(xdat - deltxdat / 2., ydat, deltxdat, color=colr, alpha=alph, label=legd)
         elif plottype == 'hist':
             deltxdat = xdat[1] - xdat[0]
             axis.bar(xdat - deltxdat / 2., ydat, deltxdat, color=colr, alpha=alph, label=legd)
@@ -4179,13 +4240,12 @@ def samp( \
     ## plot bins
     numbbins = 20
     indxbins = np.arange(numbbins)
-    binspara = np.empty((numbbins + 1, numbpara)) 
+    binsgrid = np.empty((numbbins + 1, numbpara)) 
     for k in indxpara:
         if limtpara[0, k] == limtpara[1, k]:
             raise Exception('')
-
-        binspara[:, k] = np.linspace(limtpara[0, k], limtpara[1, k], numbbins + 1)
-    meanpara = (binspara[1:, :] + binspara[:-1, :]) / 2.
+        
+        binsgrid[:, k], midpgrid[:, k], deltgrid, numbpntsgrid[k], indx = retr_axis(listsamp=listpara[:, k, 0])
     
     for k in indxpara:
         if minmpara[k] >= maxmpara[k]:
@@ -4420,7 +4480,7 @@ def samp( \
         if boolplot and pathvisu is not None:
             ## joint PDF
             strgextn = 'postparafitt' + strgextn
-            plot_grid(listlablpara, pathbase=pathvisu, listnamepara=listnamepara, strgextn=strgextn, listpara=listparafitt, numbbinsplot=numbbins)
+            plot_grid(listlablpara, pathbase=pathvisu, listnamepara=listnamepara, strgextn=strgextn, listpara=listparafitt, numbpntsgrid=numbbins+1)
             
             # derived
             if dictlablscalparaderi is not None:
@@ -4432,9 +4492,9 @@ def samp( \
                 listnameparatotl = listnamepara + listnameparaderi
                 listparatotl = np.concatenate([listparafitt, listparaderi], 1)
                 strgextn = 'postparaderi' + strgextn
-                plot_grid(listlablparaderi, pathbase=pathvisu, strgextn=strgextn, listnameparaderi=listnameparaderi, listpara=listparaderi, numbbinsplot=numbbins)
+                plot_grid(listlablparaderi, pathbase=pathvisu, strgextn=strgextn, listnameparaderi=listnameparaderi, listpara=listparaderi, numbpntsgrid=numbbins+1)
                 strgextn = 'postparatotl' + strgextn
-                plot_grid(listlablparatotl, pathbase=pathvisu, strgextn=strgextn, listpara=listparatotl, numbbinsplot=numbbins)
+                plot_grid(listlablparatotl, pathbase=pathvisu, strgextn=strgextn, listpara=listparatotl, numbpntsgrid=numbbins+1)
             else:
                 listparatotl = listparafitt
         
@@ -4586,7 +4646,9 @@ def plot_grid_diag(k, axis, listpara, truepara, listparadraw, boolplotquan, \
 
 def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
                                      listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listmsizpopl, \
-                                     listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=None, \
+                                     typeannosamp, listlablannosamp, \
+                                     listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, \
+                                     bins=None, midpgrid=None, \
                                      listlablsamp=None, boolcbar=True, \
                                     ):
     
@@ -4627,60 +4689,74 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 listlablsamppair = listlablsamp[u][indx]
                 listparapair = listparapair[:, np.array([l, k])]
                 
-                # transform from data to axis coordinate positions
-                ## display coordinate positions
-                posidisp = axis.transData.transform(listparapair)
-                ## axis coordinate positions
-                listparapairoutl = axis.transAxes.inverted().transform(posidisp)
-                
-                from sklearn.neighbors import LocalOutlierFactor
-                numbsamp = listparapairoutl.shape[0]
-                
-                numboutf = min(0, numbsamp)
-                if numboutf > 0:
-                    if numbsamp > numboutf:
-                        n_neighbors = min(numbsamp, 100)
-                        objtfore = LocalOutlierFactor(n_neighbors=n_neighbors)
-                        objtfore.fit(listparapairoutl)
-                        louf = objtfore.negative_outlier_factor_
+                if listlablannosamp is not None:
+                    listindxsamplouf = []
+                    for lablannosamp in listlablannosamp:
+                        indx = np.where(listlablsamppair == lablannosamp)[0]
+                        if indx.size > 0:
+                            if indx.size > 1:
+                                raise Exception('')
+                            listindxsamplouf.append(indx[0])
+                    listindxsamplouf = np.array(listindxsamplouf, dtype=int)
+                elif typeannosamp == 'LOF':
+                    # transform from data to axis coordinate positions
+                    ## display coordinate positions
+                    posidisp = axis.transData.transform(listparapair)
+                    ## axis coordinate positions
+                    listparapairoutl = axis.transAxes.inverted().transform(posidisp)
+                    
+                    print('Determining the elements to be annotated...')
+                    from sklearn.neighbors import LocalOutlierFactor
+                    numbsamp = listparapairoutl.shape[0]
+                    
+                    numboutf = min(0, numbsamp)
+                    if numboutf > 0:
+                        if numbsamp > numboutf:
+                            n_neighbors = min(numbsamp, 100)
+                            objtfore = LocalOutlierFactor(n_neighbors=n_neighbors)
+                            objtfore.fit(listparapairoutl)
+                            louf = objtfore.negative_outlier_factor_
+                        else:
+                            louf = np.zeros(numbsamp)
+                        listindxsamplouf = np.argsort(louf)[:numboutf]
                     else:
-                        louf = np.zeros(numbsamp)
-                    listindxsamplouf = np.argsort(louf)[:numboutf]
-                else:
-                    listindxsamplouf = np.array([], dtype=int)
+                        listindxsamplouf = np.array([], dtype=int)
 
-                indxtemp = np.array([np.argmin(listparapair[:, 0]), np.argmin(listparapair[:, 1]), np.argmax(listparapair[:, 0]), np.argmax(listparapair[:, 1])])
-                listindxsamplouf = np.concatenate([listindxsamplouf, indxtemp])
-                listindxsamplouf = np.unique(listindxsamplouf)
+                elif typeannosamp == 'minmax':
+                    listindxsamplouf = np.array([np.argmin(listparapair[:, 0]), np.argmin(listparapair[:, 1]), np.argmax(listparapair[:, 0]), np.argmax(listparapair[:, 1])])
+                    listindxsamplouf = np.unique(listindxsamplouf)
+                else:
+                    raise Exception('')
+
                 numboutf = listindxsamplouf.size
                 listparapair = listparapair[listindxsamplouf, :]
                 listlablsamppair = listlablsamppair[listindxsamplouf]
             
-                ## coordinates of the samples to be annotated
-                if listscalpara[l] == 'self' or listscalpara[l] == 'gaus':
-                    xpossamp = cdfn_self(listparapair[:, 0], limt[0, l], limt[1, l])
-                elif listscalpara[l] == 'logt':
-                    xpossamp = cdfn_logt(listparapair[:, 0], limt[0, l], limt[1, l])
-                elif listscalpara[l] == 'atan':
-                    xpossamp = cdfn_atan(listparapair[:, 0], limt[0, l], limt[1, l])
-                else:
-                    raise Exception('Unrecognized scaling: %s' % listscalpara[l])
-                
-                if listscalpara[k] == 'self' or listscalpara[k] == 'gaus':
-                    ypossamp = cdfn_self(listparapair[:, 1], limt[0, k], limt[1, k])
-                elif listscalpara[k] == 'logt':
-                    ypossamp = cdfn_logt(listparapair[:, 1], limt[0, k], limt[1, k])
-                elif listscalpara[k] == 'atan':
-                    ypossamp = cdfn_atan(listparapair[:, 1], limt[0, k], limt[1, k])
-                else:
-                    raise Exception('Unrecognized scaling: %s' % listscalpara[k])
-                
                 # place larger markers at the positions of the outliers
                 axis.scatter(listparapair[:, 0], listparapair[:, 1], s=3, color=listcolrpopl[u], marker=listmrkrpopl[u])
                 
                 print('Automatically positioning the annotations...')
                 # automatically position the annotations
 
+                ## coordinates of the samples to be annotated
+                if listscalpara[l] == 'self' or listscalpara[l] == 'gaus':
+                    xpossamp = cdfn_self(listparapair[:, 0], limt[l][0], limt[l][1])
+                elif listscalpara[l] == 'logt':
+                    xpossamp = cdfn_logt(listparapair[:, 0], limt[l][0], limt[l][1])
+                elif listscalpara[l] == 'atan':
+                    xpossamp = cdfn_atan(listparapair[:, 0], limt[l][0], limt[l][1])
+                else:
+                    raise Exception('Unrecognized scaling: %s' % listscalpara[l])
+                
+                if listscalpara[k] == 'self' or listscalpara[k] == 'gaus':
+                    ypossamp = cdfn_self(listparapair[:, 1], limt[k][0], limt[k][1])
+                elif listscalpara[k] == 'logt':
+                    ypossamp = cdfn_logt(listparapair[:, 1], limt[k][0], limt[k][1])
+                elif listscalpara[k] == 'atan':
+                    ypossamp = cdfn_atan(listparapair[:, 1], limt[k][0], limt[k][1])
+                else:
+                    raise Exception('Unrecognized scaling: %s' % listscalpara[k])
+                
                 # tunable parameters
                 sizelablxpos = 0.3 
                 sizelablypos = 0.1
@@ -4752,20 +4828,46 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 #listyposlabl = listyposlabl[indxlablassi]
                 
                 for n in range(numboutf):
-                    axis.annotate(listlablsamppair[n], xy=(xpossamp[n], ypossamp[n]), \
+                    axis.annotate(listlablsamppair[n], \
+                                  #xy=(xpossamp[n], ypossamp[n]), \
+                                  xy=(listparapair[n, 0], listparapair[n, 1]), \
                                   xytext=(listxposlabl[n], listyposlabl[n]),
                                   textcoords=axis.transAxes, \
-                                  xycoords=axis.transAxes, \
+                                  xycoords=axis.transData, \
                                   ha='center', va='center', \
                                   color=listcolrpopl[u], \
-                                  bbox=dict(boxstyle='round,pad=0.2', fc='yellow', ec='darkblue', alpha=1.), \
-                                  arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.1', color='red'), \
+                                  bbox=dict(boxstyle='round,pad=0.2', fc='yellow', ec='black', alpha=1.), \
+                                  arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.1', color='gray'), \
                                  )
 
-        else:
+        elif listtypeplottdim[u] == 'kdee':
+            kdee = tdpy.retr_KDE(listpara[u][:, np.array([k, l])], midpgrid=midpgrid)
+        
+            if np.amax(kdee) / np.amin(kdee) < 1e2:
+                norm = None
+            else:
+                norm = matplotlib.colors.LogNorm()
+            
+            objtaxispcol = axis.pcolor(midpgrid[l], midpgrid[k], kdee, cmap=listcolrpopltdim[u], label=labl, norm=norm)
+        elif listtypeplottdim[u] == 'hist':
             hist = np.histogram2d(listpara[u][:, l], listpara[u][:, k], bins=binstemp)[0]
-            objtaxispcol = axis.pcolor(bins[l], bins[k], hist.T, cmap=listcolrpopltdim[u], label=labl, norm=matplotlib.colors.LogNorm())
-    
+            
+            if np.amax(hist) == 0:
+                print('binstemp')
+                print(binstemp)
+                print('listpara[u][:, k]')
+                summgene(listpara[u][:, k])
+                raise Exception('')
+
+            if np.amax(hist) / np.amin(hist[np.where(hist > 0)]) < 1e2:
+                norm = None
+            else:
+                norm = matplotlib.colors.LogNorm()
+            
+            objtaxispcol = axis.pcolor(midpgrid[l], midpgrid[k], hist.T, cmap=listcolrpopltdim[u], label=labl, norm=norm)
+        else:
+            raise Exception('')
+
     if boolcbar and (listtypeplottdim == 'hist').any():
         cbar = plt.colorbar(objtaxispcol)
         
@@ -4788,11 +4890,41 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
         axis.set_aspect('equal')
     
     if listscalpara[l] == 'logt':
-        setp_axislogt(axis, limt[:, l], 'x', listmantlabl)
+        setp_axislogt(axis, limt[l], 'x', listmantlabl)
     
     if listscalpara[k] == 'logt':
-        setp_axislogt(axis, limt[:, k], 'y', listmantlabl)
+        setp_axislogt(axis, limt[k], 'y', listmantlabl)
     
+
+def retr_KDE(listpara):
+    '''
+    Return a KDE estimate of a list samples for one or two parameters
+    '''
+
+    numbpara = listpara.shape[1]
+    if numbpara < 1 or numbpara > 2:
+        raise Exception('')
+    indxpara = np.arange(numbpara)
+    numbpntsgrid = np.empty(numbpara)
+    midpgrid = [[] for k in indxpara]
+    for k in indxpara:
+        bins, midpgrid[k], deltgrid, numbpntsgrid[k], indx = retr_axis(listsamp=listpara[:, k, 0])
+        
+    if numbpara == 1:
+        kdee = np.zeros(numbpntsgrid[0])
+    
+        for n in indxsamp:
+            kdee += np.exp(-0.5 * (listpara[n, 0, 0] - xposmesh)**2 / listpara[n, :, 1]**2) / listpara[n, 0, 1]
+
+    else:
+        kdee = np.zeros((numbpntsgrid[0], numbpntsgrid[1]))
+        xposmesh, yposmesh = np.meshgrid(midpgrid[0], midpgrid[1], indexing='ij')
+        
+        for n in indxsamp:
+            kdee += np.exp(-0.5 * ((listpara[n, 0, 0] - xposmesh)**2 + (listpara[n, 1, 0] - yposmesh)**2) / listpara[n, :, 1]**2) / listpara[n, 0, 1] / listpara[n, 1, 1]
+
+    return kdee
+
 
 def retr_listvalutickmajr(minmlogt, maxmlogt, scal):
     
@@ -4952,7 +5084,7 @@ def plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, li
         axis.xaxis.get_major_locator().set_params(integer=True)
     
     if listscalpara[k] == 'logt':
-        setp_axislogt(axis, limtrims[:, k], 'x', listmantlabl)
+        setp_axislogt(axis, limtrims[k], 'x', listmantlabl)
     limtyaxi = axis.get_ylim()
     
     boolyaxilogt = limtyaxi[1] - limtyaxi[0] > 30.
@@ -4984,7 +5116,7 @@ def plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, li
     
     if titl is not None:
         axis.set_title(titl)
-    axis.set_xlim(limt[:, k]) 
+    axis.set_xlim(limt[k]) 
     plt.tight_layout()
     if path is not None:
         print('Writing to %s...' % path)
@@ -5105,10 +5237,20 @@ def plot_grid(
               
               # list of labels for populations
               listlablpopl=None, \
-              
+            
+              # Boolean flag to overwrite
+              boolwritover=False, \
+
               # Boolean flag to include a legend
               boolmakelegd=True, \
              
+              # type of annotation
+              ## 'minmax': minima and maxima
+              typeannosamp='minmax', \
+              
+              # label of the sample to be annotated
+              listlablannosamp=None, \
+
               # Boolean flag to indicate that the populations are mutually-exclusive
               boolpoplexcl=False, \
              
@@ -5121,8 +5263,11 @@ def plot_grid(
               # list of tick mantices (other than 1) to show in the label when the axis is log-streched
               listmantlabl=None, \
               
+              # optional bins
+              binsgridinpt=None, \
+
               # number of bins
-              numbbinsplot=40, \
+              numbpntsgrid=None, \
 
               # Boolean flag to overplot quantiles
               boolplotquan=False, \
@@ -5205,34 +5350,34 @@ def plot_grid(
     else:
         boolmpop = False
         listpara = [listpara]
-        
+    
     # preclude quantile lines if there are multiple populations
     if boolplotquan and boolmpop:
         raise Exception('')
     
     if listpara[0].ndim == 1:
-        listpara[0] = listpara[0][:, None]
-        listlablpara = [listlablpara]
+        raise Exception('listpara should be a list of Nsamp by Nparam array')
 
     # temp: number of parameters should be able to be different for different populations
     numbpara = listpara[0].shape[1]
     indxpara = np.arange(numbpara)
     
+    if listnamepara is None:
+        listnamepara = []
+        for k in indxpara:
+            listnamepara.append('p%03d' % k)
+
     if boolplotpair is None:
-        boolplotpair = not boolplottria and not (listnamepara is None and pathbase is not None)
+        boolplotpair = not boolplottria and pathbase is not None
     
     if boolplothistodim is None:
-        boolplothistodim = not boolplottria and not (listnamepara is None and pathbase is not None)
+        boolplothistodim = not boolplottria and pathbase is not None
     
-    if (boolplotpair or boolplothistodim) and listnamepara is None and pathbase is not None:
-        raise Exception('If individual histograms or pairwise scatter plots are to be written to the disk, then listnamepara and pathbase must be provided.')
+    if (boolplotpair or boolplothistodim) and pathbase is None:
+        raise Exception('If individual histograms or pairwise scatter plots are to be written to the disk, then pathbase must be provided.')
     
     if lablnumbsamp is None:
         lablnumbsamp = 'Number of samples'
-
-    # check inputs
-    if (boolplotpair or boolplothistodim) and listnamepara is None and pathbase is not None:
-        raise Exception('You should provide the argument listnamepara to write individual histograms and pairwise scatter plots to the disk.')
     
     if len(listlablpara[0]) == 2 and isinstance(listlablpara[0][0], str) and isinstance(listlablpara[0][1], str):
         listlablparatotl = retr_labltotl(listlablpara)
@@ -5273,6 +5418,9 @@ def plot_grid(
     
     if listscalpara is None:
         listscalpara = ['self'] * numbpara
+    
+    print('listscalpara')
+    print(listscalpara)
 
     if len(listscalpara) != len(listlablpara):
         print('listscalpara')
@@ -5309,7 +5457,11 @@ def plot_grid(
             listtypeplottdim[indxpoplmaxm] = 'hist'
         else:
             listtypeplottdim[indxpoplmaxm] = 'scat'
-
+    
+    strglisttypeplottdim = ''
+    for temp in listtypeplottdim:
+        strglisttypeplottdim += temp
+    
     # sort the populations in decreasing order of size
     indxpopl = np.argsort(numbsamp)[::-1]
 
@@ -5321,14 +5473,26 @@ def plot_grid(
                 print('Will reset its scaling to linear (self)...')
                 listscalpara[k] = 'self'
 
-    listindxgood = [[[] for k in indxpara] for u in indxpopl]
-    if limt is None:
-        limt = np.empty((2, numbpara))
-        limt[0, :] = 1e100
-        limt[1, :] = -1e100
+    if listparadraw is not None:
+        numbdraw = len(listparadraw)
+        indxdraw = np.arange(numbdraw)
+
+    # list of Booleans for each parameter indicating whether it is a list of integers
+    boolinte = [[] for k in indxpara]
+    for k in indxpara:
+        boolinte[k] = True
+        for u in indxpopl:
+            if ((listpara[u][:, k] - listpara[u][:, k].astype(int)) != 0).any():
+                boolinte[k] = False
         
-        boolinte = [[] for k in indxpara]
+    limtrims = [[] for k in indxpara]
+    listindxgood = [[[] for k in indxpara] for u in indxpopl]
+    if binsgridinpt is None:
+        limt = [[] for k in indxpara]
         for k in indxpara:
+            limt[k] = np.empty(2)
+            limt[k][0] = 1e100
+            limt[k][1] = -1e100
             for u in indxpopl:
                 boolsampfini = np.isfinite(listpara[u][:, k])
                 if listscalpara[k] == 'logt':
@@ -5349,18 +5513,18 @@ def plot_grid(
                     listindxgood[u][k] = np.where(boolsampfini)[0]
             
                 if listindxgood[u][k].size > 0:
-                    limt[0, k] = min(limt[0, k], np.nanmin(listpara[u][listindxgood[u][k], k], 0))
-                    limt[1, k] = max(limt[1, k], np.nanmax(listpara[u][listindxgood[u][k], k], 0))
+                    limt[k][0] = min(limt[k][0], np.nanmin(listpara[u][listindxgood[u][k], k], 0))
+                    limt[k][1] = max(limt[k][1], np.nanmax(listpara[u][listindxgood[u][k], k], 0))
             
             if booldiag:
-                if limt[0, k] == limt[1, k]:
+                if limt[k][0] == limt[k][1]:
                     print('')
                     print('')
                     print('')
                     print('')
                     print('listnamepara')
                     #print(listnamepara)
-                    print('Warning! The lower and upper limits for parameters %s are the same: %g.' % (listlablpara[k][0], limt[0, k]))
+                    print('Warning! The lower and upper limits for parameters %s are the same: %g.' % (listlablpara[k][0], limt[k][0]))
                     print('listpara[u][:, k]')
                     summgene(listpara[u][:, k])
                     print('listpara[u][listindxgood[u][k], k]')
@@ -5368,12 +5532,6 @@ def plot_grid(
                     print('')
                     #raise Exception('')
 
-            # list of Booleans for each parameter indicating whether it is a list of integers
-            boolinte[k] = True
-            for u in indxpopl:
-                if ((listpara[u][:, k] - listpara[u][:, k].astype(int)) != 0).any():
-                    boolinte[k] = False
-        
         # sanity checks
         if booldiag:
             for k in indxpara:
@@ -5393,22 +5551,20 @@ def plot_grid(
                 #        summgene(listindxgood[u][k])
                 #        print('listpara[u][:, k]')
                 #        summgene(listpara[u][:, k])
-                #        print('numbbinsplot')
-                #        print(numbbinsplot)
                 #        print('listnamepara[k]')
                 #        print(listnamepara[k])
                 #        print('listlablpara[k]')
                 #        print(listlablpara[k])
                 #        print('listscalpara[k]')
                 #        print(listscalpara[k])
-                #        print('limt[:, k]')
-                #        print(limt[:, k])
+                #        print('limt[k]')
+                #        print(limt[k])
                 #        raise Exception('')
                 
                 for u in indxpopl:
                     if listpara[u][:, k].size > 0:
                         minmtemp = np.amin(np.abs(listpara[u][:, k]))
-                        if not np.isfinite(limt[:, k]).all() or minmtemp < 1e-100 and minmtemp > 0.:
+                        if not np.isfinite(limt[k]).all() or minmtemp < 1e-100 and minmtemp > 0.:
                             print('')
                             print('')
                             print('')
@@ -5419,22 +5575,20 @@ def plot_grid(
                             summgene(listindxgood[u][k])
                             print('listpara[u][:, k]')
                             summgene(listpara[u][:, k])
-                            print('numbbinsplot')
-                            print(numbbinsplot)
                             print('listlablpara[k]')
                             print(listlablpara[k])
                             print('listscalpara[k]')
                             print(listscalpara[k])
-                            print('limt[:, k]')
-                            print(limt[:, k])
+                            print('limt[k]')
+                            print(limt[k])
                             print('minmtemp')
                             print(minmtemp)
-                            raise Exception('not np.isfinite(limt[:, k]).all() or minmtemp < 1e-100 and minmtemp > 0.')
+                            raise Exception('not np.isfinite(limt[k]).all() or minmtemp < 1e-100 and minmtemp > 0.')
 
         # sanity checks
         if booldiag:
             for k in indxpara:
-                if not np.isfinite(limt[:, k]).all():
+                if not np.isfinite(limt[k]).all():
                     print('')
                     print('')
                     print('')
@@ -5452,49 +5606,55 @@ def plot_grid(
                         summgene(listindxgood[u][k])
                         print('listpara[u][:, k]')
                         summgene(listpara[u][:, k])
-                    print('numbbinsplot')
-                    print(numbbinsplot)
                     print('listlablpara[k]')
                     print(listlablpara[k])
                     print('listscalpara[k]')
                     print(listscalpara[k])
-                    print('limt[:, k]')
-                    print(limt[:, k])
+                    print('limt[k]')
+                    print(limt[k])
                     raise Exception('')
+
+        if truepara is not None:
+            for k in indxpara:
+                if truepara[k] is not None:
+                    if truepara[k] < limt[k][0]:
+                        limt[k][0] = truepara[k] - 0.1 * (limt[k][1] - truepara[k]) 
+                    if truepara[k] > limt[k][1]:
+                        limt[k][1] = truepara[k] + 0.1 * (truepara[k] - limt[k][0])
+    
+        # limits that do not leave any room for white space which is good for histograms
+        limtrims = np.copy(limt)
 
         if (listtypeplottdim == 'scat').any():
             # update limits to leave white space in the rims which is good for scatter plots
             for k in indxpara:
                 
-                if limt[0, k] == 1e100 and limt[1, k] == -1e100:
+                if limt[k][0] == 1e100 and limt[k][1] == -1e100:
                     continue
 
                 if listscalpara[k] == 'self':
                     if boolinte[k]:
                         delt = 0.5
                     else:
-                        delt = 0.05 * (limt[1, k] - limt[0, k])
-                    limt[0, k] -= delt
-                    limt[1, k] += delt
+                        delt = 0.05 * (limt[k][1] - limt[k][0])
+                    limt[k][0] -= delt
+                    limt[k][1] += delt
                 if listscalpara[k] == 'logt':
-                    fact = np.exp(0.05 * np.log(limt[1, k] / limt[0, k]))
-                    limt[0, k] /= fact
-                    limt[1, k] *= fact
+                    fact = np.exp(0.05 * np.log(limt[k][1] / limt[k][0]))
+                    limt[k][0] /= fact
+                    limt[k][1] *= fact
         
         ## if the limits are finite
         #for k in indxpara:
-        #    if not np.isfinite(limt[:, k]).all():
+        #    if not np.isfinite(limt[k]).all():
         #        print('The limits for parameter %s were not finite. Fixing them to [0, 1]...' % listnamepara[k])
-        #        limt[0, k] = 0.
-        #        limt[1, k] = 1.
+        #        limt[k][0] = 0.
+        #        limt[k][1] = 1.
             
-        # limits that do not leave any room for white space which is good for histograms
-        limtrims = np.copy(limt)
-
         # sanity checks
         if booldiag:
             for k in indxpara:
-                if not np.isfinite(limt[:, k]).all():
+                if not np.isfinite(limt[k]).all():
                     print('')
                     print('')
                     print('')
@@ -5512,14 +5672,12 @@ def plot_grid(
                         summgene(listindxgood[u][k])
                         print('listpara[u][:, k]')
                         summgene(listpara[u][:, k])
-                    print('numbbinsplot')
-                    print(numbbinsplot)
                     print('listlablpara[k]')
                     print(listlablpara[k])
                     print('listscalpara[k]')
                     print(listscalpara[k])
-                    print('limt[:, k]')
-                    print(limt[:, k])
+                    print('limt[k]')
+                    print(limt[k])
                     raise Exception('')
 
         for k in indxpara:
@@ -5529,37 +5687,103 @@ def plot_grid(
                         print('Warning! Population %d (%s), parameter %d (%s) has nonfinite samples.' % (u, listlablpopl[u], k, listlablpara[k][0]))
                         summgene(listpara[u][:, k])
     
-    for k in indxpara:
-        if limt[0, k] == limt[1, k]:
-            print('')
-            print('')
-            print('')
-            print('')
-            print('tdpy.plot_grid(): WARNING! Lower and upper limits are the same for the following parameter.')
-            print('k')
-            print(k)
-            print('limt[:, k]')
-            print(limt[:, k])
-            print('listlablpara[k]')
-            print(listlablpara[k])
-            for u in indxpopl:
-                print('u')
-                print(u)
-                print('listpara[u]')
-                summgene(listpara[u])
-            print('')
-    
-    if truepara is not None:
         for k in indxpara:
-            if truepara[k] is not None:
-                if truepara[k] < limt[0, k]:
-                    limt[0, k] = truepara[k] - 0.1 * (limt[1, k] - truepara[k]) 
-                if truepara[k] > limt[1, k]:
-                    limt[1, k] = truepara[k] + 0.1 * (truepara[k] - limt[0, k])
-    
-    if listparadraw is not None:
-        numbdraw = len(listparadraw)
-        indxdraw = np.arange(numbdraw)
+            if limt[k][0] == limt[k][1]:
+                print('')
+                print('')
+                print('')
+                print('')
+                print('tdpy.plot_grid(): WARNING! Lower and upper limits are the same for the following parameter.')
+                print('k')
+                print(k)
+                print('limt[k]')
+                print(limt[k])
+                print('listlablpara[k]')
+                print(listlablpara[k])
+                for u in indxpopl:
+                    print('u')
+                    print(u)
+                    print('listpara[u]')
+                    summgene(listpara[u])
+                print('')
+        
+    if binsgridinpt is not None and numbpntsgrid is not None:
+        raise Exception('')
+
+    if binsgridinpt is None:
+        binsgridinpt = []
+        for k in indxpara:
+            binsgridinpt.append(None)
+        numbpntsgrid = 40
+    else:
+        numbpntsgrid = None
+        limt = []
+        for k in indxpara:
+            limt.append(None)
+        
+    if boolplottria or boolplothistodim or boolplotpair and ((listtypeplottdim == 'hist').any() or (listtypeplottdim == 'kdee').any()):
+        bins = [[] for k in indxpara]
+        midpgrid = [[] for k in indxpara]
+        for k in indxpara:
+            
+            bins[k], midpgrid[k], deltgrid, numbpntsgrid, indx = retr_axis(limt=limt[k], boolinte=boolinte[k], binsgrid=binsgridinpt[k], numbpntsgrid=numbpntsgrid, scalpara=listscalpara[k])
+            
+            if limt[k] is None:
+                limt[k] = np.array([bins[k][0], bins[k][-1]])
+                limtrims[k] = np.copy(limt[k])
+            
+            if booldiag:
+                boolwarn = False
+                boolstop = False
+                if bins[k].size > 1e6:
+                    boolwarn = True
+                if bins[k][0] >= bins[k][-1]:
+                    boolwarn = True
+                if not np.isfinite(bins[k]).all():
+                    boolstop = True
+                    
+                if boolstop or boolwarn:
+                    print('')
+                    print('')
+                    print('')
+                    print('k')
+                    print(k)
+                    print('listnamepara[k]')
+                    print(listnamepara[k])
+                    print('listlablpara[k]')
+                    print(listlablpara[k])
+                    print('listscalpara[k]')
+                    print(listscalpara[k])
+                    print('limt[k]')
+                    print(limt[k])
+                    print('binsgridinpt[k]')
+                    summgene(binsgridinpt[k])
+                    print('bins[k]')
+                    summgene(bins[k])
+                    for u in indxpopl:
+                        print('listpara[u][:, k]')
+                        summgene(listpara[u][:, k])
+                        
+                    if boolstop:
+                        raise Exception('bins not good')
+                    else:
+                        print('bins not good')
+            
+            if np.amin(bins[k]) == 0 and np.amax(bins[k]) == 0:
+                print('Lower and upper limits of the bins are the same for %s. Grid plot failed.' % listlablpara[k][0])
+                print('k')
+                print(k)
+                print('bins[k]')
+                print(bins[k])
+                print('limt[k]')
+                print(limt[k])
+                print('listscalpara[k]')
+                print(listscalpara[k])
+                print('listlablpara[k]')
+                print(listlablpara[k])
+                #return
+    else:
+        bins = None
 
     # list of Booleans indicating whether a parameter is good to plot
     boolparagood = np.ones(numbpara, dtype=bool)
@@ -5569,73 +5793,8 @@ def plot_grid(
             if np.isfinite(listpara[u][:, k]).any():
                 booltemp = True
         boolparagood[k] = booltemp
-    boolparagood[np.where(limt[0, :] == limt[1, :])] = False
+        boolparagood[np.where(limt[k][0] == limt[k][1])] = False
         
-    if boolplottria or boolplothistodim or boolplotpair and (listtypeplottdim == 'hist').any():
-        bins = [[] for k in indxpara]
-        for k in indxpara:
-            
-            if not boolparagood[k]:
-                continue
-            
-            if boolinte[k] and int(limt[1, k] - limt[0, k]) < 1e7:
-                bins[k] = np.linspace(limt[0, k], limt[1, k], int(limt[1, k] - limt[0, k] + 1))
-            
-            else:
-                if listscalpara[k] == 'self' or listscalpara[k] == 'gaus' or listscalpara[k] == 'logt' and limt[1, k] < 10 * limt[0, k]:
-                    bins[k] = icdf_self(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
-                elif listscalpara[k] == 'logt':
-                    bins[k] = icdf_logt(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
-                elif listscalpara[k] == 'atan':
-                    bins[k] = icdf_atan(np.linspace(0., 1., numbbinsplot + 1), limt[0, k], limt[1, k])
-                else:
-                    raise Exception('Unrecognized scaling: %s' % listscalpara[k])
-            
-            if booldiag:
-                boolgood = True
-                if bins[k].size > 1e6:
-                    boolgood = False
-                if not np.isfinite(bins[k]).all() or bins[k][0] > bins[k][-1]:
-                    boolgood = False
-                    
-                if not boolgood:
-                    print('')
-                    print('')
-                    print('')
-                    print('k')
-                    print(k)
-                    print('numbbinsplot')
-                    print(numbbinsplot)
-                    print('listnamepara[k]')
-                    print(listnamepara[k])
-                    print('listlablpara[k]')
-                    print(listlablpara[k])
-                    print('listscalpara[k]')
-                    print(listscalpara[k])
-                    print('limt[:, k]')
-                    print(limt[:, k])
-                    print('bins[k]')
-                    summgene(bins[k])
-                    for u in indxpopl:
-                        print('listpara[u][:, k]')
-                        summgene(listpara[u][:, k])
-                    raise Exception('')
-            if np.amin(bins[k]) == 0 and np.amax(bins[k]) == 0:
-                print('Lower and upper limits of the bins are the same for %s. Grid plot failed.' % listlablpara[k][0])
-                print('k')
-                print(k)
-                print('bins[k]')
-                print(bins[k])
-                print('limt[:, k]')
-                print(limt[:, k])
-                print('listscalpara[k]')
-                print(listscalpara[k])
-                print('listlablpara[k]')
-                print(listlablpara[k])
-                #return
-    else:
-        bins = None
-
     if boolplothistodim:
         
         if numbpopl == 1:
@@ -5650,7 +5809,7 @@ def plot_grid(
             
             if pathbase is not None:
                 path = pathbase + 'hist_%s_%s.%s' % (listnamepara[k], strgextn, typefileplot)
-                if not os.path.exists(path):
+                if not os.path.exists(path) or boolwritover:
                     plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, \
                                                 bins, listcolrpopl, listparadraw, lablnumbsamp, lablsampgene, boolinte, \
                                                 boolmakelegd, listscalpara, factulimyaxihist, titl, plotsize, limt, limtrims, boolcumu=False, path=path)
@@ -5658,11 +5817,18 @@ def plot_grid(
                 if listnamepara[k] in listnamefeatcumu:
                     if pathbase is not None:
                         path = pathbase + 'histcumu_%s_%s.%s' % (listnamepara[k], strgextn, typefileplot)
-                        if not os.path.exists(path):
+                        if not os.path.exists(path) or boolwritover:
                             plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, listlablpopl, bins, \
                                                     listcolrpopl, listparadraw, lablnumbsamp, lablsampgene, boolinte, \
                                                     boolmakelegd, listscalpara, factulimyaxihist, titl, plotsize, limt, limtrims, boolcumu=True, path=path)
                     
+    if boolplottria or boolplothistodim or boolplotpair:
+        if not boolparagood[k]:
+            print('Parameter %d is bad.')
+            for u in indxpopl:
+                print('listpara[u][:, k]')
+                summgene(listpara[u][:, k])
+    
     listsizepopl = []
     for u in indxpopl:
         listsizepopl.append(listpara[u][:, 0].size)
@@ -5713,7 +5879,7 @@ def plot_grid(
         plt.close(figr)
     
     if boolplotpair:
-        if listlablsamp is None or numbpopl > 1:
+        if listlablsamp is None or numbpopl > 1 or typeplottdim == 'hist' or typeplottdim == 'kdee':
             liststrgtext = ['']
         else:
             liststrgtext = ['', '_anno']
@@ -5753,22 +5919,24 @@ def plot_grid(
                             projection = 'aitoff'
                             strgiter = '_aito'
                         if pathbase is not None:
-                            path = pathbase + 'pmar_%s_%s_%s_%s%s%s.%s' % (typeplottdim, listnamepara[k], \
-                                                    listnamepara[l], strgextn, strgtext, strgiter, typefileplot)
+                            path = pathbase + 'pmar_%s_%s_%s%s%s_%s.%s' % (listnamepara[k], \
+                                                    listnamepara[l], strgextn, strgtext, strgiter, strglisttypeplottdim, typefileplot)
                         
-                            if not os.path.exists(path):
+                            if not os.path.exists(path) or boolwritover:
                             
                                 figr = plt.figure(figsize=(plotsize, plotsize))
                                 axis = figr.add_subplot(111, projection=projection)
                                 
                                 plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
                                                                  listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopl, listcolrpopl, listmsizpopl, \
-                                                                 listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=bins, \
+                                                                 typeannosamp, listlablannosamp, \
+                                                                 listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, \
+                                                                 bins=bins, midpgrid=midpgrid, \
                                                                  listlablsamp=listlablsamptemp, boolcbar=True)
                                 
                                 if e == 0:
-                                    axis.set_xlim(limt[:, l])
-                                    axis.set_ylim(limt[:, k])
+                                    axis.set_xlim(limt[l])
+                                    axis.set_ylim(limt[k])
                 
                                 axis.set_xlabel(listlablparatotl[l])
                                 axis.set_ylabel(listlablparatotl[k])
@@ -5821,11 +5989,13 @@ def plot_grid(
                     else:
                         plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparadraw, boolplotquan, listlablpara, \
                                                          listscalpara, boolsqua, listvectplot, listtypeplottdim, indxpopltemp, listcolrpopl, listmsizpopl, \
-                                                         listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, bins=bins, \
+                                                         typeannosamp, listlablannosamp, \
+                                                         listmrkrpopl, listcolrpopltdim, listlablpopl, boolmakelegd, \
+                                                         bins=bins, midpgrid=midpgrid, \
                                                          boolcbar=False)
                         
-                        axis.set_xlim(limt[:, l])
-                        axis.set_ylim(limt[:, k])
+                        axis.set_xlim(limt[l])
+                        axis.set_ylim(limt[k])
                     
                         
                     if k == numbpara - 1:
@@ -5843,7 +6013,7 @@ def plot_grid(
             plt.subplots_adjust(wspace=0.05, hspace=0.05)
             
             if pathbase is not None:
-                path = pathbase + 'pmar_%s_%s%s.%s' % (typeplottdim, strgextn, strgpgrp, typefileplot)
+                path = pathbase + 'pmar_%s%s_%s.%s' % (strgextn, strgpgrp, strglisttypeplottdim, typefileplot)
                 print('Writing to %s...' % path)
                 figr.savefig(path, dpi=300)
                 plt.close(figr)
