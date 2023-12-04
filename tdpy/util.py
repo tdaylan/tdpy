@@ -2271,7 +2271,7 @@ def plot_timeline(
             print(listnamerows[k])
             print('dictrows[listnamerows[k]]')
             print(dictrows[listnamerows[k]])
-            raise Exception('Each dictionary in dictrows should itself be a dictionary with keys "dictlistelem".')
+            raise Exception('Each dictionary in dictrows should itself be a dictionary with at least the key "listdictelem".')
 
         if 'size' in dictrows[listnamerows[k]]:
             listsizerows[k] = dictrows[listnamerows[k]]['size']
