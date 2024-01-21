@@ -1329,7 +1329,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             listlablpara[k] = ['$M_{sys}$', '$M_\odot$']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'massstar':
-            listlablpara[k] = ['$M_\star$', '$M_\odot$']
+            listlablpara[k] = ['$M_{\star}$', '$M_\odot$']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'stdvmassstar':
             listlablpara[k] = ['$\sigma_{M_\star}$', '$M_\odot$']
@@ -1378,9 +1378,6 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'epocmtratess':
             listlablpara[k] = ['$T_0$', 'BJD-2457000']
-            listscalpara[k] = 'self'
-        elif listnamepara[k] == 'offsphas%s' % strgelem:
-            listlablpara[k] = ['$\phi_{off}$', '$^\circ$']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'epocmtra':
             listlablpara[k] = ['$T_0$', 'BJD']
@@ -1625,6 +1622,9 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             elif listnamepara[k][:-1] == 'cosicom':
                 listlablpara[k] = ['$\cos i$%s' % strgnume, '']
                 listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'offsphascom':
+                listlablpara[k] = ['$\phi_{off}$%s' % strgnume, '$^\circ$']
+                listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'epocmtracom':
                 if boolnume:
                     listlablpara[k] = ['$T_{0;%s}$' % listnamepara[k][-1], 'BJD']
@@ -1704,7 +1704,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             listscalpara[k] = 'self'
             print('Warning! Unrecognized parameter name: %s. Setting the label to the name of the parameter.' % listnamepara[k])
         
-        if listlablunitforc[k] is not None:
+        if listlablunitforc is not None and listlablunitforc[k] is not None:
             listlablpara[k][1] = listlablunitforc[k]
 
         if listscalpara[k] is not None and len(listscalpara[k]) == 0:
