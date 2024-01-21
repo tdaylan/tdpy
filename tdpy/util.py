@@ -1068,7 +1068,7 @@ def sign_code(axis, typesigncode, typeplotback='white'):
                                                                         transform=axis.transAxes, color='firebrick', ha='right', size='small')
 
 
-def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldiag=True, typelang='English', boolmath=False, typedist='pc', strgelem='comp'):
+def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None, dictdefa=None, booldiag=True, typelang='English', boolmath=False, strgelem='comp'):
     
     if dictdefa is not None:
         if not isinstance(dictdefa, dict):
@@ -1492,7 +1492,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
                 listlablpara[k][0] = '$d$'
             else:
                 listlablpara[k][0] = 'Distance'
-            listlablpara[k][1] = typedist
+            listlablpara[k][1] = 'pc'
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'noisphot':
             listlablpara[k] = ['Photometric Noise', 'ppt']
@@ -1541,7 +1541,11 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             listlablpara[k] = ['$P_{LS,max}$', 'days']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'mass%s' % strgelem:
-            listlablpara[k] = ['$M_{comp}$', '$M_\odot$']
+            if strgelem == 'comp':
+                lablunit = '\odot'
+            else:
+                lablunit = '\oplus'
+            listlablpara[k] = ['$M_{comp}$', '$M_%s$' % lablunit]
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'masstotl':
             listlablpara[k] = ['$M_{tot}$', '$M_\odot$']
@@ -1700,6 +1704,9 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, dictdefa=None, booldi
             listscalpara[k] = 'self'
             print('Warning! Unrecognized parameter name: %s. Setting the label to the name of the parameter.' % listnamepara[k])
         
+        if listlablunitforc[k] is not None:
+            listlablpara[k][1] = listlablunitforc[k]
+
         if listscalpara[k] is not None and len(listscalpara[k]) == 0:
             print('')
             print('')
@@ -2009,8 +2016,16 @@ def retr_axis(minm=None, maxm=None, limt=None, numbpntsgrid=None, midpgrid=None,
     if boolinte is None:
         raise Exception('To be implemented')
     
+    print('retr_axis()')
+    print('numbpntsgrid')
+    print(numbpntsgrid)
+
     if midpgrid is not None:
+        if numbpntsgrid is not None:
+            raise Exception('')
+        
         numbpntsgrid = midpgrid.size
+        print('hey')
     elif binsgrid is None:
         if listsamp is not None:
             if minm is not None or maxm is not None:
@@ -2023,9 +2038,12 @@ def retr_axis(minm=None, maxm=None, limt=None, numbpntsgrid=None, midpgrid=None,
             limt[1] = maxm
             limt[0] = minm
         if boolinte and int(limt[1] - limt[0]) < 1e7:
+            if numbpntsgrid is not None:
+                raise Exception('')
             binsgrid = np.linspace(limt[0] - 0.5, limt[1] + 0.5, int(limt[1] - limt[0] + 2))
             midpgrid = (binsgrid[1:] + binsgrid[:-1]) / 2.
             numbpntsgrid = binsgrid.size - 1
+            print('mey')
         else:
             if numbpntsgrid is None:
                 numbpntsgrid = 100
@@ -2044,11 +2062,17 @@ def retr_axis(minm=None, maxm=None, limt=None, numbpntsgrid=None, midpgrid=None,
                 raise Exception('Unrecognized scaling: %s' % scalpara)
             
     else:
+        if numbpntsgrid is not None:
+            raise Exception('')
         if scalpara == 'self':
             midpgrid = (binsgrid[1:] + binsgrid[:-1]) / 2.
         else:
             midpgrid = np.sqrt(binsgrid[1:] * binsgrid[:-1])
+        print('key')
         numbpntsgrid = midpgrid.size
+    
+    print('numbpntsgrid')
+    print(numbpntsgrid)
     
     indxpntsgrid = np.arange(numbpntsgrid)
     
@@ -2473,7 +2497,7 @@ def plot_timeline(
         figr, axis = plt.subplots(1, figsize=sizefigr)
         
         ydattext = 0.
-        listtick = [[] for k in indxrows]
+        listtickyaxi = [[] for k in indxrows]
         for k in indxrows:
             
             for l in range(len(dictrows[listnamerows[k]]['listdictelem'])):
@@ -2504,7 +2528,7 @@ def plot_timeline(
             if k == numbrows - 1:
                 maxmydat = ydattext + 0.5 * listsizerows[k]
             
-            listtick[k] = ydattext
+            listtickyaxi[k] = ydattext
 
             if k < numbrows - 1:
                 ydattext += 0.5 * (listsizerows[k] + listsizerows[k+1])
@@ -2516,13 +2540,16 @@ def plot_timeline(
             for jdatlabl in listjdatlablhigh:
                 if jdatlabl == 'now':
                     jdat = astropy.time.Time.now().jd
+                    print('JD now: %g' % jdat)
+                    labl = jdatlabl
                 else:
                     jdat = astropy.time.Time(jdatlabl[0], format='iso').jd
+                    labl = jdatlabl[1]
                 axis.axvline(jdat, ls='-.', lw=1, color='black')
-                axis.text(jdat, numbrows, jdatlabl[1], ha='center', va='center')
+                axis.text(jdat, numbrows, labl, ha='center', va='center')
         
         limtydat = [minmydat, maxmydat]
-        axis.set_yticks(listtick)
+        axis.set_yticks(listtickyaxi)
         axis.set_yticklabels(listlablrows)
         axis.set_ylim(limtydat)
         axis.set_xlabel('Time')
@@ -4274,7 +4301,7 @@ def samp( \
             print('stdvgauspara')
             print(stdvgauspara)
     
-    if strgextn is not '':
+    if strgextn != '':
         strgextn = '_%s' % strgextn
     
     # path of the posterior
@@ -4685,7 +4712,15 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 
                 # remove infinite samples
                 indx = np.where(np.isfinite(listpara[u][:, l]) & np.isfinite(listpara[u][:, k]))[0]
+                print('indx')
+                print(indx)
+                print('u')
+                print(u)
+                print('listpara[u]')
+                print(listpara[u])
                 listparapair = listpara[u][indx, :]
+                print('listlablsamp[u]')
+                print(listlablsamp[u])
                 listlablsamppair = listlablsamp[u][indx]
                 listparapair = listparapair[:, np.array([l, k])]
                 
@@ -5248,6 +5283,9 @@ def plot_grid(
               ## 'minmax': minima and maxima
               typeannosamp='minmax', \
               
+              # Boolean flag to force all parameters to be interpreted as floats
+              boolforcflot=False, \
+
               # label of the sample to be annotated
               listlablannosamp=None, \
 
@@ -5476,15 +5514,15 @@ def plot_grid(
     if listparadraw is not None:
         numbdraw = len(listparadraw)
         indxdraw = np.arange(numbdraw)
-
+    
     # list of Booleans for each parameter indicating whether it is a list of integers
     boolinte = [[] for k in indxpara]
     for k in indxpara:
         boolinte[k] = True
         for u in indxpopl:
-            if ((listpara[u][:, k] - listpara[u][:, k].astype(int)) != 0).any():
+            if ((listpara[u][:, k] - listpara[u][:, k].astype(int)) != 0).any() or boolforcflot:
                 boolinte[k] = False
-        
+    
     limtrims = [[] for k in indxpara]
     listindxgood = [[[] for k in indxpara] for u in indxpopl]
     if binsgridinpt is None:
@@ -5709,7 +5747,9 @@ def plot_grid(
         
     if binsgridinpt is not None and numbpntsgrid is not None:
         raise Exception('')
-
+    
+    print('numbpntsgrid')
+    print(numbpntsgrid)
     if binsgridinpt is None:
         binsgridinpt = []
         for k in indxpara:
@@ -5720,14 +5760,27 @@ def plot_grid(
         limt = []
         for k in indxpara:
             limt.append(None)
-        
+    
+    print('numbpntsgrid')
+    print(numbpntsgrid)
     if boolplottria or boolplothistodim or boolplotpair and ((listtypeplottdim == 'hist').any() or (listtypeplottdim == 'kdee').any()):
         bins = [[] for k in indxpara]
         midpgrid = [[] for k in indxpara]
+        print('Starting the parameter loop')
         for k in indxpara:
             
-            bins[k], midpgrid[k], deltgrid, numbpntsgrid, indx = retr_axis(limt=limt[k], boolinte=boolinte[k], binsgrid=binsgridinpt[k], numbpntsgrid=numbpntsgrid, scalpara=listscalpara[k])
+            if boolinte[k]:
+                numbpntsgridtemp = None
+            else:
+                numbpntsgridtemp = numbpntsgrid
+            print('numbpntsgrid')
+            print(numbpntsgrid)
+            print('Will call retr_axis()')
+            bins[k], midpgrid[k], deltgrid, numbpntsgridtemp, indx = retr_axis(limt=limt[k], boolinte=boolinte[k], binsgrid=binsgridinpt[k], \
+                                                                                                numbpntsgrid=numbpntsgridtemp, scalpara=listscalpara[k])
             
+            print('numbpntsgridtemp')
+            print(numbpntsgridtemp)
             if limt[k] is None:
                 limt[k] = np.array([bins[k][0], bins[k][-1]])
                 limtrims[k] = np.copy(limt[k])
