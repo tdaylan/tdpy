@@ -2016,16 +2016,12 @@ def retr_axis(minm=None, maxm=None, limt=None, numbpntsgrid=None, midpgrid=None,
     if boolinte is None:
         raise Exception('To be implemented')
     
-    print('retr_axis()')
-    print('numbpntsgrid')
-    print(numbpntsgrid)
-
     if midpgrid is not None:
         if numbpntsgrid is not None:
             raise Exception('')
         
         numbpntsgrid = midpgrid.size
-        print('hey')
+    
     elif binsgrid is None:
         if listsamp is not None:
             if minm is not None or maxm is not None:
@@ -2043,7 +2039,6 @@ def retr_axis(minm=None, maxm=None, limt=None, numbpntsgrid=None, midpgrid=None,
             binsgrid = np.linspace(limt[0] - 0.5, limt[1] + 0.5, int(limt[1] - limt[0] + 2))
             midpgrid = (binsgrid[1:] + binsgrid[:-1]) / 2.
             numbpntsgrid = binsgrid.size - 1
-            print('mey')
         else:
             if numbpntsgrid is None:
                 numbpntsgrid = 100
@@ -2068,11 +2063,7 @@ def retr_axis(minm=None, maxm=None, limt=None, numbpntsgrid=None, midpgrid=None,
             midpgrid = (binsgrid[1:] + binsgrid[:-1]) / 2.
         else:
             midpgrid = np.sqrt(binsgrid[1:] * binsgrid[:-1])
-        print('key')
         numbpntsgrid = midpgrid.size
-    
-    print('numbpntsgrid')
-    print(numbpntsgrid)
     
     indxpntsgrid = np.arange(numbpntsgrid)
     
@@ -5748,8 +5739,6 @@ def plot_grid(
     if binsgridinpt is not None and numbpntsgrid is not None:
         raise Exception('')
     
-    print('numbpntsgrid')
-    print(numbpntsgrid)
     if binsgridinpt is None:
         binsgridinpt = []
         for k in indxpara:
@@ -5761,26 +5750,20 @@ def plot_grid(
         for k in indxpara:
             limt.append(None)
     
-    print('numbpntsgrid')
-    print(numbpntsgrid)
     if boolplottria or boolplothistodim or boolplotpair and ((listtypeplottdim == 'hist').any() or (listtypeplottdim == 'kdee').any()):
         bins = [[] for k in indxpara]
         midpgrid = [[] for k in indxpara]
-        print('Starting the parameter loop')
+        
         for k in indxpara:
             
             if boolinte[k]:
                 numbpntsgridtemp = None
             else:
                 numbpntsgridtemp = numbpntsgrid
-            print('numbpntsgrid')
-            print(numbpntsgrid)
-            print('Will call retr_axis()')
+            
             bins[k], midpgrid[k], deltgrid, numbpntsgridtemp, indx = retr_axis(limt=limt[k], boolinte=boolinte[k], binsgrid=binsgridinpt[k], \
                                                                                                 numbpntsgrid=numbpntsgridtemp, scalpara=listscalpara[k])
             
-            print('numbpntsgridtemp')
-            print(numbpntsgridtemp)
             if limt[k] is None:
                 limt[k] = np.array([bins[k][0], bins[k][-1]])
                 limtrims[k] = np.copy(limt[k])
