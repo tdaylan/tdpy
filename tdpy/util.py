@@ -1314,7 +1314,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             listlablpara[k] = ['$\sigma_{R_p}$', '$R_\oplus$']
             listscalpara[k] = 'self'
         elif listnamepara[k] == 'radistar':
-            listlablpara[k] = ['$R_\star$', '$R_\odot$']
+            listlablpara[k] = ['$R_{\star}$', '$R_\odot$']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'tagestar':
             listlablpara[k] = ['Age of the host star', 'Gyr']
@@ -1338,16 +1338,16 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             listlablpara[k] = ['$M_{BH}$', '$M_\odot$']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'densstar':
-            listlablpara[k] = ['$d_\star$', 'g cm$^{-3}$']
+            listlablpara[k] = ['$d_{\star}$', 'g cm$^{-3}$']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'tmpt%s' % strgelem:
             listlablpara[k] = ['$T_p$', 'K']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'lumistar':
-            listlablpara[k] = ['$L_\star$', '$L_{\odot}$']
+            listlablpara[k] = ['$L_{\star}$', '$L_{\odot}$']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'tmptstar':
-            listlablpara[k] = ['$T_\star$', 'K']
+            listlablpara[k] = ['$T_{\star}$', 'K']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'loggstar':
             listlablpara[k] = ['$\log g$', '']
@@ -1417,9 +1417,9 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             elif listnamepara[k].startswith('scalstep'):
                 listlablpara[k] = ['$A_{b%s}$' % strg, '']
             elif listnamepara[k].startswith('rratcomp'):
-                listlablpara[k] = ['$R_{p%s}/R_\star$' % strg, '']
+                listlablpara[k] = ['$R_{p%s}/R_{\star}$' % strg, '']
             elif listnamepara[k].startswith('rratcom'):
-                listlablpara[k] = ['$R_{%d%s}/R_\star$' % (int(listnamepara[k][7]), strg), '']
+                listlablpara[k] = ['$R_{%d%s}/R_{\star}$' % (int(listnamepara[k][7]), strg), '']
             # linear limb-darkening coefficient
             elif listnamepara[k].startswith('coeflmdklinr'):
                 listlablpara[k] = ['$u_{l%s}$' % strg, '']
@@ -1551,7 +1551,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             listlablpara[k] = ['$a$', 'AU']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'rsma':
-            listlablpara[k] = ['$(R_\star+R_p)/a$', '']
+            listlablpara[k] = ['$(R_{\star}+R_p)/a$', '']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'rs2a':
             listlablpara[k] = ['$R_\star/a$', '']
@@ -1614,10 +1614,10 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
                 listlablpara[k] = ['$R_{%s}$' % listnamepara[k][-1], '']
                 listscalpara[k] = 'logt'
             elif listnamepara[k][:-1] == 'rratcom':
-                listlablpara[k] = ['$R_{%s}/R_\star$' % listnamepara[k][-1], '']
+                listlablpara[k] = ['$R_{%s}/R_{\star}$' % listnamepara[k][-1], '']
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'rsmacom':
-                listlablpara[k] = ['$(R_\star+R_{%s})/a$' % listnamepara[k][-1], '']
+                listlablpara[k] = ['$(R_{\star}+R_{%s})/a$' % listnamepara[k][-1], '']
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'cosicom':
                 listlablpara[k] = ['$\cos i$%s' % strgnume, '']
