@@ -4571,15 +4571,6 @@ def retr_boolsubb(listtotl, listsubb):
     return boollygo
 
 
-def setp_para_defa(gdat, strgmodl, strgvarb, valuvarb):
-    
-    if strgmodl == 'fitt' or strgmodl == 'true':
-        setp_para_defa_wrap(gdat, strgmodl, strgvarb, valuvarb)
-    elif strgmodl == 'full':
-        for strgmodl in gdat.liststrgmodl:
-            setp_para_defa_wrap(gdat, strgmodl, strgvarb, valuvarb)
-
-
 def retr_matrrota(thet, \
                   # Boolean indicating that the input is in radians
                   boolradn=False, \
@@ -4599,6 +4590,15 @@ def retr_sperfromcart(xaxi, yaxi, zaxi):
     thet = 90. - np.arccos(zaxi / radi) * 180. / np.pi
     
     return phii, thet, radi
+
+
+def setp_para_defa(gdat, strgmodl, strgvarb, valuvarb):
+    
+    if strgmodl == 'fitt' or strgmodl == 'true':
+        setp_para_defa_wrap(gdat, strgmodl, strgvarb, valuvarb)
+    elif strgmodl == 'full':
+        for strgmodl in gdat.liststrgmodl:
+            setp_para_defa_wrap(gdat, strgmodl, strgvarb, valuvarb)
 
 
 def setp_para_defa_wrap(gdat, strgmodl, strgvarb, valuvarb):
