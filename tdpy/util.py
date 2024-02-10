@@ -1616,12 +1616,6 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             elif listnamepara[k][:-1] == 'rratcom':
                 listlablpara[k] = ['$R_{%s}/R_{\star}$' % listnamepara[k][-1], '']
                 listscalpara[k] = 'self'
-            elif listnamepara[k][:-1] == 'rsmacom':
-                listlablpara[k] = ['$(R_{\star}+R_{%s})/a$' % listnamepara[k][-1], '']
-                listscalpara[k] = 'self'
-            elif listnamepara[k][:-1] == 'cosicom':
-                listlablpara[k] = ['$\cos i$%s' % strgnume, '']
-                listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'offsphascom':
                 listlablpara[k] = ['$\phi_{off}$%s' % strgnume, '$^\circ$']
                 listscalpara[k] = 'self'
@@ -1638,6 +1632,15 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
                     listlablpara[k][0] = 'Orbital period%s' % strgnume
                 listlablpara[k][1] = 'days'
                 listscalpara[k] = 'logt'
+            elif listnamepara[k][:-1] == 'cosicom':
+                if boolmath:
+                    listlablpara[k][0] = '$\cos i_{%s}$' % strgnume
+                else:
+                    listlablpara[k][0] = 'Cosine of inclination%s' % strgnume
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'rsmacom':
+                listlablpara[k] = ['$(R_{\star}+R_{%s})/a_{%s}$' % (listnamepara[k][-1], listnamepara[k][-1]), '']
+                listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'eccecom':
                 if boolmath:
                     listlablpara[k][0] = '$e_{%s}$' % strgnume
