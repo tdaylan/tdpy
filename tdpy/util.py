@@ -2013,11 +2013,15 @@ def retr_strgmemo(memo):
 
 def retr_axis(minm=None, maxm=None, limt=None, numbpntsgrid=None, midpgrid=None, binsgrid=None, listsamp=None, scalpara='self', boolinte=None):
     
+    if minm is not None and maxm is not None and limt is not None:
+        raise Exception('')
+
     if limt is None:
-        limt = np.arange(2)
+        if minm is not None:
+            limt = [minm, maxm]
     
     if boolinte is None:
-        raise Exception('To be implemented')
+        boolinte = False
     
     if midpgrid is not None:
         if numbpntsgrid is not None:
@@ -4262,12 +4266,16 @@ def samp( \
     numbbins = 20
     indxbins = np.arange(numbbins)
     binsgrid = np.empty((numbbins + 1, numbpara)) 
+    midpgrid = np.empty((numbbins, numbpara)) 
+    numbpntsgrid = np.empty(numbpara, dtype=int)
     for k in indxpara:
         if limtpara[0, k] == limtpara[1, k]:
             raise Exception('')
         
-        binsgrid[:, k], midpgrid[:, k], deltgrid, numbpntsgrid[k], indx = retr_axis(listsamp=listpara[:, k, 0])
+        binsgrid[:, k], midpgrid[:, k], deltgrid, numbpntsgrid[k], indx = retr_axis(limt=limtpara[:, k], numbpntsgrid=numbbins)
     
+    print('minmpara')
+    print(minmpara)
     for k in indxpara:
         if minmpara[k] >= maxmpara[k]:
             raise Exception('')
