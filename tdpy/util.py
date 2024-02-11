@@ -1616,9 +1616,6 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             elif listnamepara[k][:-1] == 'rratcom':
                 listlablpara[k] = ['$R_{%s}/R_{\star}$' % listnamepara[k][-1], '']
                 listscalpara[k] = 'self'
-            elif listnamepara[k][:-1] == 'offsphascom':
-                listlablpara[k] = ['$\phi_{off}$%s' % strgnume, '$^\circ$']
-                listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'epocmtracom':
                 if boolnume:
                     listlablpara[k] = ['$T_{0;%s}$' % listnamepara[k][-1], 'BJD']
@@ -1637,6 +1634,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
                     listlablpara[k][0] = '$\cos i_{%s}$' % strgnume
                 else:
                     listlablpara[k][0] = 'Cosine of inclination%s' % strgnume
+                listlablpara[k][1] = ''
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'rsmacom':
                 listlablpara[k] = ['$(R_{\star}+R_{%s})/a_{%s}$' % (listnamepara[k][-1], listnamepara[k][-1]), '']
@@ -1676,6 +1674,13 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
                     listlablpara[k][0] = 'Transit depth%s' % strgnume
                 listlablpara[k][1] = 'ppt'
                 listscalpara[k] = 'logt'
+            elif listnamepara[k][:-1] == 'offsphascom':
+                if boolmath:
+                    listlablpara[k][0] = '$\phi_{off,%s}$' % strgnume
+                else:
+                    listlablpara[k][0] = 'Hotspot phase offset%s' % strgnume
+                listlablpara[k][1] = '$^\circ$'
+                listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'massplancom':
                 listlablpara[k] = ['$M_{%s}$' % listnamepara[k][-1], '$M_\oplus$']
                 listscalpara[k] = 'self'
@@ -4274,11 +4279,16 @@ def samp( \
         
         binsgrid[:, k], midpgrid[:, k], deltgrid, numbpntsgrid[k], indx = retr_axis(limt=limtpara[:, k], numbpntsgrid=numbbins)
     
-    print('minmpara')
-    print(minmpara)
     for k in indxpara:
         if minmpara[k] >= maxmpara[k]:
-            raise Exception('')
+            print('')
+            print('')
+            print('')
+            print('manmpara')
+            print(maxxpara)
+            print('minmpara')
+            print(minmpara)
+            raise Exception('minmpara > maxmpara')
     
     dictlpos = [gdat, indxpara, scalpara, minmpara, maxmpara, meangauspara, stdvgauspara, retr_llik, retr_lpri]
     
