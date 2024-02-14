@@ -672,12 +672,12 @@ def plot_recaprec( \
     
     numbvarbreca = listpararele.shape[1]
     indxvarbreca = np.arange(numbvarbreca)
-    listlablvarbreletotl = retr_labltotl(listlablvarbrele)
+    listlablvarbreletotl = retr_listlabltotl(listlablvarbrele)
     
     if listparaanls is not None:
         numbvarbprec = listparaanls.shape[1]
         indxvarbprec = np.arange(numbvarbprec)
-        listlablvarbanlstotl = retr_labltotl(listlablvarbanls)
+        listlablvarbanlstotl = retr_listlabltotl(listlablvarbanls)
     
     if typeverb > 1:
         print('numbbins')
@@ -909,16 +909,16 @@ def retr_listscalpara(listnamepara):
     return listscalpara
 
 
-def retr_labltotl(listlablpara):
+def retr_listlabltotl(listlablpara):
     
     listlablparatotl = [[] for k in range(len(listlablpara))]
     for k in range(len(listlablpara)):
-        listlablparatotl[k] = retr_labltotlsing(listlablpara[k][0], listlablpara[k][1])
+        listlablparatotl[k] = retr_labltotl(listlablpara[k][0], listlablpara[k][1])
    
     return listlablparatotl
 
 
-def retr_labltotlsing(labl, lablunit):
+def retr_labltotl(labl, lablunit):
     
     if lablunit == '' or lablunit is None:
         labltotl = '%s' % labl
@@ -1094,6 +1094,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
     listlablrootpara = [[] for k in indxpara]
     listlablunitpara = [[] for k in indxpara]
     listscalpara = [[] for k in indxpara]
+    
     for k in indxpara:
         if listlablpara[k] is not None and len(listlablpara[k]) > 0:
             continue
@@ -1742,7 +1743,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             listlabltotlpara[k] = listlablpara[k][0]
         else:
             listlabltotlpara[k] = '%s [%s]' % (listlablpara[k][0], listlablpara[k][1])
-            
+    
     return listlablpara, listscalpara, listlablrootpara, listlablunitpara, listlabltotlpara
 
 
@@ -5120,6 +5121,7 @@ def plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, li
     if listparadraw is not None:
         for m in indxdraw:
             axis.axvline(listparadraw[m][k], color='orange', lw=3)
+    
     axis.set_xlabel(listlablparatotl[k])
     if lablnumbsamp is not None:
         axis.set_ylabel(lablnumbsamp)
@@ -5429,11 +5431,25 @@ def plot_grid(
     if lablnumbsamp is None:
         lablnumbsamp = 'Number of samples'
     
+    if booldiag:
+        if isinstance(listlablpara[0][1], list):
+            raise Exception('')
+
     if len(listlablpara[0]) == 2 and isinstance(listlablpara[0][0], str) and isinstance(listlablpara[0][1], str):
-        listlablparatotl = retr_labltotl(listlablpara)
+        listlablparatotl = retr_listlabltotl(listlablpara)
     else:
+        print('hey')
         listlablparatotl = listlablpara
     
+    if booldiag:
+        if not isinstance(listlablparatotl[0], str):
+            print('')
+            print('')
+            print('')
+            print('listlablparatotl')
+            print(listlablparatotl)
+            raise Exception('')
+
     if listmrkrpopl is None:
         listmrkrpopl = np.array(['o', 'x', '+', 'D', '^', '*', '<', '>', 's', 'p'])
     
@@ -5469,9 +5485,6 @@ def plot_grid(
     if listscalpara is None:
         listscalpara = ['self'] * numbpara
     
-    print('listscalpara')
-    print(listscalpara)
-
     if len(listscalpara) != len(listlablpara):
         print('listscalpara')
         print(listscalpara)
@@ -5519,7 +5532,7 @@ def plot_grid(
         for u in indxpopl:
             boolsampfini = np.isfinite(listpara[u][:, k])
             if listscalpara[k] == 'logt' and (listpara[u][boolsampfini, k] <= 0).any():
-                print('Warning! Parameter %d (%s) has a log scaling but also nonpositive elements!' % (k, listlablpara[k]))
+                print('Warning! Parameter %d (%s) has a log scaling but also nonpositive elements!' % (k, listlablpara[k][0]))
                 print('Will reset its scaling to linear (self)...')
                 listscalpara[k] = 'self'
 
