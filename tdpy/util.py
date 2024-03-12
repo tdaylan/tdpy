@@ -2521,7 +2521,9 @@ def plot_timeline(
                         color = listcolrrows[k]
                     axis.barh(ydattext, jdatseco - jdatfrst, left=jdatfrst, color=color, height=listsizerows[k], edgecolor=edgecolor, alpha=0.5)
                     
-                    listlablxaxi = axis.set_xticks(listjdat, rotation=45)
+                    print('listjdat')
+                    print(listjdat)
+                    listlablxaxi = axis.set_xticks(listjdat)#, rotation=45)
                     
                     axis.set_xticklabels(listlabltick)
                     
