@@ -40,6 +40,14 @@ class gdatstrt(object):
         super(gdatstrt, self).__setattr__(attr, valu)
 
 
+def setp_dict(dictinpt, strg, arry, lablunit=None):
+
+    if lablunit is None:
+        dictinpt[strg] = [arry, '']
+    else:
+        dictinpt[strg] = [arry, lablunit]
+
+
 class gdatstrtpcat(object):
     
     def __init__(self):
