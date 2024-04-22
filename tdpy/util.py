@@ -1150,6 +1150,9 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             listlablpara[k] = ['Star', '']
             listscalpara[k] = 'self'
 
+        elif listnamepara[k] == 'fluxbolosyst' or listnamepara[k] == 'fluxbolostar':
+            listlablpara[k] = [r'$F_{bol}$', '']
+            listscalpara[k] = 'logt'
         # discovery magnitude
         elif listnamepara[k] == 'magtdisc':
             listlablpara[k] = [r'$m_{disc}$', '']
