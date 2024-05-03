@@ -1355,6 +1355,9 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
         elif listnamepara[k] == 'masssyst':
             listlablpara[k] = ['$M_{sys}$', '$M_\odot$']
             listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'minmfrddtimeoutlsort':
+            listlablpara[k] = ['$\min_k f_k$', '']
+            listscalpara[k] = 'self'
         elif listnamepara[k] == 'massstar':
             listlablpara[k] = ['$M_{\star}$', '$M_\odot$']
             listscalpara[k] = 'logt'
