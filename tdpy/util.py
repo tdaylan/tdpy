@@ -160,16 +160,17 @@ def time_func_verb(func, *args):
 
 
 # astrophysics
-def retr_specbbod(tmpt, wlen):
+def retr_fluxspecbbod(tmpt, wlen):
     '''
-    Calculate the spectrum of a blackbody
+    Calculate the spectral flux (power per area per wavelenght) of a blackbody
     wlen in microns
     '''
     
     #0.0143877735e6 # [um K]
     #spec = 3.742e11 / wlen**5 / (np.exp(0.0143877735e6 / (wlen * tmpt)) - 1.)
     
-    spec = 3.3e-7 * 3.742e11 / wlen**5 / (np.exp(0.0143877735e6 / (wlen * tmpt)) - 1.) # [W/m^s/s/nm]
+    print('temp: need to check the fudge factor here to go from temperature to W/m^2')
+    spec = 1e10 * 3.3e-7 * 3.742e11 / wlen**5 / (np.exp(0.0143877735e6 / (wlen * tmpt)) - 1.) # [W/m^2/s/nm]
     
     return spec
 
@@ -635,6 +636,9 @@ def plot_recaprec( \
                   ##  2: detailed description of the execution
                   typeverb=1, \
                   
+                  # Boolean flag to diagnose the code
+                  booldiag=True, \
+         
                   numbbins=10, \
                   strgreca='Recall', \
                   listparadete=None, \
@@ -725,7 +729,18 @@ def plot_recaprec( \
             listlablvarbtemp = listlablvarbreletotl
             strgmetr = 'occu'
             lablyaxi = 'Occurence rate'
-            
+        
+        if booldiag:
+            if len(listnamepara) != listpara.shape[1]:
+                print('')
+                print('')
+                print('')
+                print('listpara')
+                summgene(listpara)
+                print('listnamepara')
+                print(listnamepara)
+                raise Exception('len(listnamepara) != listpara.shape[1]')
+
         for k, namepara in enumerate(listnamepara):
         
             bins = np.linspace(np.nanmin(listpara[:, k]), np.nanmax(listpara[:, k]), numbbins + 1)
@@ -1650,6 +1665,9 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'rsmacom':
                 listlablpara[k] = ['$(R_{\star}+R_{%s})/a_{%s}$' % (listnamepara[k][-1], listnamepara[k][-1]), '']
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'rsumcom':
+                listlablpara[k] = ['$R_{\star}+R_{%s}$' % (listnamepara[k][-1]), '']
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'eccecom':
                 if boolmath:
@@ -5151,6 +5169,7 @@ def plot_grid_histodim(listmantlabl, listpara, k, listlablparatotl, indxpopl, li
 
     # rescale the upper limit of the vertical axis
     if factulimyaxihist != 1.:
+        print('Scaling up the vertical axis upper limit for the histogram by a factor of %g...' % factulimyaxihist)
         limtyaxiprim = np.array(limtyaxi)
         if boolyaxilogt:
             # find the minimum value of the histogram for all populations
@@ -5249,6 +5268,9 @@ def plot_grid(
 
               # Boolean flag to generate individual histograms
               boolplothistodim=None, \
+              
+              # Boolean flag to generate pie plots
+              boolplotpies=True, \
               
               # Boolean flag to generate individual pair-wise plots
               boolplotpair=None, \
@@ -5881,7 +5903,7 @@ def plot_grid(
         if numbpopl == 1:
             factulimyaxihist = 1.
         else:
-            factulimyaxihist = 100.
+            factulimyaxihist = 1.2
 
         # one dimensional histograms
         for k in indxpara:
@@ -5924,40 +5946,35 @@ def plot_grid(
     # make pie-chart of the populations if populations are mutually-exclusive
     if boolpoplexcl:
     
-        #def make_autopct(listsizepopl):
-        #    
-        #    def my_autopct(pct):
-        #        total = sum(listsizepopl)
-        #        val = int(round(pct*total/100.0))
-        #        return '{p:.1f}% hey  ({v:d})'.format(p=pct,v=val)
-        #    
-        #    return my_autopct
-        
         def make_autopct(listsizepopl):
+            
             def my_autopct(pct):
+                
                 total = sum(listsizepopl)
                 val = int(round(pct*total/100.0))
+                
                 return '%.3g%%' % val
-                #return '{p:.2f}%%  ({v:d})'.format(p=pct,v=val)
+            
             return my_autopct
-
-        figr, axis = plt.subplots(figsize=(plotsize, plotsize))
-        objt = axis.pie(listsizepopl, labels=listlablpopl, \
-                                                                #autopct=make_autopct(listsizepopl), \
-                                                                colors=listcolrpopl, \
-                                                                autopct='%.3g%%', \
-                                                                )
-        for kk in range(len(objt[0])):
-            objt[0][kk].set_alpha(0.5)
-
-        axis.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-        if titl is not None:
-            axis.set_title(titl)
-        path = pathbase + 'pies_%s.%s' % (strgextn, typefileplot)
-        print('Writing to %s...' % path)
         
-        figr.savefig(path, bbox_inches='tight')
-        plt.close(figr)
+        if boolplotpies:
+            figr, axis = plt.subplots(figsize=(plotsize, plotsize))
+            objt = axis.pie(listsizepopl, labels=listlablpopl, \
+                                                                    #autopct=make_autopct(listsizepopl), \
+                                                                    colors=listcolrpopl, \
+                                                                    autopct='%.3g%%', \
+                                                                    )
+            for kk in range(len(objt[0])):
+                objt[0][kk].set_alpha(0.5)
+
+            axis.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
+            if titl is not None:
+                axis.set_title(titl)
+            path = pathbase + 'pies_%s.%s' % (strgextn, typefileplot)
+            print('Writing to %s...' % path)
+            
+            figr.savefig(path, bbox_inches='tight')
+            plt.close(figr)
     
     if boolplotpair:
         if listlablsamp is None or numbpopl > 1 or typeplottdim == 'hist' or typeplottdim == 'kdee':
