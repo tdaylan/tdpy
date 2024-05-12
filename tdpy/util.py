@@ -2292,6 +2292,10 @@ def plot_timeline(
                   sizefigr=None, \
                   # type of the times to be highlighted
                   typetimeshow=None, \
+                  
+                  # user-defined limits of horizontal (time) axis
+                  strgtimelimt=None, \
+
                   # a list of times and labels to highligh with vertical lines
                   listjdatlablhigh=None, \
                   
@@ -2401,7 +2405,6 @@ def plot_timeline(
     
     print('typetickdate')
     print(typetickdate)
-
     if typetickdate in ['daily', 'monthly', 'quarterly', 'bimonthly', 'yearly']:
         # string holding the first date
         strgtimeminm = astropy.time.Time(minmjdat, format='jd').to_value('iso', subfmt='date')
@@ -2584,6 +2587,11 @@ def plot_timeline(
                 axis.axvline(jdat, ls='-.', lw=1, color='black')
                 axis.text(jdat, numbrows, labl, ha='center', va='center')
         
+        if strgtimelimt is not None:
+            minmtime = datetime.datetime.strptime(strgtimelimt[0], "%Y-%m-%d").jd
+            maxmtime = datetime.datetime.strptime(strgtimelimt[1], "%Y-%m-%d").jd
+            axis.set_xlim([minmtime, maxmtime])
+
         limtydat = [minmydat, maxmydat]
         axis.set_yticks(listtickyaxi)
         axis.set_yticklabels(listlablrows)
