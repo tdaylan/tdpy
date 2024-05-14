@@ -2535,6 +2535,10 @@ def plot_timeline(
 
         figr, axis = plt.subplots(1, figsize=sizefigr)
         
+        if strgtimelimt is not None:
+            minmtime = astropy.time.Time(strgtimelimt[0], format='iso').jd
+            maxmtime = astropy.time.Time(strgtimelimt[1], format='iso').jd
+        
         ydattext = 0.
         listtickyaxi = [[] for k in indxrows]
         for k in indxrows:
@@ -2544,11 +2548,22 @@ def plot_timeline(
                 jdatfrst = astropy.time.Time(dictrows[listnamerows[k]]['listdictelem'][l]['limtdate'][0], format='iso').jd
                 jdatseco = astropy.time.Time(dictrows[listnamerows[k]]['listdictelem'][l]['limtdate'][1], format='iso').jd
                 
+                if strgtimelimt is not None and (jdatseco < minmtime or jdatfrst > maxmtime):
+                    continue
+                
+                if strgtimelimt is not None:
+                    jdatfrsttext = max(jdatfrst, minmtime)
+                    jdatsecotext = min(jdatseco, maxmtime)
+                else:
+                    jdatfrsttext = jdatfrst
+                    jdatsecotext = jdatseco
+                    
+
                 if o == 0 or (jdatfrst < listjdatbins[o-1] and jdatseco > listjdatbins[o-1]) or \
                              (jdatseco > listjdatbins[o] and jdatfrst < listjdatbins[o]) or \
                              (jdatseco < listjdatbins[o] and jdatfrst > listjdatbins[o-1]):
                     
-                    xdattext = jdatfrst + 0.5 * (jdatseco - jdatfrst)
+                    xdattext = jdatfrsttext + 0.5 * (jdatsecotext - jdatfrsttext)
                     
                     if 'colr' in dictrows[listnamerows[k]]['listdictelem'][l]:
                         color = dictrows[listnamerows[k]]['listdictelem'][l]['colr']
@@ -2573,24 +2588,29 @@ def plot_timeline(
                 ydattext += 0.5 * (listsizerows[k] + listsizerows[k+1])
         
         for jdatvert in listjdatvert:
+            
+            if strgtimelimt is not None and (jdatvert > maxmtime or jdatvert < minmtime):
+                continue
+
             axis.axvline(jdatvert, ls='--', color='gray', alpha=0.4)
         
         if listjdatlablhigh is not None:
             for jdatlabl in listjdatlablhigh:
                 if jdatlabl == 'now':
                     jdat = astropy.time.Time.now().jd
-                    print('JD now: %g' % jdat)
                     labl = jdatlabl
                 else:
                     jdat = astropy.time.Time(jdatlabl[0], format='iso').jd
                     labl = jdatlabl[1]
-                axis.axvline(jdat, ls='-.', lw=1, color='black')
-                axis.text(jdat, numbrows, labl, ha='center', va='center')
-        
-        if strgtimelimt is not None:
-            minmtime = datetime.datetime.strptime(strgtimelimt[0], "%Y-%m-%d").jd
-            maxmtime = datetime.datetime.strptime(strgtimelimt[1], "%Y-%m-%d").jd
-            axis.set_xlim([minmtime, maxmtime])
+                print('jdat')
+                print(jdat)
+                print('labl')
+                print(labl)
+                if strgtimelimt is None or strgtimelimt is not None and jdat < maxmtime and jdat > minmtime:
+                    print('Printing')
+                    axis.axvline(jdat, ls='-.', lw=1, color='black')
+                    axis.text(jdat, numbrows, labl, ha='center', va='center')
+                print('')
 
         limtydat = [minmydat, maxmydat]
         axis.set_yticks(listtickyaxi)
@@ -2598,6 +2618,9 @@ def plot_timeline(
         axis.set_ylim(limtydat)
         axis.set_xlabel('Time')
         
+        if strgtimelimt is not None:
+            axis.set_xlim([minmtime, maxmtime])
+            
         #if o > 0:
         #    axis.set_xlim([listjdatbins[o-1], listjdatbins[o]])
         
