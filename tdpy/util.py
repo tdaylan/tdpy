@@ -4580,26 +4580,28 @@ def samp( \
                     plt.savefig(path)
                     plt.close()
         
+        # derived
+        if dictlablscalparaderi is not None:
+            listnameparaderi = dictlablscalparaderi.keys()
+            listlablparatotl = listlablpara + listlablparaderi
+            listnameparatotl = listnamepara + listnameparaderi
+            listparatotl = np.concatenate([listparafitt, listparaderi], 1)
+        else:
+            listparatotl = listparafitt
+            
         if boolplot and pathvisu is not None:
             ## joint PDF
             strgextn = 'postparafitt' + strgextn
             plot_grid(listlablpara, pathbase=pathvisu, listnamepara=listnamepara, strgextn=strgextn, listpara=listparafitt, numbpntsgrid=numbbins+1)
             
-            # derived
             if dictlablscalparaderi is not None:
-                listnameparaderi = dictlablscalparaderi.keys()
                 listlablparaderi = []
                 for name in listnameparaderi:
                     listlablparaderi.append(dictlablscalparaderi[name][0])
-                listlablparatotl = listlablpara + listlablparaderi
-                listnameparatotl = listnamepara + listnameparaderi
-                listparatotl = np.concatenate([listparafitt, listparaderi], 1)
                 strgextn = 'postparaderi' + strgextn
                 plot_grid(listlablparaderi, pathbase=pathvisu, strgextn=strgextn, listnameparaderi=listnameparaderi, listpara=listparaderi, numbpntsgrid=numbbins+1)
                 strgextn = 'postparatotl' + strgextn
                 plot_grid(listlablparatotl, pathbase=pathvisu, strgextn=strgextn, listpara=listparatotl, numbpntsgrid=numbbins+1)
-            else:
-                listparatotl = listparafitt
         
         if pathbase is not None:
             if dictlablscalparaderi is not None:
