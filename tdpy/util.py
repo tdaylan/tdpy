@@ -1586,8 +1586,8 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
         elif listnamepara[k] == 'rs2a':
             listlablpara[k] = ['$R_\star/a$', '']
             listscalpara[k] = 'logt'
-        elif listnamepara[k] == 'dcyc':
-            listlablpara[k] = ['$\Delta \phi_{tr}$', '']
+        elif listnamepara[k] == 'dcyctrantotl':
+            listlablpara[k] = ['$\Delta \phi_{tr,tot}$', '']
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'amplslen':
             listlablpara[k] = ['$A_{SL}$', 'ppt']
@@ -1652,6 +1652,13 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
                 else:
                     listlablpara[k] = ['$T_{0}$', 'BJD']
                 listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'smaxcom':
+                if boolmath:
+                    listlablpara[k][0] = '$a_{%s}$' % strgnume
+                else:
+                    listlablpara[k][0] = 'Semi-major axis%s' % strgnume
+                listlablpara[k][1] = 'AU'
+                listscalpara[k] = 'logt'
             elif listnamepara[k][:-1] == 'pericom':
                 if boolmath:
                     listlablpara[k][0] = '$P_{%s}$' % strgnume
@@ -1665,6 +1672,13 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
                 else:
                     listlablpara[k][0] = 'Cosine of inclination%s' % strgnume
                 listlablpara[k][1] = ''
+                listscalpara[k] = 'self'
+        
+            elif listnamepara[k][:-1] == 'duratranfullcom':
+                listlablpara[k] = ['$T_{%s,tr,full}$' % (listnamepara[k][-1]), 'hours']
+                listscalpara[k] = 'self'
+            elif listnamepara[k][:-1] == 'duratrantotlcom':
+                listlablpara[k] = ['$T_{%s,tr,tot}$' % (listnamepara[k][-1]), 'hours']
                 listscalpara[k] = 'self'
             elif listnamepara[k][:-1] == 'rsmacom':
                 listlablpara[k] = ['$(R_{\star}+R_{%s})/a_{%s}$' % (listnamepara[k][-1], listnamepara[k][-1]), '']
