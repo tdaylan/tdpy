@@ -1340,6 +1340,9 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
         elif listnamepara[k] == 'stdvradi%s' % strgelem:
             listlablpara[k] = ['$\sigma_{R_p}$', '$R_\oplus$']
             listscalpara[k] = 'self'
+        elif listnamepara[k] == 'stdvtmpt%s' % strgelem:
+            listlablpara[k] = ['$\sigma_{T_p}$', 'K']
+            listscalpara[k] = 'self'
         elif listnamepara[k] == 'radistar':
             listlablpara[k] = ['$R_{\star}$', '$R_\odot$']
             listscalpara[k] = 'logt'
@@ -1607,6 +1610,13 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             else:
                 listlablpara[k][0] = 'Companion radius'
             listlablpara[k][1] = '$R_\oplus$'
+            listscalpara[k] = 'logt'
+        elif listnamepara[k] == 'tmpt%s' % strgelem:
+            if boolmath:
+                listlablpara[k][0] = '$T_c$'
+            else:
+                listlablpara[k][0] = 'Companion temperature'
+            listlablpara[k][1] = 'K'
             listscalpara[k] = 'logt'
         elif listnamepara[k] == 'mass%s' % strgelem:
             listlablpara[k] = ['$M_{C}$', '$M_\odot$']
@@ -2838,83 +2848,75 @@ def read_fits(path, pathvisu=None, typeverb=1):
 
     print('Reading from %s...' % path)
     listhdun = astropy.io.fits.open(path)
-    numbhead = len(listhdun)
-    dictdata = []
-    for k in range(numbhead):
+    numbhdun = len(listhdun)
+    dictpopl = dict()
+    for k in range(numbhdun):
         head = listhdun[k].header
         data = listhdun[k].data
 
         print('Extension %d...' % k)
-
+        
+        dictdata = dict()
         print('Header:')
         print(repr(head))
         print('')
-        print('')
-        print('')
         print('Data:')
-        if data is not None:
-            if isinstance(data, np.ndarray):
-                print('It is a numpy array')
-                summgene(data)
-            else:
-                print('data.names')
-                print(data.names)
-                for name in data.names:
-                    print(name)
-                    summgene(data[name])
-                    
-                    dictdata['Extension%d_%s' % (k, name)].append(data)
-        print('')
-        print('')
-        print('')
-        print('')
-        print('')
-        print('')
-
-        if data is None:
-            continue
-
+        
+        listkeys = np.array(list(head.keys()))
+        listvalu = np.array(list(head.values()))
+        
         numbkeyshead = len(list(head.keys()))
-        listkeys = list(head.keys())
-        listvalu = list(head.values())
-        #print('listkeys')
-        #print(listkeys)
-        #print('listvalu')
-        #print(listvalu)
         
-        for m, keys in enumerate(listkeys):
-            print(keys)
-            print(listvalu[m])
-            print('')
+        if data is not None:
             
-        listtype = []
-        listform = []
-        listunit = []
-       
-        print('listkeys')
-        print(listkeys)
-        if k > 0:
-            for n in range(numbkeyshead):
-                if listkeys[n].startswith('TTYPE'):
-                    listtype.append(listvalu[n])
-                if listkeys[n].startswith('TUNIT'):
-                    listunit.append(listvalu[n])
-                else:
-                    listunit.append('')
-                if listkeys[n].startswith('TFORM'):
-                    listform.append(listvalu[n])
-        
-        print('len(listtype)')
-        print(len(listtype))
-        print('len(listunit)')
-        print(len(listunit))
-        if len(listunit) != len(listtype):
-            print('')
-            print('')
-            print('')
-            raise Exception('')
+            listnamefeatorig = np.array(list(data.names))
+            listnamefeat = np.copy(listnamefeatorig)
+            numbfeat = len(listnamefeatorig)
+            indxfeat = np.arange(numbfeat)
+            for m in indxfeat:
+                if '/' in listnamefeat[m]:
+                    listnamefeat[m] = ''.join(listnamefeat[m].split('/'))
+                    
+                dictdata[listnamefeat[m]] = [pd.DataFrame(data[listnamefeatorig[m]]).to_numpy().flatten(), '']
+                
+                # retrieve the unit for the feature
+                for n in range(numbkeyshead):
+                    
+                    if isinstance(listvalu[n], str) and ''.join(listvalu[n].split(' ')) == listnamefeat[m]:
+                        strg = 'TUNIT%s' % listkeys[n][5:]
+                        indx = np.where(listkeys == strg)[0]
+                        if indx.size > 1:
+                            raise Exception('')
+                        elif indx.size == 1:
+                            dictdata[listnamefeat[m]][1] = listvalu[indx[0]]
+                        break
+            
+            dictpopl['Extension%d' % (k)] = dictdata
+
         
         if pathvisu is not None:
+        
+            listtype = []
+            listform = []
+            listunit = []
+       
+            if k > 0:
+                for n in range(numbkeyshead):
+                    if listkeys[n].startswith('TTYPE'):
+                        listtype.append(listvalu[n])
+                    if listkeys[n].startswith('TUNIT'):
+                        listunit.append(listvalu[n])
+                    else:
+                        listunit.append('')
+                    if listkeys[n].startswith('TFORM'):
+                        listform.append(listvalu[n])
+        
+            if len(listunit) != len(listtype):
+                print('')
+                print('')
+                print('')
+                raise Exception('')
+        
             cmnd = 'convert -density 300'
             for n in range(len(listtype)):
                 if not listform[n].endswith('A') and np.isfinite(data[listtype[n]]).all():
@@ -2933,7 +2935,14 @@ def read_fits(path, pathvisu=None, typeverb=1):
                     figr.savefig(path)
                     plt.close(figr)
 
-    return listhdun, dictdata
+        print('')
+        print('')
+        print('')
+        print('')
+        print('')
+        print('')
+    
+    return listhdun, dictpopl
 
 
 def plot_maps(path, maps, pixltype='heal', scat=None, indxpixlrofi=None, numbpixl=None, titl='', minmlgal=None, maxmlgal=None, minmbgal=None, maxmbgal=None, \
@@ -5992,6 +6001,11 @@ def plot_grid(
             if listlablpopl is not None:
                 print(listlablpopl[u])
             print(listsizepopl[u])
+            if listlablsamp is not None and listsizepopl[u] < 100:
+                print('Labels of these samples:')
+                print(listlablsamp[u])
+            print('')
+        print('')
     
     # make pie-chart of the populations if populations are mutually-exclusive
     if boolpoplexcl:
