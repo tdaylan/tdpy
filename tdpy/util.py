@@ -4802,8 +4802,14 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
 
         if listtypeplottdim[u] == 'scat':
         
-            if listpara[u][:, l].size >= 1e6:
+            if listpara[u][:, l].size >= 1e7:
+                print('')
+                print('')
+                print('')
                 print('Warning! Skipped the scatter plot because there are too many points to plot!')
+                print('')
+                print('')
+                print('')
                 return
 
             axis.scatter(listpara[u][:, l], listpara[u][:, k], s=listmsizpopl[u], color=listcolrpopl[u], label=labl, alpha=alph, marker=listmrkrpopl[u])
@@ -4813,15 +4819,7 @@ def plot_grid_pair(k, l, axis, limt, listmantlabl, listpara, truepara, listparad
                 
                 # remove infinite samples
                 indx = np.where(np.isfinite(listpara[u][:, l]) & np.isfinite(listpara[u][:, k]))[0]
-                print('indx')
-                print(indx)
-                print('u')
-                print(u)
-                print('listpara[u]')
-                print(listpara[u])
                 listparapair = listpara[u][indx, :]
-                print('listlablsamp[u]')
-                print(listlablsamp[u])
                 listlablsamppair = listlablsamp[u][indx]
                 listparapair = listparapair[:, np.array([l, k])]
                 
@@ -5929,10 +5927,12 @@ def plot_grid(
                     if boolstop:
                         raise Exception('bins not good')
                     else:
-                        print('bins not good')
+                        print('Bins are not good, but skipping the exception...')
             
             if np.amin(bins[k]) == 0 and np.amax(bins[k]) == 0:
-                print('Lower and upper limits of the bins are the same for %s. Grid plot failed.' % listlablpara[k][0])
+                print('')
+                print('')
+                print('')
                 print('k')
                 print(k)
                 print('bins[k]')
@@ -5943,7 +5943,7 @@ def plot_grid(
                 print(listscalpara[k])
                 print('listlablpara[k]')
                 print(listlablpara[k])
-                #return
+                print('Lower and upper limits of the bins are the same for %s. Grid plot can fail, but skipping the exception...' % listlablpara[k][0])
     else:
         bins = None
 
@@ -5955,7 +5955,8 @@ def plot_grid(
             if np.isfinite(listpara[u][:, k]).any():
                 booltemp = True
         boolparagood[k] = booltemp
-        boolparagood[np.where(limt[k][0] == limt[k][1])] = False
+        if limt[k][0] == limt[k][1]:
+            boolparagood[k] = False
         
     if boolplothistodim:
         
@@ -6022,11 +6023,17 @@ def plot_grid(
             return my_autopct
         
         if boolplotpies:
+            
+            def func(pct, allvals):
+                absolute = int(pct/100.*np.sum(allvals))
+                return "{:.1f}%\n({:d})".format(pct, absolute)
+
             figr, axis = plt.subplots(figsize=(plotsize, plotsize))
             objt = axis.pie(listsizepopl, labels=listlablpopl, \
                                                                     #autopct=make_autopct(listsizepopl), \
                                                                     colors=listcolrpopl, \
-                                                                    autopct='%.3g%%', \
+                                                                    autopct=lambda pct: func(pct, listsizepopl), \
+                                                                    #autopct='%.3g%%', \
                                                                     )
             for kk in range(len(objt[0])):
                 objt[0][kk].set_alpha(0.5)
@@ -6040,6 +6047,18 @@ def plot_grid(
             figr.savefig(path, bbox_inches='tight')
             plt.close(figr)
     
+    print('')
+    print('')
+    print('')
+    print('')
+    print('')
+    print('boolplotpair')
+    print(boolplotpair)
+    print('')
+    print('')
+    print('')
+    print('')
+    print('')
     if boolplotpair:
         if listlablsamp is None or numbpopl > 1 or typeplottdim == 'hist' or typeplottdim == 'kdee':
             liststrgtext = ['']
@@ -6054,6 +6073,11 @@ def plot_grid(
             for k in indxpara:
                 for l in indxpara:
                     if not boolparagood[k] or not boolparagood[l]:
+                        print('Skipping the pair plot for parameter pair (%d, %d)...' % (k, l))
+                        print('boolparagood[%d]' % k)
+                        print(boolparagood[k])
+                        print('boolparagood[%d]' % l)
+                        print(boolparagood[l])
                         continue
                     if k <= l:
                         continue
@@ -6098,6 +6122,20 @@ def plot_grid(
                                 
                                 if e == 0:
                                     axis.set_xlim(limt[l])
+                                    
+                                    if booldiag:
+                                        if limt[l][0] == limt[l][1] or limt[k][0] == limt[k][1]:
+                                            print('')
+                                            print('')
+                                            print('')
+                                            print('k, l')
+                                            print(k, l)
+                                            print('limt[k]')
+                                            print(limt[k])
+                                            print('limt[l]')
+                                            print(limt[l])
+                                            raise Exception('')
+                                    
                                     axis.set_ylim(limt[k])
                 
                                 axis.set_xlabel(listlablparatotl[l])
