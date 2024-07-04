@@ -2616,25 +2616,29 @@ def plot_timeline(
             if strgtimelimt is not None and (jdatvert > maxmtime or jdatvert < minmtime):
                 continue
 
-            axis.axvline(jdatvert, ls='--', color='gray', alpha=0.4)
+            axis.axvline(jdatvert, ls='--', color='gray', alpha=0.2)
         
         if listjdatlablhigh is not None:
             for jdatlabl in listjdatlablhigh:
-                if jdatlabl == 'now':
+                if jdatlabl[0] == 'Now':
                     jdat = astropy.time.Time.now().jd
-                    labl = jdatlabl
+                    labl = jdatlabl[1]
+                    ydatoffs = 0.5
+                    colr = 'orange'
                 else:
                     jdat = astropy.time.Time(jdatlabl[0], format='iso').jd
                     labl = jdatlabl[1]
-                print('jdat')
-                print(jdat)
-                print('labl')
-                print(labl)
+                    ydatoffs = 0.
+                    colr = 'olive'
+                
+                if len(jdatlabl) == 3:
+                    ydatoffs = jdatlabl[2]
+                else:
+                    ydatoffs = 0.
+                
                 if strgtimelimt is None or strgtimelimt is not None and jdat < maxmtime and jdat > minmtime:
-                    print('Printing')
-                    axis.axvline(jdat, ls='-.', lw=1, color='black')
-                    axis.text(jdat, numbrows, labl, ha='center', va='center')
-                print('')
+                    axis.axvline(jdat, ls='-.', lw=1, color=colr)
+                    axis.text(jdat, numbrows + ydatoffs, labl, ha='center', va='center', color=colr)
 
         limtydat = [minmydat, maxmydat]
         axis.set_yticks(listtickyaxi)
