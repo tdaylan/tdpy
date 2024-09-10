@@ -6051,18 +6051,6 @@ def plot_grid(
             figr.savefig(path, bbox_inches='tight')
             plt.close(figr)
     
-    print('')
-    print('')
-    print('')
-    print('')
-    print('')
-    print('boolplotpair')
-    print(boolplotpair)
-    print('')
-    print('')
-    print('')
-    print('')
-    print('')
     if boolplotpair:
         if listlablsamp is None or numbpopl > 1 or typeplottdim == 'hist' or typeplottdim == 'kdee':
             liststrgtext = ['']
