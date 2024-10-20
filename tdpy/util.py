@@ -1622,6 +1622,15 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
             listlablpara[k] = ['$M_{C}$', '$M_\odot$']
             listscalpara[k] = 'self'
         
+        # angular distance from the companion
+        elif listnamepara[k] == 'distangl%s' % strgelem:
+            if boolmath:
+                listlablpara[k][0] = r'$\Delta \theta$'
+            else:
+                listlablpara[k][0] = 'Companion angular separation'
+            listlablpara[k][1] = '$arcsec$'
+            listscalpara[k] = 'logt'
+        
         # orbital parameters for each component
         elif listnamepara[k][-1].isnumeric() and listnamepara[k][-4:-1] == 'com' or listnamepara[k].endswith('comp'):
             listlablpara[k] = [[], []]
@@ -2567,6 +2576,8 @@ def plot_timeline(
         listtickyaxi = [[] for k in indxrows]
         for k in indxrows:
             
+            offs = 0.
+            bctrjdatchunprev = 1000.
             for l in range(len(dictrows[listnamerows[k]]['listdictelem'])):
                 
                 jdatfrst = astropy.time.Time(dictrows[listnamerows[k]]['listdictelem'][l]['limtdate'][0], format='iso').jd
@@ -2581,7 +2592,9 @@ def plot_timeline(
                 else:
                     jdatfrsttext = jdatfrst
                     jdatsecotext = jdatseco
-                    
+                
+                bctrjdatchun = (jdatseco + jdatfrst) / 2.
+                deltjdatchun = jdatseco - jdatfrst
 
                 if o == 0 or (jdatfrst < listjdatbins[o-1] and jdatseco > listjdatbins[o-1]) or \
                              (jdatseco > listjdatbins[o] and jdatfrst < listjdatbins[o]) or \
@@ -2593,14 +2606,20 @@ def plot_timeline(
                         color = dictrows[listnamerows[k]]['listdictelem'][l]['colr']
                     else:
                         color = listcolrrows[k]
-                    axis.barh(ydattext, jdatseco - jdatfrst, left=jdatfrst, color=color, height=listsizerows[k], edgecolor=edgecolor, alpha=0.5)
+                    axis.barh(ydattext, deltjdatchun, left=jdatfrst, color=color, height=listsizerows[k], edgecolor=edgecolor, alpha=0.5)
                     
                     listlablxaxi = axis.set_xticks(listjdat)#, rotation=45)
                     
                     axis.set_xticklabels(listlabltick)
                     
-                    axis.text(xdattext, ydattext, dictrows[listnamerows[k]]['listdictelem'][l]['strg'], color=textcolor, ha='center', va='center')
-            
+                    if bctrjdatchunprev < 45.:
+                        offs += 0.2
+                    else:
+                        offs = 0.
+                    axis.text(xdattext, ydattext + offs, dictrows[listnamerows[k]]['listdictelem'][l]['strg'], color=textcolor, ha='center', va='center')
+                
+                bctrjdatchunprev = bctrjdatchun
+
             if k == 0:
                 minmydat = ydattext - 0.5 * listsizerows[k]
             if k == numbrows - 1:
