@@ -600,33 +600,54 @@ def plot_recaprec( \
                   # base path for placing the plots
                   pathvisu, \
                   
-                  # a string describing the run
-                  strgextn, \
-                  
-                  # list of parameters for relevant samples
-                  listpararele=None, \
-                  
                   # list of parameters for analyzed samples
-                  listparaanls=None, \
+                  listparaanls, \
                   
-                  # list of parameter names for relevant samples
-                  listnamepararele=None, \
-                  
-                  # list of parameter names for analyzed samples
-                  listnameparaanls=None, \
+                  # list of Booleans for all samples indicating whether they are positive
+                  boolpositarg, \
 
-                  # list of parameter names for relevant samples
-                  listlablvarbrele=None, \
+                  # list of Booleans for all samples indicating whether they are relevant
+                  boolreletarg, \
 
-                  # list of parameter names for analyzed samples
-                  listlablvarbanls=None, \
-                  
                   # list of Booleans for all relevant samples indicating whether they are positive
-                  boolposirele=None, \
+                  #boolposirele, \
 
                   # list of Booleans for all positive samples indicating whether they are relevant
-                  boolreleposi=None, \
+                  #boolreleposi, \
 
+                  # list of parameter names for analyzed samples
+                  listnameparaanls=None, \
+                  
+                  # list of parameter labels for analyzed samples
+                  listlablparaanls=None, \
+                  
+                  # list of parameter names for which to calculate recall
+                  listnameparareca=None, \
+                  
+                  # list of parameter labels for which to calculate recall
+                  listlablparareca=None, \
+                  
+                  # list of parameter names for which to calculate precision
+                  listnameparaprec=None, \
+
+                  # list of parameter labels for which to calculate precision
+                  listlablparaprec=None, \
+                  
+                  # list of parameter names exclusive for positive samples
+                  listnameparaposi=[], \
+
+                  # list of parameter labels exclusive for positive samples
+                  listlablparaposi=None, \
+
+                  # list of parameter names exclusive for relevant samples
+                  listnamepararele=[], \
+
+                  # list of parameter labels exclusive for relevant samples
+                  listlablpararele=None, \
+
+                  # a string describing the run
+                  strgextn='', \
+                  
                   typefileplot='png', \
               
                   # type of verbosity
@@ -640,63 +661,86 @@ def plot_recaprec( \
                   booldiag=True, \
          
                   numbbins=10, \
+                  
                   strgreca='Recall', \
+                  
                   listparadete=None, \
                  ):
     
-    if isinstance(boolreleposi, list):
-        boolreleposi = np.array(boolreleposi)
+    #if isinstance(boolreleposi, list):
+    #    boolreleposi = np.array(boolreleposi)
 
-    if isinstance(boolposirele, list):
-        boolposirele = np.array(boolposirele)
+    #if isinstance(boolposirele, list):
+    #    boolposirele = np.array(boolposirele)
     
+    if isinstance(boolreletarg, list):
+        boolreletarg = np.array(boolreletarg)
+
+    if isinstance(boolpositarg, list):
+        boolpositarg = np.array(boolpositarg)
+    
+    numbtargrele = boolreletarg.size
+    numbtargposi = boolpositarg.size
+    booltpostarg = boolreletarg & boolpositarg
+    
+    #boolposirele = np.empty(numbtargrele)
+    #boolposirele[indx] = True
+    #boolreleposi = np.empty(numbtargposi)
+
     # sanity checks
                                 #listpararele is not None and boolposirele.size != listpararele.shape[0] or \
-    if np.sum(boolposirele) != np.sum(boolreleposi) or \
-                                listparaanls is not None and boolreleposi.size != listparaanls.shape[0] or \
-                                isinstance(listpararele, list) or isinstance(listparaanls, list) or \
-                                listlablvarbrele is not None and len(listlablvarbrele) != listpararele.shape[1] or \
-                                listlablvarbanls is not None and len(listlablvarbanls) != listparaanls.shape[1]:
-        print('listlablvarbrele')
-        print(listlablvarbrele)
-        print('listpararele')
-        summgene(listpararele)
-        print('listlablvarbanls')
-        print(listlablvarbanls)
-        print('listparaanls')
-        summgene(listparaanls)
-        print('boolposirele')
-        summgene(boolposirele)
-        print('boolreleposi')
-        summgene(boolreleposi)
-        print('np.sum(boolreleposi)')
-        print(np.sum(boolreleposi))
-        print('np.sum(boolposirele)')
-        print(np.sum(boolposirele))
-        #raise Exception('')
+    if listparaanls is None:
+        raise Exception('')
+
+    #if np.sum(boolposirele) != np.sum(boolreleposi) or \
+    #                            boolreleposi.size != listparaanls.shape[0] or \
+    #                            isinstance(listpararele, list) or isinstance(listparaanls, list) or \
+    #                            listlablpararele is not None and len(listlablpararele) != listpararele.shape[1] or \
+    #                            listlablparaanls is not None and len(listlablparaanls) != listparaanls.shape[1]:
+    #    print('listlablparaanls')
+    #    print(listlablparaanls)
+    #    print('listparaanls')
+    #    summgene(listparaanls)
+    #    print('boolposirele')
+    #    summgene(boolposirele)
+    #    print('boolreleposi')
+    #    summgene(boolreleposi)
+    #    print('np.sum(boolreleposi)')
+    #    print(np.sum(boolreleposi))
+    #    print('np.sum(boolposirele)')
+    #    print(np.sum(boolposirele))
+    #    raise Exception('')
+    
+    if listlablparaanls is None:
+        listlablparaanls, _, _, _, _ = retr_listlablscalpara(listnameparaanls)
+    
+    if listnameparareca is None:
+        listnameparareca = listnameparaanls + listnamepararele
+
+    if listnameparaprec is None:
+        listnameparaprec = listnameparaanls + listnameparaposi
 
     # get the labels and scalings if not already defined
-    if listlablvarbrele is None:
-        listlablvarbrele, _, _, _, _ = retr_listlablscalpara(listnamepararele)
+    if listlablparareca is None:
+        listlablparareca, _, _, _, _ = retr_listlablscalpara(listnameparareca)
     
-    if listlablvarbanls is None:
-        listlablvarbanls, _, _, _, _ = retr_listlablscalpara(listnameparaanls)
-    
-    numbvarbreca = listpararele.shape[1]
+    if strgextn != '':
+        strgextn = '_%s' % strgextn
+
+    numbvarbreca = len(listnameparareca)
     indxvarbreca = np.arange(numbvarbreca)
-    listlablvarbreletotl = retr_listlabltotl(listlablvarbrele)
+    listlablpararecatotl = retr_listlabltotl(listlablparareca)
     
-    if listparaanls is not None:
-        numbvarbprec = listparaanls.shape[1]
-        indxvarbprec = np.arange(numbvarbprec)
-        listlablvarbanlstotl = retr_listlabltotl(listlablvarbanls)
+    numbvarbprec = len(listnameparaprec)
+    indxvarbprec = np.arange(numbvarbprec)
+    listlablparaprectotl = retr_listlabltotl(listlablparaprec)
     
     if typeverb > 1:
         print('numbbins')
         print(numbbins)
     
-    if isinstance(boolposirele, list):
-        raise Exception('')
+    #if isinstance(boolposirele, list):
+    #    raise Exception('')
 
     indxbins = np.arange(numbbins)
     indxiter = range(2)
@@ -708,25 +752,21 @@ def plot_recaprec( \
             continue
         
         if c == 0:
-            if boolposirele.size == 0:
-                continue
-            listpara = listpararele
-            listnamepara = listnamepararele
-            listlablvarbtemp = listlablvarbreletotl
+            listpara = listparareca
+            listnamepara = listnameparareca
+            listlablpara = listlablpararecatotl
             strgmetr = 'reca'
             lablyaxi = strgreca + ' [\%]'
         if c == 1:
-            if boolreleposi.size == 0:
-                continue
             listpara = listparaanls
             listnamepara = listnameparaanls
-            listlablvarbtemp = listlablvarbanlstotl
+            listlablparatemp = listlablparaanlstotl
             strgmetr = 'prec'
             lablyaxi = 'Precision [\%]'
         if c == 2:
             listpara = listpararele
             listnamepara = listnamepararele
-            listlablvarbtemp = listlablvarbreletotl
+            listlablparatemp = listlablparareletotl
             strgmetr = 'occu'
             lablyaxi = 'Occurence rate'
         
@@ -762,10 +802,10 @@ def plot_recaprec( \
                     if numb > 0:
                         # recall
                         if c == 0:
-                            metr[c, a] = float(np.sum(boolposirele[indx].astype(float))) / numb
+                            metr[c, a] = float(np.sum(booltpos[indx].astype(float))) / numb
                         # precision
                         if c == 1:
-                            metr[c, a] = float(np.sum(boolreleposi[indx].astype(float))) / numb
+                            metr[c, a] = float(np.sum(booltpos[indx].astype(float))) / numb
                     
                 if c == 2 and listparadete is not None:
                     if len(listparadete) == 0:
@@ -783,9 +823,9 @@ def plot_recaprec( \
             if (c == 0 or c == 1) and listparadete is None:
                 figr, axis = plt.subplots(figsize=(6, 4))
                 axis.plot(meanvarb, metr[c, :] * 100.)
-                axis.set_xlabel(listlablvarbtemp[k])
+                axis.set_xlabel(listlablparatemp[k])
                 axis.set_ylabel(lablyaxi)
-                path = pathvisu + '%s_%s_%s.%s' % (strgmetr, namepara, strgextn, typefileplot) 
+                path = pathvisu + '%s_%s%s.%s' % (strgmetr, namepara, strgextn, typefileplot) 
                 print('Writing to %s...' % path)
                 plt.savefig(path)
                 plt.close()
@@ -794,8 +834,8 @@ def plot_recaprec( \
                 figr, axis = plt.subplots(figsize=(6, 4))
                 axis.errorbar(meanvarb, metr[c, :], marker='o', uplims=boolupprlimt)
                 axis.set_ylabel('Occurence rate')
-                axis.set_xlabel(listlablvarbreletotl[k])
-                path = pathvisu + 'occu_%s_%s.%s' % (namepara, strgextn, typefileplot) 
+                axis.set_xlabel(listlablparareletotl[k])
+                path = pathvisu + 'occu_%s%s.%s' % (namepara, strgextn, typefileplot) 
                 print('Writing to %s...' % path)
                 plt.savefig(path)
                 plt.close()
@@ -1812,7 +1852,7 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
     return listlablpara, listscalpara, listlablrootpara, listlablunitpara, listlabltotlpara
 
 
-def summgene(varb, boolslin=False, namevarb=None, varbcomp=None, boolshowuniq=False, \
+def summgene(varb, boolslin=False, namepara=None, varbcomp=None, boolshowuniq=False, \
              # Boolean flag to show the contents of an array in detail
              boolshowlong=True, \
             ):
@@ -1846,10 +1886,10 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None, boolshowuniq=Fa
         if boolshowuniq:
             show_uniq(varb)
         if boolslin:
-            if namevarb is not None:
-                namevarb = '%s: ' % namevarb
+            if namepara is not None:
+                namepara = '%s: ' % namepara
             else:
-                namevarb = ''
+                namepara = ''
             if len(varb) == 0:
                 print('Empty variable with size 0.')
                 return
@@ -1880,7 +1920,7 @@ def summgene(varb, boolslin=False, namevarb=None, varbcomp=None, boolshowuniq=Fa
                 stdvcomp = (upprcomp - lowrcomp) / 2.
                 sigm = (medi - medicomp) / np.sqrt(stdvcomp**2 + ((uppr - lowr) / 2.)**2)
                 strgcomp = ', %.3g sigma diff' % sigm
-            print('%s%.3g +%.3g -%.3g, limt: %.3g %.g, %d samples%s%s%s' % (namevarb, medi, uppr - medi, medi - lowr, \
+            print('%s%.3g +%.3g -%.3g, limt: %.3g %.g, %d samples%s%s%s' % (namepara, medi, uppr - medi, medi - lowr, \
                                                                                 minm, maxm, varb.size, strginfi, strgnann, strgcomp))
         else:
             
@@ -4549,7 +4589,7 @@ def samp( \
                     for n in range(numbsampderi):
                         dictvarbderi[strg][n, ...] = listdictvarbderi[n][strg]
                 
-                listnamevarbderi = listdictvarbderi[0].keys()
+                listnameparaderi = listdictvarbderi[0].keys()
                 listnameparaderi = []
                 for name, valu in listdictvarbderi[0].items():
                     if np.isscalar(valu) and valu is not None:
