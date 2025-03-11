@@ -600,8 +600,8 @@ def plot_recaprec( \
                   # base path for placing the plots
                   pathvisu, \
                   
-                  # list of parameters for analyzed samples
-                  listparaanls, \
+                  # dictionary with the list of parameters for analyzed samples
+                  dictlistpara, \
                   
                   # list of Booleans for all samples indicating whether they are positive
                   boolpositarg, \
@@ -615,32 +615,14 @@ def plot_recaprec( \
                   # list of Booleans for all positive samples indicating whether they are relevant
                   #boolreleposi, \
 
-                  # list of parameter names for analyzed samples
-                  listnameparaanls=None, \
+                  # list of parameter names for all analyzed samples ('anls'), those for which to calculate recall ('reca'), those for which to calculate precision ('rec')
+                  dictlistnamepara=None, \
                   
-                  # list of parameter labels for analyzed samples
-                  listlablparaanls=None, \
+                  # list of parameter labels for all analyzed samples ('anls'), those for which to calculate recall ('reca'), those for which to calculate precision ('rec')
+                  dictlistlablpara=None, \
                   
-                  # list of parameter scalings for analyzed samples
-                  listscalparaanls=None, \
-                  
-                  # list of parameter names for which to calculate recall
-                  listnameparareca=None, \
-                  
-                  # list of parameter scalings for which to calculate recall
-                  listscalparareca=None, \
-                  
-                  # list of parameter labels for which to calculate recall
-                  listlablparareca=None, \
-                  
-                  # list of parameter names for which to calculate precision
-                  listnameparaprec=None, \
-
-                  # list of parameter scalings for which to calculate precision
-                  listscalparaprec=None, \
-
-                  # list of parameter labels for which to calculate precision
-                  listlablparaprec=None, \
+                  # list of parameter scalings for all analyzed samples ('anls'), those for which to calculate recall ('reca'), those for which to calculate precision ('rec')
+                  dictlistscalpara=None, \
                   
                   # list of parameter names exclusive for positive samples
                   listnameparaposi=[], \
@@ -693,7 +675,7 @@ def plot_recaprec( \
     if isinstance(boolpositarg, list):
         boolpositarg = np.array(boolpositarg)
     
-    numbtarg = listparaanls.shape[0]
+    numbtarg = dictlistpara['anls'].shape[0]
     indxtarg = np.arange(numbtarg)
 
     indxtargrele = np.where(boolreletarg)[0]
@@ -718,7 +700,7 @@ def plot_recaprec( \
 
     # sanity checks
                                 #listpararele is not None and boolposirele.size != listpararele.shape[0] or \
-    if listparaanls is None:
+    if dictlistpara is None:
         raise Exception('')
 
     #if isinstance(boolposirele, list):
@@ -743,260 +725,299 @@ def plot_recaprec( \
     #    print(np.sum(boolposirele))
     #    raise Exception('')
     
-    if listlablparaanls is None or listscalparaanls is None:
+    if not 'anls' in dictlistlablpara or not 'anls' in dictlistscalpara:
         
         listlablparaanlstemp, listscalparaanlstemp, _, _, _ = retr_listlablscalpara(listnameparaanls)
         
-        if listlablparaanls is None:
-            listlablparaanls = listlablparaanlstemp
+        if not 'anls' in dictlistlablpara:
+            dictlistlablpara['anls'] = listlablparaanlstemp
         
         if listscalparaanls is None:
-            listscalparaanls = listscalparaanlstemp
+            dictlistscalpara['anls'] = listscalparaanlstemp
         
-    if listnameparareca is None:
-        listnameparareca = listnameparaanls + listnamepararele
+    if not 'reca' in dictlistnamepara:
+        dictlistnamepara['reca'] = dictlistnamepara['anls'] + dictlistnamepara['rele']
     
-    if listscalparareca is None:
-        listscalparareca = listscalparaanls + listscalpararele
+    if not 'reca' in dictlistlablpara:
+        dictlistlablpara['reca'] = dictlistlablpara['anls'] + dictlistlablpara['rele']
 
-    if listnameparaprec is None:
-        listnameparaprec = listnameparaanls + listnameparaposi
+    if not 'reca' in dictlistscalpara:
+        dictlistscalpara['reca'] = dictlistscalpara['anls'] + dictlistscalpara['rele']
 
-    if listscalparaprec is None:
-        listscalparaprec = listscalparaanls + listscalparaposi
+    if not 'prec' in dictlistnamepara:
+        dictlistnamepara['prec'] = dictlistnamepara['anls'] + dictlistnamepara['posi']
+
+    if not 'prec' in dictlistlablpara:
+        dictlistlablpara['prec'] = dictlistlablpara['anls'] + dictlistlablpara['posi']
+
+    if not 'prec' in dictlistscalpara:
+        dictlistscalpara['prec'] = dictlistscalpara['anls'] + dictlistscalpara['posi']
 
     # get the labels and scalings if not already defined
-    if listlablparareca is None:
-        listlablparareca, _, _, _, _ = retr_listlablscalpara(listnameparareca)
+    #if not 'prec' in dictlistlablpara:
+    #    dictlistlablpara['prec'], _, _, _, _ = retr_listlablscalpara(dictlistnamepara['prec'])
     
-    if listlablparaprec is None:
-        listlablparaprec, _, _, _, _ = retr_listlablscalpara(listnameparaprec)
+    #if not 'reca' in dictlistlablpara:
+    #    dictlistlablpara['reca'], _, _, _, _ = retr_listlablscalpara(dictlistnamepara['reca'])
     
     if strgextn != '':
         strgextn = '_%s' % strgextn
     
-    numbparaanls = len(listnameparaanls)
-
-    numbparareca = len(listnameparareca)
-    indxparareca = np.arange(numbparareca)
-    listlablpararecatotl = retr_listlabltotl(listlablparareca)
+    listnameclassamp = ['anls', 'rele', 'irre', 'posi', 'nega']
     
-    numbparaprec = len(listnameparaprec)
-    indxparaprec = np.arange(numbparaprec)
-    listlablparaprectotl = retr_listlabltotl(listlablparaprec)
+    dictnumbpara = dict()
+    dictindxpara = dict()
+    dictlistlablparatotl = dict()
+    for nameclassamp in listnameclassamp:
+        dictnumbpara[nameclassamp] = dictlistpara[nameclassamp].shape[1]
+        dictindxpara[nameclassamp] = np.arange(dictnumbpara[nameclassamp], dtype=int)
+        dictlistlablparatotl[nameclassamp] = retr_listlabltotl(dictlistlablpara[nameclassamp])
+        print('nameclassamp')
+        print(nameclassamp)
+        print('dictlistnamepara[nameclassamp]')
+        print(dictlistnamepara[nameclassamp])
     
-    numbiter = 1
-    indxiter = range(numbiter)
+    listnametypeperf = ['reca', 'prec']
+    numbtypeperf = len(listnametypeperf)
+    indxtypeperf = range(numbtypeperf)
     
     if numbbins is None:
-        numbbinspara = [[] for c in indxiter]
-        #numbbinspara[0] = np.full(numbparareca, 50)
-        numbbinspara[0] = np.array([20, 30])
-        if numbiter > 1:
-            numbbinspara[1] = np.full(numbparaprec, 50)
-    
+        numbbinspara = dict()
+        for nameclassamp in listnameclassamp:
+            numbbinspara[nameclassamp] = dict()
+            for k, namepara in enumerate(dictlistnamepara[nameclassamp]):
+                if namepara.startswith('bool'):
+                    numbbinspara[nameclassamp][namepara] = 2
+                else:
+                    numbbinspara[nameclassamp][namepara] = 20
+                    
     if typeverb > 1:
         print('numbbinspara')
         print(numbbinspara)
     
-    indxparacalc = [[] for c in indxiter]
-    indxparacalc[0] = indxparareca
-    if numbiter > 1:
-        indxparacalc[1] = indxparaprec
+    dictbinspara = dict()
+    dictmidppara = dict()
+    for x, nameclassamp in enumerate(listnameclassamp):
+        dictbinspara[nameclassamp] = dict()
+        dictmidppara[nameclassamp] = dict()
+        for k, namepara in enumerate(dictlistnamepara[nameclassamp]):
+            dictbinspara[nameclassamp][namepara], dictmidppara[nameclassamp][namepara], _, _, _ = retr_axis( \
+                                                                listsamp=dictlistpara[nameclassamp][:, k], \
+                                                                numbpntsgrid=numbbinspara[nameclassamp][namepara], scalpara=dictlistscalpara[nameclassamp][k])
     
-    binspara = [[[] for k in indxparacalc[c]] for c in indxiter]
-    midppara = [[[] for k in indxparacalc[c]] for c in indxiter]
-    for c in indxiter:
-        if c == 0:
-            listpara = listparaanls[indxtargrele, :]
-            listnamepara = listnameparareca
-            listscalpara = listscalparareca
-        if c == 1:
-            listpara = listparaanls[indxtargposi, :]
-            listnamepara = listnameparaprec
-            listscalpara = listscalparareca
-        for k, namepara in enumerate(listnamepara):
-            binspara[c][k], midppara[c][k], _, _, _ = retr_axis(minm=np.nanmin(listpara[:, k]), maxm=np.nanmax(listpara[:, k]), \
-                                                                            numbpntsgrid=numbbinspara[c][k], scalpara=listscalpara[k])
+            if booldiag:
+                if not np.isfinite(dictbinspara[nameclassamp][namepara]).all():
+                    print('')
+                    print('')
+                    print('')
+                    print('nameclassamp')
+                    print(nameclassamp)
+                    print('namepara')
+                    print(namepara)
+                    print('dictlistpara[nameclassamp][:, k]')
+                    summgene(dictlistpara[nameclassamp][:, k])
+                    print('dictlistscalpara[nameclassamp][k]')
+                    print(dictlistscalpara[nameclassamp][k])
+                    raise Exception('')
+
+    varbperf = [[[] for g in range(2)] for c in indxtypeperf]
+    stdvvarbperf = [[[] for g in range(2)] for c in indxtypeperf]
+    varbperftdim = [[[] for g in range(2)] for c in indxtypeperf]
+    stdvvarbperftdim = [[[] for g in range(2)] for c in indxtypeperf]
+    
+    for c, nametypeperf in enumerate(listnametypeperf):
         
-    for c in indxiter:
-        if c == 0:
-            reca = [np.full(numbbinspara[c][k], np.nan) for k in indxparacalc[c]]
-            stdvreca = [np.full(numbbinspara[c][k], np.nan) for k in indxparacalc[c]]
-            recatdim = [[np.full((numbbinspara[c][k], numbbinspara[c][l]), np.nan) for l in indxparacalc[c]] for k in indxparacalc[c]]
-            stdvrecatdim = [[np.full((numbbinspara[c][k], numbbinspara[c][l]), np.nan) for l in indxparacalc[c]] for k in indxparacalc[c]]
+        if c == 0 and boolposirele.size == 0:
+            continue
         
-            listpara = listparaanls[indxtargrele, :]
-            listnamepara = listnameparareca
-            listscalpara = listscalparareca
-            listlablparatemp = listlablpararecatotl
+        if c == 1 and boolreleposi.size == 0:
+            continue
+        
+        if c == 0:
             strgmetr = 'reca'
             lablyaxi = strgreca + ' [\%]'
         if c == 1:
-            prec = np.zeros((numbbins, numbparaprec)) + np.nan
-            stdvprec = np.zeros((numbbins, numbparaprec)) + np.nan
-            prectdim = np.zeros((numbbins, numbbins, numbparaprec, numbparaprec)) + np.nan
-            stdvprectdim = np.zeros((numbbins, numbbins, numbparaprec, numbparaprec)) + np.nan
-            
-            listpara = listparaanls[indxtargposi, :]
-            listnamepara = listnameparaprec
-            listscalpara = listscalparaprec
-            listlablparatemp = listlablparaprectotl
             strgmetr = 'prec'
             lablyaxi = 'Precision [\%]'
-        if c == 2:
-            occu = np.zeros((numbbins, numbparaanls)) + np.nan
-            stdvoccu = np.zeros((numbbins, numbparaanls)) + np.nan
-            occutdim = np.zeros((numbbins, numbbins, numbparaanls, numbparaanls)) + np.nan
-            stdvoccutdim = np.zeros((numbbins, numbbins, numbparaanls, numbparaanls)) + np.nan
-            listpara = listpararele
-            listnamepara = listnamepararele
-            listlablparatemp = listlablparareletotl
-            strgmetr = 'occu'
-            lablyaxi = 'Occurence rate'
-        
-        if booldiag:
-            if len(listnamepara) != listpara.shape[1]:
-                print('')
-                print('')
-                print('')
-                print('listpara')
-                summgene(listpara)
-                print('listnamepara')
-                print(listnamepara)
-                raise Exception('len(listnamepara) != listpara.shape[1]')
-
-        for k, namepara in enumerate(listnamepara):
-
-            if c == 2:
-                boolupprlimt = np.zeros(numbbins, dtype=bool)
+        #if c == 2:
+        #    occu = np.zeros((numbbins, numbparaanls)) + np.nan
+        #    stdvoccu = np.zeros((numbbins, numbparaanls)) + np.nan
+        #    occutdim = np.zeros((numbbins, numbbins, numbparaanls, numbparaanls)) + np.nan
+        #    stdvoccutdim = np.zeros((numbbins, numbbins, numbparaanls, numbparaanls)) + np.nan
+        #    listpara = listpararele
+        #    listnamepara = listnamepararele
+        #    listlablparatemp = listlablparareletotl
+        #    strgmetr = 'occu'
+        #    lablyaxi = 'Occurence rate'
+        #    boolupprlimt = np.zeros(numbbins, dtype=bool)
+                
+        for g in range(2):
             
-            for a in range(numbbinspara[c][k]):
-                
-                if c == 0 or c == 1:
-                    boolinsd = (binspara[c][k][a] < listpara[:, k]) & (listpara[:, k] < binspara[c][k][a+1])
-                    indxinsd = np.where(boolinsd)[0]
-                    numbinsd = indxinsd.size
-                    if c == 0:
-                        boolinsdtpos = np.logical_and(boolposirele, boolinsd)
-                    if c == 1:
-                        boolinsdtpos = np.logical_and(boolreleposi, boolinsd)
-                    indxinsdtpos = np.where(boolinsdtpos)[0]
-                    numbinsdtpos = indxinsdtpos.size
-                
-                    if c == 0 and k == 0 and midppara[c][k][a] < 1. and numbinsdtpos > 0:
-                        print('c, k')
-                        print(c, k )
-                        print('listnamepara[k]')
-                        print(listnamepara[k])
-                        raise Exception('')
+            if g == 0:
+                nameclassamp = 'anls'
+                #listpara = dictlistpara['anls']
+            else:
+                if nametypeperf == 'reca':
+                    nameclassamp = 'rele'
+                if nametypeperf == 'prec':
+                    nameclassamp = 'posi'
+                    #listpara = dictlistpara['anls'][indxtargposi, :]
+            listpara = dictlistpara[nameclassamp]
+            
+            numbpara = len(dictlistnamepara[nameclassamp])
+            
+            varbperf[c][g] = [[] for k in dictindxpara[nameclassamp]]
+            stdvvarbperf[c][g] = [[] for k in dictindxpara[nameclassamp]]
+            varbperftdim[c][g] = [[[] for l in dictindxpara[nameclassamp]] for k in dictindxpara[nameclassamp]]
+            stdvvarbperftdim[c][g] = [[[] for l in dictindxpara[nameclassamp]] for k in dictindxpara[nameclassamp]]
+            
+            for k, namepara in enumerate(dictlistnamepara[nameclassamp]):
+                numbbins = numbbinspara[nameclassamp][namepara]
+                varbperf[c][g][k] = np.full(numbbins, np.nan)
+                stdvvarbperf[c][g][k] = np.full(numbbins, np.nan)
 
-                    if numbinsd > 0:
-                        # when c == 0, numbinsd is number of relevant samples in the bin (for recall)
-                        # when c == 1, numbinsd is number of positive samples in the bin (for precision)
-                        if c == 0:
-                            reca[k][a] = numbinsdtpos / numbinsd
-                            stdvreca[k][a] = np.sqrt(numbinsdtpos * (numbinsdtpos + numbinsd) / numbinsd**3)
+                for a in range(numbbins):
+                    
+                    if c == 0 or c == 1:
+                        # this neglects a sample at the right edge of the last bin
+                        boolinsd = (dictbinspara[nameclassamp][namepara][a] <= listpara[:, k]) & (listpara[:, k] < dictbinspara[nameclassamp][namepara][a+1])
                             
-                            if c == 0 and k == 0 and midppara[c][k][a] < 1. and reca[k][a] > 0:
-                                print('c, k')
-                                print(c, k )
-                                print('listnamepara[k]')
-                                print(listnamepara[k])
-                                raise Exception('')
-
+                        indxinsd = np.where(boolinsd)[0]
+                        numbinsd = indxinsd.size
+                            
+                        if c == 0:
+                            boolinsdtpos = np.logical_and(boolpositarg, boolinsd)
                         if c == 1:
-                            prec[a, k] = numbinsdtpos / numbinsd
-                            stdvprec[a, k] = np.sqrt(numbinsdtpos * (numbinsdtpos + numbinsd) / numbinsd**3)
+                            boolinsdtpos = np.logical_and(boolreletarg, boolinsd)
+                        indxinsdtpos = np.where(boolinsdtpos)[0]
+                        numbinsdtpos = indxinsdtpos.size
+                    
+                        if numbinsd > 0:
+                            varbperf[c][g][k][a] = numbinsdtpos / numbinsd
+                            stdvvarbperf[c][g][k][a] = np.sqrt(numbinsdtpos * (numbinsdtpos + numbinsd) / numbinsd**3)
+
+                    #if c == 2:
+                    #    indx = np.where((binspara[c][k][a] < listparadete[:, k]) & (listparadete[:, k] < binspara[c][k][a+1]))[0]
+                    #    numb = indx.size
+                    #    if numb > 0:
+                    #        boolupprlimt[a] = False
+                    #        metr[c, a] = numb / listpararele[k].size * metr[1, a] / metr[0, a]
+                    #    else:
+                    #        boolupprlimt[a] = True
+                    #        metr[c, a] = 1. / listpararele[k].size * metr[1, a] / metr[0, a]
+                
+                #if c == 0 and not np.isfinite(varbperf[c][g][k]).any() and boolreletarg.any():
+                if namepara == 's2nrcomp':
+                    print('')
+                    print('')
+                    print('')
+                    print('g')
+                    print(g)
+                    print('nameclassamp')
+                    print(nameclassamp)
+                    print('namepara')
+                    print(namepara)
+                    print('listpara[:, k]')
+                    summgene(listpara[:, k])
+                    print('dictbinspara[nameclassamp][namepara]')
+                    summgene(dictbinspara[nameclassamp][namepara])
+                    print('boolpositarg')
+                    summgene(boolpositarg)
+                    print('boolreletarg')
+                    summgene(boolreletarg)
+                    print('nametypeperf')
+                    print(nametypeperf)
+                    print('namepara')
+                    print(namepara)
+                    print('varbperf[c][g][k]')
+                    print(varbperf[c][g][k])
+                    #raise Exception('')
+
+                for l, nameparaseco in enumerate(dictlistnamepara[nameclassamp]):
+                    numbbinsseco = numbbinspara[nameclassamp][nameparaseco]
+                    varbperftdim[c][g][k][l] = np.full((numbbins, numbbinsseco), np.nan)
+                    stdvvarbperftdim[c][g][k][l] = np.full((numbbins, numbbinsseco), np.nan)
+                
+                    for a in range(numbbins):
+                        for b in range(numbbinsseco):
+                            boolinsdtdim = (dictbinspara[nameclassamp][namepara][a] < listpara[:, k]) & (listpara[:, k] < dictbinspara[nameclassamp][namepara][a+1]) & \
+                                           (dictbinspara[nameclassamp][nameparaseco][b] < listpara[:, l]) & (listpara[:, l] < dictbinspara[nameclassamp][nameparaseco][b+1])
+                            indxinsdtdim = np.where(boolinsdtdim)[0]
+                            numbinsdtdim = indxinsdtdim.size
+                            if c == 0:
+                                boolinsdtdimtpos = np.logical_and(boolpositarg, boolinsdtdim)
+                            if c == 1:
+                                boolinsdtdimtpos = np.logical_and(boolreletarg, boolinsdtdim)
+                            indxinsdtdimtpos = np.where(boolinsdtdimtpos)[0]
+                            numbinsdtdimtpos = indxinsdtdimtpos.size
+                            
+                            if numbinsdtdim > 0:
+                                # when c == 0, numbinsd is number of relevant samples in the bin (for recall)
+                                # when c == 1, numbinsd is number of positive samples in the bin (for precision)
+                                varbperftdim[c][g][k][l][a, b] = numbinsdtdimtpos / numbinsdtdim
+                                stdvvarbperftdim[c][g][k][l][a, b] = np.sqrt(numbinsdtdimtpos * (numbinsdtdimtpos + numbinsdtdim) / numbinsdtdim**3)
+            
+                if c == 0 or c == 1:
+                    
+                    figr, axis = plt.subplots(figsize=(6, 4))
+                    axis.errorbar(dictmidppara[nameclassamp][namepara], varbperf[c][g][k] * 100., stdvvarbperf[c][g][k] * 100, \
+                                                                                                marker='o', elinewidth=1, capsize=2, zorder=1, ls='', ms=1)
+                    axis.set_xlabel(dictlistlablparatotl[nameclassamp][k])
+                    axis.set_ylabel(lablyaxi)
+                    if dictlistscalpara[nameclassamp][k] == 'logt':
+                        axis.set_xscale('log')
+                    path = pathvisu + '%s_%s%s.%s' % (strgmetr, namepara, strgextn, typefileplot) 
+                    print('Writing to %s...' % path)
+                    plt.savefig(path)
+                    plt.close()
                     
                 if c == 2:
-                    indx = np.where((binspara[c][k][a] < listparadete[:, k]) & (listparadete[:, k] < binspara[c][k][a+1]))[0]
-                    numb = indx.size
-                    if numb > 0:
-                        boolupprlimt[a] = False
-                        metr[c, a] = numb / listpararele[k].size * metr[1, a] / metr[0, a]
-                    else:
-                        boolupprlimt[a] = True
-                        metr[c, a] = 1. / listpararele[k].size * metr[1, a] / metr[0, a]
-                
-                for l, nameparaseco in enumerate(listnamepara):
-            
-                    for b in range(numbbinspara[c][l]):
-                        boolinsdtdim = (binspara[c][k][a] < listpara[:, k]) & (listpara[:, k] < binspara[c][k][a+1]) & \
-                                       (binspara[c][l][b] < listpara[:, l]) & (listpara[:, l] < binspara[c][l][b+1])
-                        indxinsdtdim = np.where(boolinsdtdim)[0]
-                        numbinsdtdim = indxinsdtdim.size
-                        if c == 0:
-                            boolinsdtdimtpos = np.logical_and(boolposirele, boolinsdtdim)
-                        if c == 1:
-                            boolinsdtdimtpos = np.logical_and(boolreleposi, boolinsdtdim)
-                        indxinsdtdimtpos = np.where(boolinsdtdimtpos)[0]
-                        numbinsdtdimtpos = indxinsdtdimtpos.size
-                
-                        if numbinsdtdim > 0:
-                            # when c == 0, numbinsd is number of relevant samples in the bin (for recall)
-                            # when c == 1, numbinsd is number of positive samples in the bin (for precision)
-                            if c == 0:
-                                recatdim[k][l][a, b] = numbinsdtdimtpos / numbinsdtdim
-                                stdvrecatdim[k][l][a, b] = np.sqrt(numbinsdtdimtpos * (numbinsdtdimtpos + numbinsdtdim) / numbinsdtdim**3)
-                            if c == 1:
-                                prectdim[a, b, k, l] = numbinsdtdimtpos / numbinsdtdim
-                                stdvprectdim[a, b, k, l] = np.sqrt(numbinsdtdimtpos * (numbinsdtdimtpos + numbinsdtdim) / numbinsdtdim**3)
+                    figr, axis = plt.subplots(figsize=(6, 4))
+                    axis.errorbar(dictmidppara[c][k], metr[c, :], marker='o', uplims=boolupprlimt)
+                    axis.set_ylabel('Occurence rate')
+                    axis.set_xlabel(dictlistlablparatotl[nameclassamp][k])
+                    if listscalpara[k] == 'logt':
+                        axis.set_xscale('log')
+                    path = pathvisu + 'occu_%s%s.%s' % (namepara, strgextn, typefileplot) 
+                    print('Writing to %s...' % path)
+                    plt.savefig(path)
+                    plt.close()
+
+                for l, nameparaseco in enumerate(dictlistnamepara[nameclassamp]):
                     
-        for k, namepara in enumerate(listnamepara):
-            
-            if c == 0 or c == 1:
-                
-                figr, axis = plt.subplots(figsize=(6, 4))
-                if c == 0:
-                    axis.errorbar(midppara[c][k], reca[k] * 100., stdvreca[k] * 100)
-                if c == 1:
-                    axis.errorbar(midppara[c][k], prec[:, k] * 100., stdvprec[:, k] * 100)
-                axis.set_xlabel(listlablparatemp[k])
-                axis.set_ylabel(lablyaxi)
-                if listscalpara[k] == 'logt':
-                    axis.set_xscale('log')
-                path = pathvisu + '%s_%s%s.%s' % (strgmetr, namepara, strgextn, typefileplot) 
-                print('Writing to %s...' % path)
-                plt.savefig(path)
-                plt.close()
-                
-            if c == 2:
-                figr, axis = plt.subplots(figsize=(6, 4))
-                axis.errorbar(midppara[c][k], metr[c, :], marker='o', uplims=boolupprlimt)
-                axis.set_ylabel('Occurence rate')
-                axis.set_xlabel(listlablparareletotl[k])
-                if listscalpara[k] == 'logt':
-                    axis.set_xscale('log')
-                path = pathvisu + 'occu_%s%s.%s' % (namepara, strgextn, typefileplot) 
-                print('Writing to %s...' % path)
-                plt.savefig(path)
-                plt.close()
+                    if k >= l:
+                        continue
 
-            for l, nameparaseco in enumerate(listnamepara):
-                
-                if k >= l:
-                    continue
+                    figr, axis = plt.subplots(figsize=(6, 4))
+                    
+                    print('nameclassamp')
+                    print(nameclassamp)
+                    print('nameparaseco')
+                    print(nameparaseco)
+                    print('namepara')
+                    print(namepara)
+                    print('dictmidppara[nameclassamp][nameparaseco]')
+                    summgene(dictmidppara[nameclassamp][nameparaseco])
+                    print('dictmidppara[nameclassamp][namepara]')
+                    summgene(dictmidppara[nameclassamp][namepara])
+                    print('varbperftdim[c][g][k][l]')
+                    print(varbperftdim[c][g][k][l])
+                    summgene(varbperftdim[c][g][k][l])
+                    print('')
 
-                figr, axis = plt.subplots(figsize=(6, 4))
-                if c == 0:
-                    objtaxispcol = axis.pcolor(midppara[c][l], midppara[c][k], recatdim[k][l] * 100)#, cmap=listcolrpopltdim[u])#, label=labl, norm=norm)
-                if c == 1:
-                    objtaxispcol = axis.pcolor(midppara[c][l], midppara[c][k], prectdim[:, :, k, l] * 100)#, cmap=listcolrpopltdim[u])#, label=labl, norm=norm)
-                axis.set_xlabel(listlablparatemp[l])
-                axis.set_ylabel(listlablparatemp[k])
-                cbar = plt.colorbar(objtaxispcol)
-                if listscalpara[l] == 'logt':
-                    axis.set_xscale('log')
-                if listscalpara[k] == 'logt':
-                    axis.set_yscale('log')
-                path = pathvisu + '%s_%s%s%s.%s' % (strgmetr, namepara, nameparaseco, strgextn, typefileplot) 
-                print('Writing to %s...' % path)
-                plt.savefig(path)
-                plt.close()
+                    objtaxispcol = axis.pcolor(dictmidppara[nameclassamp][nameparaseco], dictmidppara[nameclassamp][namepara], varbperftdim[c][g][k][l] * 100)#, cmap=listcolrpopltdim[u])#, label=labl, norm=norm)
+                    axis.set_xlabel(dictlistlablparatotl[nameclassamp][l])
+                    axis.set_ylabel(dictlistlablparatotl[nameclassamp][k])
+                    cbar = plt.colorbar(objtaxispcol)
+                    if dictlistscalpara[nameclassamp][l] == 'logt':
+                        axis.set_xscale('log')
+                    if dictlistscalpara[nameclassamp][k] == 'logt':
+                        axis.set_yscale('log')
+                    path = pathvisu + '%s_%s_%s%s.%s' % (strgmetr, namepara, nameparaseco, strgextn, typefileplot) 
+                    print('Writing to %s...' % path)
+                    plt.savefig(path)
+                    plt.close()
     
-
-
 
 def prep_mask(data, epoc=None, peri=None, duramask=None, limttime=None):
     '''
@@ -1322,6 +1343,15 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
         if dictdefa is not None and listnamepara[k] in dictdefa:
             listlablpara[k] = dictdefa[listnamepara[k]]['labl']
             listscalpara[k] = dictdefa[listnamepara[k]]['scal']
+        
+        elif listnamepara[k] == 'metrsyst':
+            listlablpara[k] = [r'$\xi_{sys}$', '']
+            listscalpara[k] = 'logt'
+        
+        elif listnamepara[k] == 'metrcomp':
+            listlablpara[k] = [r'$\xi_{comp}$', '']
+            listscalpara[k] = 'logt'
+        
         elif listnamepara[k] == 'toii':
             listlablpara[k] = ['TOI ID', '']
             listscalpara[k] = 'self'
@@ -1890,6 +1920,14 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
                 listlablpara[k][1] = ''
                 listscalpara[k] = 'self'
         
+            elif listnamepara[k][:-1] == 's2nrcom':
+                if boolmath:
+                    listlablpara[k][0] = 'SNR$_{%s}$' % strgnume
+                else:
+                    listlablpara[k][0] = 'Signal to Noise Ratio%s' % strgnume
+                listlablpara[k][1] = ''
+                listscalpara[k] = 'self'
+        
             elif listnamepara[k][:-1] == 'duratranfullcom':
                 listlablpara[k] = ['$T_{%s,tr,full}$' % (listnamepara[k][-1]), 'hours']
                 listscalpara[k] = 'self'
@@ -1955,9 +1993,10 @@ def retr_listlablscalpara(listnamepara, listlablpara=None, listlablunitforc=None
                 print(listnamepara[k])
                 raise Exception('listnamepara[k] undefined.')
 
-        elif listnamepara[k] == 's2nr':
-            listlablpara[k] = ['S/N', '']
+        elif listnamepara[k] == 's2nr' :
+            listlablpara[k] = ['SNR', '']
             listscalpara[k] = 'logt'
+        
         elif listnamepara[k] == 's2nrblss':
             listlablpara[k] = ['S/N$_{BLS}$', '']
             listscalpara[k] = 'logt'
@@ -2290,8 +2329,13 @@ def retr_axis(minm=None, maxm=None, limt=None, numbpntsgrid=None, midpgrid=None,
     
     if boolinte is None:
         boolinte = False
+        
+    if listsamp is not None and np.array_equal(listsamp, listsamp.astype(bool)):
+        binsgrid = np.linspace(-0.5, 1.5, 3)
+        midpgrid = np.linspace(0., 1., 2)
+        numbpntsgrid = 2
     
-    if midpgrid is not None:
+    elif midpgrid is not None:
         if numbpntsgrid is not None:
             raise Exception('')
         
@@ -2306,8 +2350,7 @@ def retr_axis(minm=None, maxm=None, limt=None, numbpntsgrid=None, midpgrid=None,
             maxm = np.amax(listsamp)
         
         if maxm is not None:
-            limt[1] = maxm
-            limt[0] = minm
+            limt = [minm, maxm]
         if boolinte and int(limt[1] - limt[0]) < 1e7:
             if numbpntsgrid is not None:
                 raise Exception('')
@@ -2633,8 +2676,6 @@ def plot_timeline(
         else:
             typetickdate = 'daily'
     
-    print('typetickdate')
-    print(typetickdate)
     if typetickdate in ['daily', 'monthly', 'quarterly', 'bimonthly', 'yearly']:
         # string holding the first date
         strgtimeminm = astropy.time.Time(minmjdat, format='jd').to_value('iso', subfmt='date')
@@ -2659,8 +2700,6 @@ def plot_timeline(
             
             #strgtimemaxm = '%4d-12-31' % int(strgtimemaxm[:4])
             strgtimemaxm = (datetime.datetime.strptime(strgtimemaxm, "%Y-%m-%d") + dateutil.relativedelta.relativedelta(months=12)).strftime("%Y-%m-%d")[:-6] + '-01-01'
-            print('strgtimemaxm')
-            print(strgtimemaxm)
 
         objtdateminm = datetime.datetime.strptime(strgtimeminm, "%Y-%m-%d")
         objtdatemaxm = datetime.datetime.strptime(strgtimemaxm, "%Y-%m-%d")
@@ -2739,7 +2778,9 @@ def plot_timeline(
             listlabltick[kk] = listlabltick[kk][:-3]
         if typetickdate in ['yearly']:
             listlabltick[kk] = listlabltick[kk][:-6]
-        
+    
+    booluzip = False
+
     if typeplotback == 'white':
         edgecolor = 'black'
         textcolor = 'black'
@@ -2751,13 +2792,14 @@ def plot_timeline(
     listjdatbins = np.arange(minmjdat, maxmjdat+1, 2. * 365.)
     numbplot = listjdatbins.size
     indxplot = np.arange(numbplot)
+    
     for o in indxplot:
         
         # skip the time-restricted iterations for the moment
-        if o > 0:
+        if not booluzip and o > 0:
             continue
 
-        if numbplot > 1:
+        if numbplot > 1 and booluzip:
             strgiter = '_%d' % o
         else:
             strgiter = ''
@@ -2774,7 +2816,8 @@ def plot_timeline(
         for k in indxrows:
             
             offs = 0.
-            bctrjdatchunprev = 1000.
+            deltjdatchunprev = 1000.
+            bctrjdatchunprev = -1e100
             for l in range(len(dictrows[listnamerows[k]]['listdictelem'])):
                 
                 jdatfrst = astropy.time.Time(dictrows[listnamerows[k]]['listdictelem'][l]['limtdate'][0], format='iso').jd
@@ -2809,13 +2852,14 @@ def plot_timeline(
                     
                     axis.set_xticklabels(listlabltick)
                     
-                    if bctrjdatchunprev < 45.:
+                    #if deltjdatchun < 45. and 
+                    if bctrjdatchun - bctrjdatchunprev < 45.:
                         offs += 0.2
                     else:
                         offs = 0.
                     axis.text(xdattext, ydattext + offs, dictrows[listnamerows[k]]['listdictelem'][l]['strg'], color=textcolor, ha='center', va='center')
-                
                 bctrjdatchunprev = bctrjdatchun
+                deltjdatchunprev = deltjdatchun
 
             if k == 0:
                 minmydat = ydattext - 0.5 * listsizerows[k]
@@ -2854,7 +2898,7 @@ def plot_timeline(
                 
                 if strgtimelimt is None or strgtimelimt is not None and jdat < maxmtime and jdat > minmtime:
                     axis.axvline(jdat, ls='-.', lw=1, color=colr)
-                    axis.text(jdat, numbrows + ydatoffs, labl, ha='center', va='center', color=colr)
+                    axis.text(jdat, axis.get_ylim()[1] + ydatoffs, labl, ha='center', va='center', color=colr)
 
         limtydat = [minmydat, maxmydat]
         axis.set_yticks(listtickyaxi)
@@ -3079,8 +3123,6 @@ def read_fits(path, pathvisu=None, typeverb=1):
         dictdata = dict()
         print('Header:')
         print(repr(head))
-        print('')
-        print('Data:')
         
         listkeys = np.array(list(head.keys()))
         listvalu = np.array(list(head.values()))
@@ -3113,6 +3155,8 @@ def read_fits(path, pathvisu=None, typeverb=1):
             
             dictpopl['Extension%d' % (k)] = dictdata
 
+            print('keys for Extension %d:' % k)
+            print(dictpopl['Extension%d' % k].keys())
         
         if pathvisu is not None:
         
@@ -5706,6 +5750,10 @@ def plot_grid(
             else:
                 listpara[:, indxparathis] = dictpara[listkeys[k]]
 
+    print('tdpy.util.plot_grid():')
+    print('boolplotpies')
+    print(boolplotpies)
+
     # check whether there is a single population or multiple populations
     if isinstance(listpara, list):
         boolmpop = True
@@ -5787,10 +5835,6 @@ def plot_grid(
 
     indxpopl = np.arange(numbpopl)
     listcolrpopl = listcolrpopl[:numbpopl]
-    for u in indxpopl:
-        for k in indxpara:
-            if not np.isfinite(listpara[u][:, k]).all():
-                print('tdpy.plot_grid(): Not all samples are finite for parameter %d!' % k)
     
     if listscalpara is None:
         listscalpara = ['self'] * numbpara
@@ -5858,6 +5902,26 @@ def plot_grid(
             if ((listpara[u][:, k] - listpara[u][:, k].astype(int)) != 0).any() or boolforcflot:
                 boolinte[k] = False
     
+    listsizepopl = []
+    for u in indxpopl:
+        listsizepopl.append(listpara[u][:, 0].size)
+    
+    if numbpopl > 1:
+        for u in indxpopl:
+            print('Number of samples in population %d (%s): %d' % (u, listlablpopl[u], listsizepopl[u]))
+            if listlablsamp is not None and listsizepopl[u] < 100:
+                print('Labels of these samples:')
+                print(listlablsamp[u])
+    
+    for u in indxpopl:
+        for k in indxpara:
+            if not np.isfinite(listpara[u][:, k]).all():
+                numbtotl = listpara[u][:, k].size
+                numbfini = np.where(np.isfinite(listpara[u][:, k]))[0].size
+                numbinfi = numbtotl - numbfini
+                print('tdpy.plot_grid(): %d out of %d samples (%.3g%%) are not finite for population %d (%s), parameter %d (%s)!' % \
+                                                        (numbinfi, numbtotl, 100 * numbinfi / numbtotl, u, listlablpopl[u], k, listlablpara[k][0]))
+    
     limtrims = [[] for k in indxpara]
     listindxgood = [[[] for k in indxpara] for u in indxpopl]
     if binsgridinpt is None:
@@ -5917,7 +5981,7 @@ def plot_grid(
                 #        print('')
                 #        print('')
                 #        print('')
-                #        print('tdpy.plot_grid(): size is 0 for parameter %d!' % k)
+                #        print('tdpy.plot_grid(): size is 0 for parameter %d (%s)!' % (k, listlablpara[k][0]))
                 #        print('k')
                 #        print(k)
                 #        print('listindxgood[u][k]')
@@ -5941,7 +6005,7 @@ def plot_grid(
                             print('')
                             print('')
                             print('')
-                            print('tdpy.plot_grid(): limit for parameter %d is infinite!' % k)
+                            print('tdpy.plot_grid(): limit for parameter %d (%s) is infinite!' % (k, listlablpara[k][0]))
                             print('k')
                             print(k)
                             print('listindxgood[u][k]')
@@ -5969,7 +6033,7 @@ def plot_grid(
                     print('')
                     print('')
                     print('')
-                    print('tdpy.plot_grid(): limit for parameter %d is infinite!' % k)
+                    print('tdpy.plot_grid(): limit for parameter %d (%s) is infinite!' % (k, listlablpara[k][0]))
                     print('k')
                     print(k)
                     print('numbpopl')
@@ -6035,7 +6099,7 @@ def plot_grid(
                     print('')
                     print('')
                     print('')
-                    print('tdpy.plot_grid(): limit for parameter %d is infinite!' % k)
+                    print('tdpy.plot_grid(): limit for parameter %d (%s) is infinite!' % (k, listlablpara[k][0]))
                     print('k')
                     print(k)
                     print('numbpopl')
@@ -6053,12 +6117,13 @@ def plot_grid(
                     print(limt[k])
                     raise Exception('')
 
-        for k in indxpara:
-            if listlablpopl is not None:
-                for u in indxpopl:
-                    if not np.isfinite(listpara[u][:, k]).all():
-                        print('Warning! Population %d (%s), parameter %d (%s) has nonfinite samples.' % (u, listlablpopl[u], k, listlablpara[k][0]))
-                        summgene(listpara[u][:, k])
+        if False:
+            for k in indxpara:
+                if listlablpopl is not None:
+                    for u in indxpopl:
+                        if not np.isfinite(listpara[u][:, k]).all():
+                            print('Warning! Population %d (%s), parameter %d (%s) has nonfinite samples.' % (u, listlablpopl[u], k, listlablpara[k][0]))
+                            summgene(listpara[u][:, k])
     
         for k in indxpara:
             if limt[k][0] == limt[k][1]:
@@ -6211,22 +6276,6 @@ def plot_grid(
             for u in indxpopl:
                 print('listpara[u][:, k]')
                 summgene(listpara[u][:, k])
-    
-    listsizepopl = []
-    for u in indxpopl:
-        listsizepopl.append(listpara[u][:, 0].size)
-    
-    if numbpopl > 1:
-        print('Number of samples in the populations:')
-        for u in indxpopl:
-            if listlablpopl is not None:
-                print(listlablpopl[u])
-            print(listsizepopl[u])
-            if listlablsamp is not None and listsizepopl[u] < 100:
-                print('Labels of these samples:')
-                print(listlablsamp[u])
-            print('')
-        print('')
     
     # make pie-chart of the populations if populations are mutually-exclusive
     if boolpoplexcl:
