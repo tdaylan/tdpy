@@ -356,6 +356,9 @@ def icdf_powr(paraunit, minm, maxm, slop):
     Inverse CDF for P(para) = (1 - slop) / (maxmpara^(1 - slop) - minmpara^(1 - slop)) * para^(-slop)
     '''
     
+    if slop == 1.:
+        raise Exception('Power law index should not be 1, which is the case of a log-uniform distribution.')
+
     para = (paraunit * (maxm**(1. - slop) - minm**(1. - slop)) + minm**(1. - slop))**(1. / (1. - slop))
     
     return para
